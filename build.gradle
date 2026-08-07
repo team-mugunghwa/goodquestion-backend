@@ -51,29 +51,3 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-
-//def loadDotEnv() {
-//    def env = [:]
-//    def envFile = file('.env')
-//
-//    if (envFile.exists()) {
-//        envFile.readLines().findAll { line ->
-//            line.trim() && !line.trim().startsWith('#') && line.contains('=')
-//        }.each { line ->
-//            def (key, value) = line.split('=', 2)
-//            env[key.trim()] = value.trim()
-//        }
-//    }
-//
-//    return env
-//}
-//
-//def dotEnv = loadDotEnv()
-//
-//tasks.withType(JavaExec).configureEach {
-//    environment dotEnv
-//}
-//
-//tasks.withType(Test).configureEach {
-//    environment dotEnv
-//}
