@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: goodquestion-backend
+
+  datasource:
+    url: ${DB_URL}          # Supabase Postgres 연결 문자열
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate    # 스키마는 ddl/schema.sql로 관리, 엔티티와 일치만 검증
+    open-in-view: false
+    properties:
+      hibernate.default_batch_fetch_size: 100
+
+supabase:
+  jwt-secret: ${SUPABASE_JWT_SECRET}   # Supabase 프로젝트의 JWT Secret
+#  jwt-secret: Rf2uWS4bnT9ysIqC2h5yLP9mB/wXosnoTD1ckxwQ2dw=
+
+external:
+  stt:
+    api-key: ${STT_API_KEY}
+  tts:
+    api-key: ${TTS_API_KEY}
+  llm:
+    api-key: ${LLM_API_KEY}
+    analysis-model: ${ANALYSIS_MODEL:}
+    character-model: ${CHARACTER_MODEL:}
