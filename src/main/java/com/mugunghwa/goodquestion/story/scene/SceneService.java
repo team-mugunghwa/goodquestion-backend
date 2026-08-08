@@ -1,9 +1,16 @@
 package com.mugunghwa.goodquestion.story.scene;
 
+import com.mugunghwa.goodquestion.global.error.BusinessException;
+import com.mugunghwa.goodquestion.global.error.ErrorCode;
+import com.mugunghwa.goodquestion.story.scene.dto.SceneContentResponse;
+import com.mugunghwa.goodquestion.story.story.Story;
+import com.mugunghwa.goodquestion.story.story.StoryRepository;
+import com.mugunghwa.goodquestion.story.story.StoryStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,6 +20,31 @@ import java.util.UUID;
 public class SceneService {
 
     private final StorySceneRepository sceneRepository;
+
+    /** getScenes의 PUBLISHED 검증을 위해 추가 */
+    private final StoryRepository storyRepository;
+
+
+    /**
+     * 장면 콘텐츠 프리페치 (클라이언트용).
+     * 컨트롤러가 리포지토리를 직접 호출하던 것을 서비스로 옮겼다.
+     * PUBLISHED 검증이 필요한데, 검증은 컨트롤러가 아니라 서비스의 책임이기 때문.
+     *
+     * 비공개 이야기는 존재 사실도 노출하지 않도록 FORBIDDEN이 아니라 NOT_FOUND로 응답한다.
+     * SceneContentResponse는 element_criteria·remaining_worries·미션 노출 조건을 제외한다.
+     */
+    public List<SceneContentResponse> getScenes(UUID storyId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다."));
+        if (story.getStatus() != StoryStatus.PUBLISHED) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다.");
+        }
+        return sceneRepository.findAllByStoryIdOrderBySceneOrderAsc(storyId).stream()
+                .map(SceneContentResponse::from)
+                .toList();
+    }
+
+
 
     public StoryScene getFirstScene(UUID storyId) {
         // TODO: sceneOrder 최솟값 장면 반환

@@ -15,13 +15,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SceneController {
 
-    private final StorySceneRepository sceneRepository;
+    private final SceneService sceneService;
 
     /** 이야기 시작 전 장면 콘텐츠 프리페치 — 도입·전개 재생과 화면 구성을 위해 사용 */
     @GetMapping
     public List<SceneContentResponse> getScenes(@PathVariable UUID storyId) {
-        // TODO: 이야기 PUBLISHED 검증
-        return sceneRepository.findAllByStoryIdOrderBySceneOrderAsc(storyId).stream()
-                .map(SceneContentResponse::from).toList();
+        return sceneService.getScenes(storyId);
     }
 }
