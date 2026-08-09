@@ -1,7 +1,8 @@
 package com.mugunghwa.goodquestion.user.auth;
 
 import com.mugunghwa.goodquestion.user.auth.dto.AuthResponse;
-import com.mugunghwa.goodquestion.user.auth.dto.KakaoLoginRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
+import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LogoutRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
@@ -33,13 +34,12 @@ public class AuthController {
     /**
      * 소셜 로그인. 현재 지원 공급자는 kakao 뿐이며 나머지는 501을 반환한다(미결-02).
      *
-     * <p>NOTE: 명세는 {@code {authorizationCode, redirectUri}}(서버가 인가 코드를 교환)를 규정하지만
-     * 현재 구현은 모바일 카카오 SDK가 발급한 액세스 토큰을 받는다. 두 방식 모두 유효하므로
-     * 어느 쪽을 계약으로 삼을지는 팀 확인 필요 — 경로만 명세에 맞춰 두었다.
+     * <p>서버가 인가 코드를 제공자 토큰으로 교환한 뒤 프로필을 조회한다(계정-04).
+     * 교환에 카카오 REST API 키가 필요하므로 {@code KAKAO_CLIENT_ID}를 설정해야 한다.
      */
     @PostMapping("/social/{provider}")
-    public AuthResponse loginWithSocial(@PathVariable String provider,
-                                        @Valid @RequestBody KakaoLoginRequest request) {
+    public SocialAuthResponse loginWithSocial(@PathVariable String provider,
+                                              @Valid @RequestBody SocialLoginRequest request) {
         if (!"kakao".equalsIgnoreCase(provider)) {
             throw new UnsupportedOperationException("지원하지 않는 소셜 로그인 공급자입니다: " + provider);
         }
