@@ -17,14 +17,14 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    @GetMapping("/api/v1/children/{childId}/reports")
+    @GetMapping("/api/children/{childId}/reports")
     public Page<ReportListResponse> getReports(@CurrentParentId UUID parentId,
                                                @PathVariable UUID childId,
                                                @PageableDefault(size = 10) Pageable pageable) {
         return reportService.getReports(parentId, childId, pageable);
     }
 
-    @GetMapping("/api/v1/sessions/{sessionId}/report")
+    @GetMapping("/api/sessions/{sessionId}/report")
     public ReportDetailResponse getReport(@CurrentParentId UUID parentId,
                                           @PathVariable UUID sessionId) {
         return reportService.getReport(parentId, sessionId);

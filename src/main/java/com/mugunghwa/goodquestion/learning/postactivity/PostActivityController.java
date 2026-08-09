@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/sessions/{sessionId}/post-activity")
+@RequestMapping("/api/sessions/{sessionId}/post-activity")
 @RequiredArgsConstructor
 public class PostActivityController {
 
@@ -20,7 +20,7 @@ public class PostActivityController {
         return activityService.start(parentId, sessionId);
     }
 
-    @PostMapping("/card-orders")
+    @PostMapping("/order")
     public CardSubmitResponse submitOrder(@CurrentParentId UUID parentId, @PathVariable UUID sessionId,
                                           @Valid @RequestBody CardSubmitRequest request) {
         return activityService.submitOrder(parentId, sessionId, request);

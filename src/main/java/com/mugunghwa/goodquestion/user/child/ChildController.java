@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/children")
+@RequestMapping("/api/children")
 @RequiredArgsConstructor
 public class ChildController {
 

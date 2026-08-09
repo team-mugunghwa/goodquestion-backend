@@ -11,15 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/parents")
+@RequestMapping("/api/parents")
 @RequiredArgsConstructor
 public class ParentController {
 
     private final ParentService parentService;
 
-    @PostMapping("/me")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ParentResponse register(@CurrentParentId UUID parentId,
+    @PatchMapping("/me")
+    public ParentResponse updateMe(@CurrentParentId UUID parentId,
                                    @Valid @RequestBody ParentCreateRequest request) {
         return parentService.register(parentId, request);
     }

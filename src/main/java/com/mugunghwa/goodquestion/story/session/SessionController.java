@@ -20,19 +20,19 @@ public class SessionController {
     private final SessionService sessionService;
     private final MessageService messageService;
 
-    @PostMapping("/api/v1/children/{childId}/sessions")
+    @PostMapping("/api/children/{childId}/sessions")
     @ResponseStatus(HttpStatus.CREATED)
     public SessionResponse start(@CurrentParentId UUID parentId, @PathVariable UUID childId,
                                  @Valid @RequestBody SessionStartRequest request) {
         return sessionService.start(parentId, childId, request);
     }
 
-    @GetMapping("/api/v1/sessions/{sessionId}")
+    @GetMapping("/api/sessions/{sessionId}")
     public SessionResponse getSession(@CurrentParentId UUID parentId, @PathVariable UUID sessionId) {
         return sessionService.getSession(parentId, sessionId);
     }
 
-    @GetMapping("/api/v1/sessions/{sessionId}/messages")
+    @GetMapping("/api/sessions/{sessionId}/messages")
     public List<MessageResponse> getMessages(@CurrentParentId UUID parentId,
                                              @PathVariable UUID sessionId,
                                              @RequestParam(required = false) UUID sceneId) {
@@ -41,13 +41,13 @@ public class SessionController {
     }
 
     /** STORY 장면(도입·전개) 재생 완료 통지 → 다음 장면 이동 */
-    @PostMapping("/api/v1/sessions/{sessionId}/scene-completions")
+    @PostMapping("/api/sessions/{sessionId}/scenes/current/story-complete")
     public SceneAdvanceResponse completeStoryScene(@CurrentParentId UUID parentId,
                                                    @PathVariable UUID sessionId) {
         return sessionService.completeStoryScene(parentId, sessionId);
     }
 
-    @PatchMapping("/api/v1/sessions/{sessionId}/stop")
+    @PostMapping("/api/sessions/{sessionId}/stop")
     public void stop(@CurrentParentId UUID parentId, @PathVariable UUID sessionId) {
         sessionService.stop(parentId, sessionId);
     }
