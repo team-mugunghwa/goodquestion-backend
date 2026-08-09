@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.global.config;
 
 import com.mugunghwa.goodquestion.global.security.JwtAuthFilter;
+import com.mugunghwa.goodquestion.global.security.RestAccessDeniedHandler;
+import com.mugunghwa.goodquestion.global.security.RestAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -32,6 +36,11 @@ public class SecurityConfig {
                         // 회원가입·로그인은 토큰 발급 이전 단계라 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
+                // 기본값은 401·403 모두 403 + 빈 본문이라 만료와 권한 없음을 구분할 수 없다.
+                // 리프레시 토큰이 없어 만료 복구가 재로그인뿐이므로 둘을 반드시 갈라야 한다.
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(authenticationEntryPoint)   // 미인증 → 401
+                        .accessDeniedHandler(accessDeniedHandler))            // 권한 없음 → 403
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
