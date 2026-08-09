@@ -4,12 +4,10 @@ import com.mugunghwa.goodquestion.global.security.CurrentParentId;
 import com.mugunghwa.goodquestion.learning.report.dto.ReportDetailResponse;
 import com.mugunghwa.goodquestion.learning.report.dto.ReportListResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,10 +17,9 @@ public class ReportController {
     private final ReportService reportService;
 
     @GetMapping("/api/children/{childId}/reports")
-    public Page<ReportListResponse> getReports(@CurrentParentId UUID parentId,
-                                               @PathVariable UUID childId,
-                                               @PageableDefault(size = 10) Pageable pageable) {
-        return reportService.getReports(parentId, childId, pageable);
+    public List<ReportListResponse> getReports(@CurrentParentId UUID parentId,
+                                               @PathVariable UUID childId) {
+        return reportService.getReports(parentId, childId);
     }
 
     @GetMapping("/api/sessions/{sessionId}/report")

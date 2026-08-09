@@ -5,12 +5,10 @@ import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,10 +26,9 @@ public class WordbookController {
     }
 
     @GetMapping
-    public Page<WordResponse> getWords(@CurrentParentId UUID parentId, @PathVariable UUID childId,
-                                       @RequestParam(defaultValue = "false") boolean favoriteOnly,
-                                       @PageableDefault(size = 20) Pageable pageable) {
-        return wordbookService.getWords(parentId, childId, favoriteOnly, pageable);
+    public List<WordResponse> getWords(@CurrentParentId UUID parentId, @PathVariable UUID childId,
+                                       @RequestParam(required = false) WordEntryType entryType) {
+        return wordbookService.getWords(parentId, childId, entryType);
     }
 
     @PatchMapping("/{wordId}/favorite")

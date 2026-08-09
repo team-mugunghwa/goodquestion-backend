@@ -1,8 +1,10 @@
 package com.mugunghwa.goodquestion.story.content.dto;
 
 import java.util.List;
-import java.util.UUID;
 
-public record StoryListResponse(UUID id, String title, String imageUrl,
-                                Short estimatedMinutes, List<String> topics) {
+/**
+ * 이야기 목록 응답.
+ * topics는 필터 칩을 그리기 위한 전체 주제 목록이라 topic 필터와 무관하게 항상 전체를 담는다.
+ */
+public record StoryListResponse(List<StoryCardResponse> stories, List<String> topics) {
 }
