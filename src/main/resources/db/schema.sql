@@ -16,9 +16,33 @@
 --   · post_activity_results.card_order_seed, items.status 추가
 -- 코드값은 서버 enum과의 일관성을 위해 대문자 스네이크케이스로 통일
 --
+-- ⚠ 이 파일은 "빈 DB"에만 실행한다.
+--   테이블이 이미 있는 DB에 실행하면 기존 테이블은 전부 already exists로 실패하고
+--   신규 테이블만 만들어져 반쯤 적용된 상태가 된다 — 겉보기엔 다 생성된 것처럼 보인다.
+--   아래 안전장치가 그 경우를 막는다.
+--
+--     빈 DB에 새로 만들기   psql -d <db> -f db/schema.sql
+--     v3 DB를 올리기        psql -d <db> -f db/migration-to-v4.sql
+--     내용 버리고 새로 만들기 psql -d <db> -c 'drop schema public cascade; create schema public;'
+--                            뒤에 schema.sql 실행
+--
 -- 주의: ddl-auto=validate이므로 컬럼을 바꾸면 엔티티도 함께 고쳐야 앱이 뜬다.
--- 기존 DB가 있으면 이 파일 대신 db/migration-to-v4.sql을 실행한다.
 -- ============================================================
+
+-- 전체를 한 트랜잭션으로 묶는다. 중간에 실패하면 아무것도 남기지 않는다 —
+-- 반쯤 적용된 스키마가 제일 위험하다(엔티티 검증은 통과하는데 컬럼이 없는 상태).
+begin;
+
+-- 안전장치: 이미 테이블이 있으면 여기서 멈춘다.
+do $$
+begin
+    if exists (select 1 from information_schema.tables
+               where table_schema = 'public' and table_type = 'BASE TABLE') then
+        raise exception 'schema.sql은 빈 DB 전용이다 — public 스키마에 이미 테이블이 있다.'
+            using hint = 'v3 DB라면 db/migration-to-v4.sql을 실행한다. '
+                         '내용을 버려도 된다면 drop schema public cascade; create schema public; 후 다시 실행한다.';
+    end if;
+end $$;
 
 create extension if not exists "pgcrypto";
 
@@ -555,3 +579,5 @@ create unique index idx_scene_audio_shared
 create unique index idx_scene_audio_per_child
     on scene_audio(scene_id, slot, child_id) where child_id is not null;
 create index idx_scene_audio_scene_id on scene_audio(scene_id);
+
+commit;
