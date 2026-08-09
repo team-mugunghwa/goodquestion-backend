@@ -2,9 +2,12 @@ package com.mugunghwa.goodquestion.story.session;
 
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
-import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
+import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
+import com.mugunghwa.goodquestion.story.content.dto.SceneContentResponse;
+import com.mugunghwa.goodquestion.story.session.dto.CharacterMessageResponse;
+import com.mugunghwa.goodquestion.story.session.dto.ProgressResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SceneResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.story.content.SceneService;
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,7 +38,7 @@ public class SessionService {
     private final MessageService messageService;
 
     @Transactional
-    public SessionResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
+    public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
         Child child = childService.getOwnedChild(parentId, childId);
         if (!consentService.hasActiveConsent(childId)) {
             throw new BusinessException(ErrorCode.CONSENT_REQUIRED);
@@ -53,27 +57,47 @@ public class SessionService {
                 .currentScene(firstScene)
                 .build());
 
-        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다.
+        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다(캐릭터-14).
         // STORY 장면은 내레이션이라 대화 기록에 남기지 않는다.
-        MessageResponse openingMessage = null;
         if (firstScene.isDialogue()) {
-            Message opening = messageService.append(
-                    session, firstScene, SpeakerType.CHARACTER,
+            messageService.append(session, firstScene, SpeakerType.CHARACTER,
                     firstScene.getCharacterOpening(), null, null);
-            openingMessage = MessageResponse.from(opening);
         }
 
-        return new SessionResponse(
+        return new SessionStartResponse(
                 session.getId(), session.getStatus(),
-                SceneResponse.from(firstScene),
-                session.getCurrentChildTurnCount(),
-                openingMessage);
+                SceneContentResponse.from(firstScene),
+                session.resolvePhase());
     }
 
     public SessionResponse getSession(UUID parentId, UUID sessionId) {
         StorySession session = getOwnedSession(parentId, sessionId);
-        // TODO: SessionResponse 매핑 (openingMessage = null)
-        throw new UnsupportedOperationException("TODO");
+        StoryScene scene = session.getCurrentScene();
+
+        SessionResponse.SceneRef sceneRef = (scene == null) ? null
+                : new SessionResponse.SceneRef(scene.getId(), scene.getSceneOrder(), scene.getSceneType());
+
+        return new SessionResponse(
+                session.getId(), session.getChild().getId(), session.getStory().getId(),
+                session.getStatus(), sceneRef, session.resolvePhase(),
+                toProgress(session, scene), session.isSceneGoalMet(), session.getLastActivityAt());
+    }
+
+    /** 부족 요소는 저장하지 않고 (장면 목표 요소 − 누적 요소)로 매번 계산한다(진행-04). */
+    public ProgressResponse toProgress(StorySession session, StoryScene scene) {
+        List<ThinkingElement> accumulated = session.getAccumulatedElements().stream()
+                .map(ThinkingElement::valueOf).toList();
+        List<ThinkingElement> required = (scene == null || scene.getRequiredElements() == null)
+                ? List.of()
+                : scene.getRequiredElements().stream().map(ThinkingElement::valueOf).toList();
+        List<ThinkingElement> missing = required.stream()
+                .filter(e -> !accumulated.contains(e)).toList();
+
+        return new ProgressResponse(
+                session.getLastResponseMode(), accumulated, missing,
+                session.getCurrentChildTurnCount(),
+                (scene == null || scene.getMaxTurns() == null) ? 0 : scene.getMaxTurns(),
+                session.getLastGuidanceTarget());
     }
 
     /**
@@ -96,21 +120,22 @@ public class SessionService {
         StoryScene nextScene = sceneService.getNextScene(currentScene).orElse(null);
         if (nextScene == null) {
             session.toPostActivity();
-            return new SceneAdvanceResponse(null, null, true);
+            return new SceneAdvanceResponse(session.resolvePhase(), null, null);
         }
 
         session.moveToScene(nextScene);
 
-        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다.
-        MessageResponse openingMessage = null;
+        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다(캐릭터-14).
+        CharacterMessageResponse openingMessage = null;
         if (nextScene.isDialogue()) {
             Message opening = messageService.append(
                     session, nextScene, SpeakerType.CHARACTER,
                     nextScene.getCharacterOpening(), null, null);
-            openingMessage = MessageResponse.from(opening);
+            openingMessage = new CharacterMessageResponse(opening.getId(), opening.getText(), null);
         }
 
-        return new SceneAdvanceResponse(SceneResponse.from(nextScene), openingMessage, false);
+        return new SceneAdvanceResponse(
+                session.resolvePhase(), SceneContentResponse.from(nextScene), openingMessage);
     }
 
     @Transactional

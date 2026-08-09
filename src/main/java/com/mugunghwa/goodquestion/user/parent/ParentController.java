@@ -1,7 +1,7 @@
 package com.mugunghwa.goodquestion.user.parent;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
-import com.mugunghwa.goodquestion.user.parent.dto.ParentCreateRequest;
+import com.mugunghwa.goodquestion.user.parent.dto.ParentUpdateRequest;
 import com.mugunghwa.goodquestion.user.parent.dto.ParentResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,8 @@ public class ParentController {
 
     @PatchMapping("/me")
     public ParentResponse updateMe(@CurrentParentId UUID parentId,
-                                   @Valid @RequestBody ParentCreateRequest request) {
-        return parentService.register(parentId, request);
+                                   @Valid @RequestBody ParentUpdateRequest request) {
+        return parentService.update(parentId, request);
     }
 
     @GetMapping("/me")

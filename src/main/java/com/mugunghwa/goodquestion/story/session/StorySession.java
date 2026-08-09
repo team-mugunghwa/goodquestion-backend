@@ -174,4 +174,17 @@ public class StorySession {
     public void touch() { this.lastActivityAt = OffsetDateTime.now(); }
 
     public boolean isInProgress() { return status == SessionStatus.IN_PROGRESS; }
+
+    /**
+     * 플레이 단계 파생 — 저장하지 않고 상태와 현재 장면 유형에서 계산한다.
+     * 프론트가 화면을 고르는 기준이라 서버가 단일 근거로 내려준다.
+     */
+    public PlayPhase resolvePhase() {
+        return switch (status) {
+            case COMPLETED, STOPPED -> PlayPhase.ENDED;
+            case POST_ACTIVITY -> PlayPhase.POST_ACTIVITY;
+            case IN_PROGRESS -> (currentScene != null && currentScene.isDialogue())
+                    ? PlayPhase.DIALOGUE : PlayPhase.STORY;
+        };
+    }
 }

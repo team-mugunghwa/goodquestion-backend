@@ -30,10 +30,15 @@ public class PostActivityService {
         throw new UnsupportedOperationException("TODO");
     }
 
+    /**
+     * 재구성 발화 제출 = 세션 완료 + 별가루 지급(활동-09~10, 보상-04).
+     * 지급 결과를 응답에 담아야 하므로 완료 이벤트는 같은 트랜잭션에서 동기로 처리한다.
+     */
     @Transactional
-    public void submitRetelling(UUID parentId, UUID sessionId, RetellingRequest request) {
-        // TODO: retelling_text 저장 → completed_at 기록 → session.complete()
-        //  → 보호자 리포트 비동기 생성 트리거 (@Async 또는 이벤트)
-        throw new UnsupportedOperationException("TODO");
+    public RetellingResponse submitRetelling(UUID parentId, UUID sessionId, RetellingRequest request) {
+        // TODO: 카드 정답 전이면 409 RETELLING_BEFORE_ORDER
+        //  → retelling_text 저장 → completed_at 기록 → session.complete()
+        //  → 별가루 지급(멱등) → 이번 완주로 해금된 아이템 계산 → 리포트 생성 트리거
+        throw new UnsupportedOperationException("미구현: 재구성 발화 제출");
     }
 }
