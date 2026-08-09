@@ -86,11 +86,34 @@ public class SessionService {
     @Transactional
     public SceneAdvanceResponse completeStoryScene(UUID parentId, UUID sessionId) {
         StorySession session = getOwnedSession(parentId, sessionId);
-        // TODO: ① IN_PROGRESS + 현재 장면이 STORY인지 검증 (DIALOGUE면 SCENE_NOT_STORY 에러)
-        // TODO: ② 다음 장면 조회(SceneService.getNextScene) → session.moveToScene
-        // TODO: ③ 다음 장면이 DIALOGUE면 character_opening을 messages에 저장해 응답에 포함
-        // TODO: ④ 다음 장면이 없으면(마지막이 STORY인 콘텐츠) session.toPostActivity()
-        throw new UnsupportedOperationException("TODO");
+
+        if (!session.isInProgress()) {
+            throw new BusinessException(ErrorCode.SESSION_NOT_IN_PROGRESS);
+        }
+        StoryScene currentScene = session.getCurrentScene();
+        if (currentScene.isDialogue()) {
+            throw new BusinessException(ErrorCode.SCENE_NOT_STORY);
+        }
+
+        // 마지막 장면이 STORY로 끝나는 경우 후속 활동으로 전환한다.
+        StoryScene nextScene = sceneService.getNextScene(currentScene).orElse(null);
+        if (nextScene == null) {
+            session.toPostActivity();
+            return new SceneAdvanceResponse(null, null, true);
+        }
+
+        session.moveToScene(nextScene);
+
+        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다.
+        MessageResponse openingMessage = null;
+        if (nextScene.isDialogue()) {
+            Message opening = messageService.append(
+                    session, nextScene, SpeakerType.CHARACTER,
+                    nextScene.getCharacterOpening(), null, null);
+            openingMessage = MessageResponse.from(opening);
+        }
+
+        return new SceneAdvanceResponse(SceneResponse.from(nextScene), openingMessage, false);
     }
 
     @Transactional
