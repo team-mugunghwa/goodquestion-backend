@@ -10,6 +10,7 @@ import com.mugunghwa.goodquestion.user.consent.ConsentService;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +25,18 @@ public class ChildService {
     private final ChildRepository childRepository;
     private final ParentRepository parentRepository;
     private final ConsentService consentService;
+    private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 아이 생성. 행성·지갑은 learning이 ChildCreatedEvent를 받아 같은 트랜잭션에서 만든다 —
+     * user가 learning을 의존할 수 없어 방향을 뒤집었다(계정-14).
+     */
     @Transactional
     public ChildResponse create(UUID parentId, ChildCreateRequest request) {
         Parent parent = parentRepository.getReferenceById(parentId);
         Child child = childRepository.save(Child.builder()
                 .parent(parent).name(request.name()).birthYear(request.birthYear()).build());
+        eventPublisher.publishEvent(new ChildCreatedEvent(child.getId()));
         return ChildResponse.of(child, ConsentStatus.NONE);
     }
 
