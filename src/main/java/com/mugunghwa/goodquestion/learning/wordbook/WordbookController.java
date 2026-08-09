@@ -40,6 +40,11 @@ public class WordbookController {
         return wordbookService.toggleFavorite(parentId, childId, wordId);
     }
 
+    /**
+     * @deprecated 명세 경로는 {@code DELETE /api/words/{wordId}}다({@link WordDeleteController}).
+     * 프론트 전환이 끝나면 제거한다.
+     */
+    @Deprecated
     @DeleteMapping("/{wordId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@CurrentParentId UUID parentId, @PathVariable UUID childId,
