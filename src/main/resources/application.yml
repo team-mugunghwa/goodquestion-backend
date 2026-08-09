@@ -13,9 +13,9 @@ spring:
     properties:
       hibernate.default_batch_fetch_size: 100
 
-supabase:
-  jwt-secret: ${SUPABASE_JWT_SECRET}   # Supabase 프로젝트의 JWT Secret
-#  jwt-secret: Rf2uWS4bnT9ysIqC2h5yLP9mB/wXosnoTD1ckxwQ2dw=
+jwt:
+  secret: ${JWT_SECRET}                      # 자체 발급 Access 토큰 서명 키 (HS256, 32바이트 이상 권장)
+  expiration-ms: ${JWT_EXPIRATION_MS:604800000}   # 기본 7일 — Access 토큰 단일 전략(MVP), Refresh 없음
 
 external:
   stt:

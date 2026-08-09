@@ -14,11 +14,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+/** 자체 발급 Access 토큰(JWT) 검증 필터. SupabaseJwtFilter를 대체한다. */
 @Component
 @RequiredArgsConstructor
-public class SupabaseJwtFilter extends OncePerRequestFilter {
+public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final SupabaseJwtVerifier verifier;
+    private final JwtProvider jwtProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -26,7 +27,7 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             try {
-                UUID parentId = verifier.verifyAndGetParentId(header.substring(7));
+                UUID parentId = jwtProvider.verifyAndGetParentId(header.substring(7));
                 var auth = new UsernamePasswordAuthenticationToken(parentId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {

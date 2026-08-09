@@ -10,13 +10,22 @@ create extension if not exists "pgcrypto";
 
 -- ------------------------------------------------------------
 -- 1. parents — 보호자 계정
---    id는 Supabase auth.users.id와 동일하게 사용 (자체 생성 없음)
+--    Supabase Auth를 사용하지 않고 서버가 직접 발급·관리한다.
+--    provider=LOCAL은 email+password_hash로, provider=KAKAO는 provider_id로 식별한다.
 -- ------------------------------------------------------------
 create table parents (
-    id          uuid primary key,
-    name        varchar(50)  not null,
-    created_at  timestamptz  not null default now()
+    id             uuid primary key default gen_random_uuid(),
+    email          varchar(255),
+    password_hash  varchar(100),
+    provider       varchar(20)  not null
+        check (provider in ('LOCAL', 'KAKAO')),
+    provider_id    varchar(100),
+    name           varchar(50)  not null,
+    created_at     timestamptz  not null default now()
 );
+
+create unique index idx_parents_email on parents(email) where email is not null;
+create unique index idx_parents_provider_id on parents(provider, provider_id) where provider_id is not null;
 
 -- ------------------------------------------------------------
 -- 2. children — 아이 정보
