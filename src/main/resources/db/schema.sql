@@ -1,17 +1,23 @@
 -- ============================================================
--- 굿퀘스천 DDL v3 (PostgreSQL) — 21개 테이블
--- v3 변경
---   · refresh_tokens 신설 (리프레시 회전·로그아웃 무효화)
---   · mission_results 신설 (미션 결과)
---   · 보상(섬 꾸미기) 6종 신설:
---     items / child_items / stardust_wallets / stardust_transactions / islands / island_items
---   · stories에 child_role·intro 추가 (이야기 상세)
---   · wordbook.is_favorite -> entry_type, meaning을 nullable로 (미입력 시 LLM 생성)
---   · story_sessions에 guided_used_in_scene 추가 (장면 보너스 판정)
+-- 굿퀘스천 DDL v4 (PostgreSQL) — 24개 테이블
+-- v4 변경 (팀원공유 db/001~004 반영 + 행성 명칭 통일)
+--   · islands -> planets, island_items -> planet_items 로 개명 (도메인 용어를 "행성"으로 통일)
+--   · 배치 좌표를 프론트(planet/)와 같은 축좌표로 통일: grid_x/grid_y -> placed_q/placed_r
+--     축좌표는 원점 기준이라 음수가 유효하므로 하한 check를 두지 않는다.
+--     판 크기·모양은 클라이언트 카탈로그가 단일 소스라 planets.grid_width/height를 제거했다.
+--   · scene_audio 신설 (TTS 사전 생성 음성 — 팀원공유 001)
+--   · characters 신설 + story_scenes 확장 (캐릭터 레지스트리 — 팀원공유 004)
+--   · child_story_play_counts 신설 (반복 완주 상한 — 팀원공유 003)
+--   · messages에 STT 신뢰도 3종, utterance_analyses에 model_id,
+--     story_sessions에 safety_* 3종 추가 (브리프 요구 — 팀원공유 002)
+--   · story_sessions.version 추가 (턴 처리 낙관적 락)
+--   · stardust_transactions.scene_id 추가 + 지급 멱등 인덱스를 세션/장면으로 분리
+--     (기존 단일 인덱스는 장면 보너스 2건째를 유니크 위반으로 막았다)
+--   · post_activity_results.card_order_seed, items.status 추가
 -- 코드값은 서버 enum과의 일관성을 위해 대문자 스네이크케이스로 통일
 --
 -- 주의: ddl-auto=validate이므로 컬럼을 바꾸면 엔티티도 함께 고쳐야 앱이 뜬다.
--- 기존 DB가 있으면 이 파일 대신 db/migration-v2-to-v3.sql을 실행한다.
+-- 기존 DB가 있으면 이 파일 대신 db/migration-to-v4.sql을 실행한다.
 -- ============================================================
 
 create extension if not exists "pgcrypto";
@@ -109,6 +115,33 @@ create table story_topics (
 create index idx_story_topics_topic_id on story_topics(topic_id);
 
 -- ------------------------------------------------------------
+-- 4-3. characters — 캐릭터 레지스트리
+--    story_scenes.character_name varchar 하나로는 성격·말투·보이스·표정키를 담을 수 없다.
+--    특히 TTS 화자 고정이 여기 걸린다 — 장면마다 페르소나가 따로 있으면 같은 캐릭터가
+--    장면별로 다른 목소리로 합성되는 것을 막을 방법이 없다.
+-- ------------------------------------------------------------
+create table characters (
+    id              uuid        primary key default gen_random_uuid(),
+    story_id        uuid        not null references stories(id) on delete cascade,
+    -- 표정 이미지 파일명의 키: {character_key}_{expression}.png. 바꾸면 이미지 조회가 깨진다.
+    character_key   varchar(64) not null,
+    name            varchar(50) not null,     -- 화면 표시 이름
+    personality     text        not null,     -- 성격·말투 (캐릭터 LLM 페르소나)
+    -- 유도를 "어떻게 드러낼지". GUIDED 모드 대사 생성 입력
+    guidance_style  text,
+    tts_voice       varchar(64),
+    -- Gemini 계열 연기 지시문. 보이스 이름이 성별을 보장하지 않으므로 성별·연령을 반드시 포함한다
+    tts_style       text,
+    tts_gender      varchar(10)
+        check (tts_gender is null or tts_gender in ('MALE', 'FEMALE')),
+    -- 이 캐릭터가 실제로 가진 표정. 없는 표정을 요구하면 fallback으로 내린다
+    expression_keys text[]      not null default '{}',
+    created_at      timestamptz not null default now(),
+
+    unique (story_id, character_key)
+);
+
+-- ------------------------------------------------------------
 -- 5. story_scenes — 장면 (정적 콘텐츠)
 --    image_url: 장면 진행 화면의 배경/장면 이미지
 -- ------------------------------------------------------------
@@ -122,7 +155,13 @@ create table story_scenes (
     scene_description  text        not null,
     conflict           text,
     image_url          text,
+    -- 캐릭터 참조. character_name은 화면 표시용으로 남기고 페르소나·보이스·표정은 이 FK로 찾는다
+    character_id       uuid        references characters(id) on delete set null,
     character_name     varchar(50),
+    -- 같은 캐릭터라도 장면마다 입장이 다르다 (예: 시아버지가 대화2에서는 내치려 하고 전개4에서는 후회한다)
+    scene_stance       text,
+    -- STT 디코딩 힌트. 아동 발화는 고유명사 오인식이 가장 많다. 예: {자라, 별주부, 용왕}
+    proper_nouns       text[]      not null default '{}',
     -- 캐릭터 성격·상태 설명. 캐릭터 LLM 입력 — 장면별로 두어 이야기 진행에 따른 변화 반영
     character_persona  text,
     character_opening  text,
@@ -152,6 +191,7 @@ create table story_scenes (
 );
 
 create index idx_story_scenes_story_id on story_scenes(story_id);
+create index idx_story_scenes_character_id on story_scenes(character_id);
 
 -- ------------------------------------------------------------
 -- 6. story_sessions — 이야기 진행 기록 (런타임 상태)
@@ -178,8 +218,17 @@ create table story_sessions (
     -- 현재 장면의 미션 상태 (장면 이동 시 초기화). 종료 조건·재노출 방지에 사용
     mission_exposed                    boolean     not null default false,
     mission_completed                  boolean     not null default false,
+    -- 위험 신호(자해·가정 폭력·학대 정황)로 캐릭터 대사 생성을 중단한 적이 있는 세션.
+    -- 감지하고도 남길 자리가 없으면 감지한 의미가 사라진다.
+    -- safety_categories에는 범주만 남기고 아이 발화 원문은 남기지 않는다.
+    safety_flagged                     boolean     not null default false,
+    safety_categories                  text[]      not null default '{}',
+    safety_flagged_at                  timestamptz,
     status                             varchar(20) not null default 'IN_PROGRESS'
         check (status in ('IN_PROGRESS', 'POST_ACTIVITY', 'COMPLETED', 'STOPPED')),
+    -- 낙관적 락(@Version). 턴 처리는 STT·분석·대사 생성으로 수 초가 걸려
+    -- 연타가 들어오면 턴 카운터·누적 요소가 덮어써진다 — 덮어쓰기를 409로 바꾼다.
+    version                            bigint      not null default 0,
     started_at                         timestamptz not null default now(),
     completed_at                       timestamptz,
     last_activity_at                   timestamptz not null default now()
@@ -189,6 +238,10 @@ create table story_sessions (
 create index idx_story_sessions_child_recent
     on story_sessions(child_id, last_activity_at desc);
 create index idx_story_sessions_story_id on story_sessions(story_id);
+-- 진행 중 세션 조회 · 반복 완주 횟수 확인
+create index idx_story_sessions_child_status on story_sessions(child_id, status);
+-- 확인이 필요한 세션만 빠르게 뽑는다
+create index idx_story_sessions_safety on story_sessions(safety_flagged) where safety_flagged;
 
 -- ------------------------------------------------------------
 -- 7. messages — 대화 기록
@@ -204,8 +257,14 @@ create table messages (
     turn_order         integer     not null,
     text               text        not null,
     stt_raw_text       text,   -- 아이 발화에만 저장, 원본 음성은 저장하지 않음
-    character_emotion  varchar(20)
-        check (character_emotion in ('NEUTRAL', 'HAPPY', 'SAD', 'WORRIED', 'SURPRISED', 'RELIEVED')),
+    -- STT 신뢰도(0~1). 기준값 이하면 낮은 신뢰 표시를 남기고 대표 발화 후보에서 제외한다.
+    -- 기준값 자체는 아직 미정이라 판정은 애플리케이션이 한다.
+    stt_confidence     numeric(4,3)
+        check (stt_confidence is null or (stt_confidence >= 0 and stt_confidence <= 1)),
+    stt_low_confidence boolean     not null default false,
+    stt_retry_count    smallint    not null default 0,   -- 아이가 다시 말한 횟수
+    -- 캐릭터 표정 키. 값 목록은 characters.expression_keys로 캐릭터마다 다르므로 check를 두지 않는다
+    character_emotion  varchar(20),
     created_at         timestamptz not null default now(),
 
     unique (session_id, turn_order)
@@ -227,6 +286,11 @@ create table utterance_analyses (
         check (utterance_validity in ('VALID', 'SHORT', 'UNCLEAR', 'OFF_TOPIC', 'PLAYFUL')),
     -- analysis_versions 테이블 대신 MVP에서는 버전 문자열만 기록 (DB 문서 방침 유지)
     analysis_version    varchar(30) not null default 'mvp_v1',
+    -- 분석에 사용한 LLM 식별자. analysis_version만으로는 같은 프롬프트를 모델만 바꿔
+    -- 돌린 경우를 구분할 수 없다. 소급이 안 되는 값이라 처음부터 남긴다.
+    model_id            varchar(64),
+    -- 후처리에서 폐기된 근거. 분석 LLM이 없는 요소를 만들어내는 빈도 추적용(검수·프롬프트 개선)
+    dropped_evidence    jsonb       not null default '[]',
     created_at          timestamptz not null default now()
 );
 
@@ -236,6 +300,8 @@ create table utterance_analyses (
 create table post_activity_results (
     id                uuid primary key default gen_random_uuid(),
     session_id        uuid     not null unique references story_sessions(id) on delete cascade,
+    -- 카드 셔플 고정용 시드. 없으면 재진입·재시도마다 순서가 바뀌어 채점 재현이 안 된다
+    card_order_seed   varchar(64) not null,
     submitted_order   text[],
     is_order_correct  boolean,
     attempt_count     smallint not null default 0,
@@ -333,6 +399,9 @@ create table items (
     model_url              text,
     thumbnail_url          text,
     display_order          smallint     not null default 0,
+    -- 운영 중 내리기. child_items가 FK로 물고 있어 행 삭제는 불가능하므로 상태로 감춘다
+    status                 varchar(10)  not null default 'ACTIVE'
+        check (status in ('ACTIVE', 'HIDDEN')),
     created_at             timestamptz  not null default now(),
 
     -- 해금 조건별 필수값을 DB가 보장한다
@@ -363,20 +432,41 @@ create table stardust_transactions (
     wallet_id     uuid        not null references stardust_wallets(id) on delete cascade,
     amount        integer     not null check (amount <> 0),
     reason        varchar(30) not null
-        check (reason in ('STORY_COMPLETED', 'SCENE_BONUS', 'ITEM_PURCHASE')),
+        check (reason in ('STORY_COMPLETED', 'SCENE_BONUS', 'ITEM_PURCHASE', 'ADMIN_ADJUST')),
     -- 지급 근거 세션 (멱등 판정용). 구매는 null
     session_id    uuid        references story_sessions(id) on delete set null,
+    -- 장면 보너스는 장면마다 최대 1회라 장면까지 구분해야 한다. 완주 보상·구매는 null
+    scene_id      uuid        references story_scenes(id) on delete set null,
     -- 사용(구매) 대상 아이템. 지급은 null
     item_id       uuid        references items(id),
     acknowledged  boolean     not null default false,
     created_at    timestamptz not null default now()
 );
 
--- 지급 멱등: 같은 세션·같은 사유로는 1건만 (데이터-06)
+-- 지급 멱등 (데이터-06). 세션 단위와 장면 단위를 나눠 건다 —
+-- (session_id, reason) 하나로 묶으면 장면 보너스 2건째가 유니크 위반으로 막힌다.
 create unique index idx_stardust_tx_session_reason
     on stardust_transactions(session_id, reason)
-    where session_id is not null;
+    where session_id is not null and scene_id is null;
+create unique index idx_stardust_tx_scene_reason
+    on stardust_transactions(session_id, scene_id, reason)
+    where session_id is not null and scene_id is not null;
 create index idx_stardust_tx_wallet on stardust_transactions(wallet_id, created_at desc);
+
+-- ------------------------------------------------------------
+-- 16-1. child_story_play_counts — 이야기별 완주 횟수
+--     "2회차는 완주 보상 절반, 3회차부터 지급 없음"의 판정 근거.
+--     COMPLETED 세션을 count하면 조회와 지급 사이가 원자적이지 않아 중복 지급이 난다.
+--     upsert 한 문장으로 증가시키고 그 반환값으로 지급액을 정한다.
+-- ------------------------------------------------------------
+create table child_story_play_counts (
+    child_id    uuid        not null references children(id) on delete cascade,
+    story_id    uuid        not null references stories(id)  on delete cascade,
+    play_count  smallint    not null default 0 check (play_count >= 0),
+    updated_at  timestamptz not null default now(),
+
+    primary key (child_id, story_id)
+);
 
 -- ------------------------------------------------------------
 -- 17. child_items — 보유 아이템 (보상-14, 보상-20)
@@ -393,33 +483,75 @@ create table child_items (
 create index idx_child_items_child_id on child_items(child_id);
 
 -- ------------------------------------------------------------
--- 18. islands — 아이의 섬 (아이당 1개, 보상-15~16, 보상-22, 보상-26)
+-- 18. planets — 아이의 행성 (아이당 1개, 보상-15~16, 보상-22, 보상-26)
+--     판 크기·모양은 클라이언트 카탈로그가 단일 소스라 서버에 두지 않는다.
 -- ------------------------------------------------------------
-create table islands (
+create table planets (
     id                  uuid        primary key default gen_random_uuid(),
     child_id            uuid        not null unique references children(id) on delete cascade,
     name                varchar(30) not null default '내 행성',
-    -- 격자 크기는 확장 대비로 컬럼에 둔다 (MVP 8x8)
-    grid_width          smallint    not null default 8 check (grid_width > 0),
-    grid_height         smallint    not null default 8 check (grid_height > 0),
     tutorial_completed  boolean     not null default false,
     created_at          timestamptz not null default now()
 );
 
 -- ------------------------------------------------------------
--- 19. island_items — 격자 배치 (보상-16~17)
+-- 19. planet_items — 격자 배치 (보상-16~17)
+--     좌표는 프론트(planet/)와 같은 축좌표(q, r). 원점 기준이라 음수가 유효해
+--     하한 check를 두지 않는다.
 --     겹침 불가와 "보유 아이템 하나는 한 곳에만"을 DB 유니크로 보장한다 (보상-02).
 --     치우기는 이 행을 삭제하는 것이고 child_items는 남는다 = 보관함 복귀.
+--
+--     한계: 발판이 2x2인 아이템은 앵커 칸만 저장하므로 나머지 칸의 겹침은 이 유니크가
+--     막지 못한다. 카탈로그 발판 정의로 애플리케이션이 점유 칸을 계산해 검증해야 한다.
 -- ------------------------------------------------------------
-create table island_items (
+create table planet_items (
     id             uuid        primary key default gen_random_uuid(),
-    island_id      uuid        not null references islands(id) on delete cascade,
+    planet_id      uuid        not null references planets(id) on delete cascade,
     child_item_id  uuid        not null unique references child_items(id) on delete cascade,
-    grid_x         smallint    not null check (grid_x >= 0),
-    grid_y         smallint    not null check (grid_y >= 0),
+    placed_q       smallint    not null,
+    placed_r       smallint    not null,
     placed_at      timestamptz not null default now(),
 
-    unique (island_id, grid_x, grid_y)   -- 한 칸에 하나 (409 CELL_OCCUPIED)
+    unique (planet_id, placed_q, placed_r)   -- 한 칸에 하나 (409 CELL_OCCUPIED)
 );
 
-create index idx_island_items_island_id on island_items(island_id);
+create index idx_planet_items_planet_id on planet_items(planet_id);
+
+-- ------------------------------------------------------------
+-- 20. scene_audio — TTS 사전 생성 음성
+--     내레이션과 장면 첫·마지막 대사만 담는다. 중간 반응 대사는 실시간 합성이라 여기 없다.
+--     오디오 바이너리는 오브젝트 스토리지에 두고 경로와 메타데이터만 남긴다.
+--
+--     주의: messages·child_consents의 "원본 음성 미저장"은 아이가 말한 녹음을 남기지
+--     않는다는 개인정보 원칙이고, TTS 산출물 저장과는 다른 문제다.
+-- ------------------------------------------------------------
+create table scene_audio (
+    id               uuid        primary key default gen_random_uuid(),
+    scene_id         uuid        not null references story_scenes(id) on delete cascade,
+    -- NARRATION = scene_description 낭독
+    slot             varchar(20) not null
+        check (slot in ('NARRATION', 'OPENING', 'CLOSING')),
+    -- 아이 이름이 들어가는 대사("ㅇㅇ아, ...")만 아이별로 렌더한다. null이면 공용 음성
+    child_id         uuid        references children(id) on delete cascade,
+    storage_path     text        not null,
+    -- 렌더 원본 텍스트의 SHA-256. 없으면 대사를 고쳤을 때 화면엔 새 문장,
+    -- 스피커엔 옛 문장인 상태가 되고 아무도 눈치채지 못한다. 재생 전에 대조해 잡는다.
+    text_hash        char(64)    not null,
+    -- 보이스를 바꿔 재렌더할 때 어떤 게 옛 엔진 산출물인지 모르면 전수 재생성밖에 없다
+    engine           varchar(64) not null,
+    voice            varchar(64) not null,
+    style_prompt     text,                       -- Gemini 계열 연기 지시문
+    speaking_rate    numeric(4,2),               -- Cloud TTS 계열 속도
+    duration_ms      integer     not null check (duration_ms > 0),
+    -- 문장별 실측 시작·끝(초). 자막·화면 전환을 글자수 비례 추정이 아니라 이 값으로 붙인다.
+    --   [{"index":0,"text":"...","start":0.0,"end":4.68}, ...]
+    sentence_timings jsonb       not null default '[]',
+    created_at       timestamptz not null default now()
+);
+
+-- 장면·슬롯당 최신 음성 하나. null은 유니크에서 중복 취급이라 부분 인덱스로 나눠 건다
+create unique index idx_scene_audio_shared
+    on scene_audio(scene_id, slot) where child_id is null;
+create unique index idx_scene_audio_per_child
+    on scene_audio(scene_id, slot, child_id) where child_id is not null;
+create index idx_scene_audio_scene_id on scene_audio(scene_id);

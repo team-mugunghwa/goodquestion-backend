@@ -12,6 +12,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,18 +53,33 @@ public class UtteranceAnalysis {
     @Column(name = "analysis_version", nullable = false, length = 30)
     private String analysisVersion;
 
+    /**
+     * 분석에 사용한 LLM 식별자. analysisVersion만으로는 같은 프롬프트를 모델만 바꿔 돌린
+     * 경우를 구분할 수 없다. 소급이 안 되는 값이라 처음부터 남긴다.
+     */
+    @Column(name = "model_id", length = 64)
+    private String modelId;
+
+    /** 후처리에서 폐기된 근거 — 분석 LLM이 없는 요소를 만들어내는 빈도 추적용 */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dropped_evidence", nullable = false, columnDefinition = "jsonb")
+    private List<DetectedElement> droppedEvidence = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
     @Builder
     public UtteranceAnalysis(Message message, ChildIntent childIntent, String mainPoint,
                              List<DetectedElement> detectedElements,
-                             UtteranceValidity utteranceValidity, String analysisVersion) {
+                             UtteranceValidity utteranceValidity, String analysisVersion,
+                             String modelId, List<DetectedElement> droppedEvidence) {
         this.message = message;
         this.childIntent = childIntent;
         this.mainPoint = mainPoint;
         this.detectedElements = detectedElements;
         this.utteranceValidity = utteranceValidity;
         this.analysisVersion = analysisVersion != null ? analysisVersion : "mvp_v1";
+        this.modelId = modelId;
+        this.droppedEvidence = droppedEvidence != null ? droppedEvidence : new ArrayList<>();
     }
 }

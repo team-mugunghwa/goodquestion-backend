@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,8 +53,28 @@ public class StoryScene {
     @Column(name = "image_url", columnDefinition = "text")
     private String imageUrl;
 
+    /**
+     * 캐릭터 참조. characterName은 화면 표시용으로 남기고
+     * 페르소나·보이스·표정은 이 참조로 찾는다.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "character_id")
+    private StoryCharacter character;
+
     @Column(name = "character_name", length = 50)
     private String characterName;
+
+    /**
+     * 장면별 입장 — 같은 캐릭터라도 장면마다 입장이 다르다
+     * (시아버지가 대화2에서는 내치려 하고 전개4에서는 후회한다).
+     */
+    @Column(name = "scene_stance", columnDefinition = "text")
+    private String sceneStance;
+
+    /** STT 디코딩 힌트. 아동 발화는 고유명사 오인식이 가장 많다 */
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "proper_nouns", nullable = false, columnDefinition = "text[]")
+    private List<String> properNouns = new ArrayList<>();
 
     /** 캐릭터 성격·상태 설명 — 캐릭터 LLM 입력. 장면별로 두어 이야기 진행에 따른 변화 반영 */
     @Column(name = "character_persona", columnDefinition = "text")
@@ -95,8 +116,10 @@ public class StoryScene {
     private Short maxTurns;
 
     @Builder
-    public StoryScene(Story story, short sceneOrder, SceneType sceneType, String sceneDescription,
-                      String conflict, String imageUrl, String characterName, String characterPersona,
+    public StoryScene(Story story, short sceneOrder, SceneType sceneType,
+                      String sceneDescription, String conflict, String imageUrl,
+                      StoryCharacter character, String characterName, String sceneStance,
+                      List<String> properNouns, String characterPersona,
                       String characterOpening, String characterClosing, String sceneGoal,
                       List<String> requiredElements, Map<String, String> elementCriteria,
                       Map<String, String> remainingWorries, Map<String, Object> missionConfig,
@@ -107,7 +130,10 @@ public class StoryScene {
         this.sceneDescription = sceneDescription;
         this.conflict = conflict;
         this.imageUrl = imageUrl;
+        this.character = character;
         this.characterName = characterName;
+        this.sceneStance = sceneStance;
+        this.properNouns = properNouns != null ? properNouns : new ArrayList<>();
         this.characterPersona = characterPersona;
         this.characterOpening = characterOpening;
         this.characterClosing = characterClosing;

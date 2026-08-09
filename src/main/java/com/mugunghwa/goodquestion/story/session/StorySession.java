@@ -91,9 +91,33 @@ public class StorySession {
     @Column(name = "mission_completed", nullable = false)
     private boolean missionCompleted;
 
+    /**
+     * 위험 신호(자해·가정 폭력·학대 정황)로 캐릭터 대사 생성을 중단한 적이 있는 세션.
+     * 감지하고도 남길 자리가 없으면 감지한 의미가 사라진다.
+     * safetyCategories에는 범주만 남기고 아이 발화 원문은 남기지 않는다.
+     */
+    @Column(name = "safety_flagged", nullable = false)
+    private boolean safetyFlagged;
+
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "safety_categories", nullable = false, columnDefinition = "text[]")
+    private List<String> safetyCategories = new ArrayList<>();
+
+    @Column(name = "safety_flagged_at")
+    private OffsetDateTime safetyFlaggedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SessionStatus status;
+
+    /**
+     * 낙관적 락. 한 턴 처리는 STT·분석·대사 생성으로 수 초가 걸려, 아이가 연타하면
+     * 턴 카운터와 누적 요소가 그대로 덮어써진다 — max_turns 종료 판정까지 어긋난다.
+     * 덮어쓰기 대신 충돌로 드러내 409로 변환한다.
+     */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(name = "started_at", nullable = false)
     private OffsetDateTime startedAt;
@@ -170,6 +194,14 @@ public class StorySession {
     }
 
     public void stop() { this.status = SessionStatus.STOPPED; touch(); }
+
+    /** 위험 신호 감지 — 대사 생성을 중단하고 확인 필요 표시를 남긴다. */
+    public void flagSafety(List<String> categories) {
+        this.safetyFlagged = true;
+        this.safetyCategories = categories != null ? categories : new ArrayList<>();
+        this.safetyFlaggedAt = OffsetDateTime.now();
+        touch();
+    }
 
     public void touch() { this.lastActivityAt = OffsetDateTime.now(); }
 

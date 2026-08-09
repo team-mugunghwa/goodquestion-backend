@@ -28,6 +28,13 @@ public class PostActivityResult {
     @JoinColumn(name = "session_id", nullable = false, unique = true)
     private StorySession session;
 
+    /**
+     * 카드 셔플 고정용 시드. 없으면 재진입·재시도마다 순서가 바뀌어
+     * submittedOrder 채점을 재현할 수 없다.
+     */
+    @Column(name = "card_order_seed", nullable = false, length = 64)
+    private String cardOrderSeed;
+
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "submitted_order", columnDefinition = "text[]")
     private List<String> submittedOrder;
@@ -45,8 +52,9 @@ public class PostActivityResult {
     private OffsetDateTime completedAt;
 
     @Builder
-    public PostActivityResult(StorySession session) {
+    public PostActivityResult(StorySession session, String cardOrderSeed) {
         this.session = session;
+        this.cardOrderSeed = cardOrderSeed != null ? cardOrderSeed : UUID.randomUUID().toString();
         this.attemptCount = 0;
     }
 
