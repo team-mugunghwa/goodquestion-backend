@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/children/{childId}/wordbook")
+@RequestMapping("/api/children/{childId}/words")
 @RequiredArgsConstructor
 public class WordbookController {
 

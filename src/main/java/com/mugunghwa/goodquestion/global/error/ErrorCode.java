@@ -20,6 +20,21 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     KAKAO_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "카카오 인증에 실패했습니다."),
+
+    // ---- 보상(섬 꾸미기) — 엔티티 구현 후 사용 ----
+    CELL_OCCUPIED(HttpStatus.CONFLICT, "이미 다른 아이템이 놓인 칸입니다."),
+    ITEM_ALREADY_PLACED(HttpStatus.CONFLICT, "이미 섬에 놓인 아이템입니다."),
+    ITEM_LOCKED(HttpStatus.CONFLICT, "아직 열리지 않은 아이템입니다."),
+    STARDUST_INSUFFICIENT(HttpStatus.CONFLICT, "별가루가 부족합니다."),
+    GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),
+
+    // ---- 진행 단계 충돌 ----
+    MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
+    MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
+    MISSION_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 미션입니다."),
+    RETELLING_BEFORE_ORDER(HttpStatus.CONFLICT, "카드 순서를 맞춘 뒤에 이야기를 다시 들려줄 수 있습니다."),
+
+    NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "아직 구현되지 않은 기능입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

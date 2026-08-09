@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/stories/{storyId}/scenes")
+@RequestMapping("/api/stories/{storyId}/scenes")
 @RequiredArgsConstructor
 public class SceneController {
 

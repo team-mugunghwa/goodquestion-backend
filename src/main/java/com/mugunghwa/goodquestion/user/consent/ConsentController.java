@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/children/{childId}/consents")
+@RequestMapping("/api/children/{childId}/consents")
 @RequiredArgsConstructor
 public class ConsentController {
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/children/{childId}/home")
+@RequestMapping("/api/children/{childId}/home")
 @RequiredArgsConstructor
 public class HomeController {
 

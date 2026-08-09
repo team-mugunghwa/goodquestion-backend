@@ -22,6 +22,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse("INVALID_REQUEST", message));
     }
 
+    /**
+     * 미구현 스텁. 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 호출되면 501로 명확히 알린다 —
+     * 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다.
+     */
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ErrorResponse> handleNotImplemented(UnsupportedOperationException e) {
+        String message = e.getMessage() != null ? e.getMessage() : ErrorCode.NOT_IMPLEMENTED.getDefaultMessage();
+        return ResponseEntity.status(ErrorCode.NOT_IMPLEMENTED.getStatus())
+                .body(ErrorResponse.of(ErrorCode.NOT_IMPLEMENTED, message));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e) {
         // TODO: 로깅
