@@ -5,14 +5,16 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.consent.dto.ConsentCreateRequest;
 import com.mugunghwa.goodquestion.user.consent.dto.ConsentResponse;
+import com.mugunghwa.goodquestion.user.consent.dto.ConsentStatusResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
- * 아동 개인정보 처리 동의. ChildService가 이 서비스를 의존하므로(hasActiveConsent),
+ * 아동 개인정보 처리 동의. ChildService가 이 서비스를 의존하므로(getStatus),
  * 순환 의존을 피하기 위해 소유권 검증(ChildService.getOwnedChild)은 컨트롤러에서 선행하고
  * 검증된 Child를 그대로 전달받는다.
  */
@@ -33,13 +35,31 @@ public class ConsentService {
         return ConsentResponse.from(consent);
     }
 
-    @Transactional
-    public ConsentResponse withdraw(UUID childId, UUID consentId) {
-        ChildConsent consent = consentRepository.findById(consentId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "동의 내역을 찾을 수 없습니다."));
-        if (!consent.getChild().getId().equals(childId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+    /** 현재 유효 동의 + 전체 이력(계정-10). */
+    public ConsentStatusResponse getStatusDetail(UUID childId) {
+        List<ChildConsent> history = consentRepository.findAllByChildIdOrderByConsentedAtDesc(childId);
+        ConsentResponse current = history.stream()
+                .filter(c -> c.getWithdrawnAt() == null)
+                .findFirst()
+                .map(ConsentResponse::from)
+                .orElse(null);
+        return new ConsentStatusResponse(current, history.stream().map(ConsentResponse::from).toList());
+    }
+
+    /** 아이 목록의 동의 뱃지용 파생 상태. */
+    public ConsentStatus getStatus(UUID childId) {
+        if (consentRepository.existsByChildIdAndWithdrawnAtIsNull(childId)) {
+            return ConsentStatus.VALID;
         }
+        return consentRepository.existsByChildId(childId) ? ConsentStatus.WITHDRAWN : ConsentStatus.NONE;
+    }
+
+    /** 현재 유효한 동의를 철회한다. 이후 신규 세션은 차단된다(계정-13). */
+    @Transactional
+    public ConsentResponse withdrawCurrent(UUID childId) {
+        ChildConsent consent = consentRepository
+                .findFirstByChildIdAndWithdrawnAtIsNullOrderByConsentedAtDesc(childId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "철회할 유효한 동의가 없습니다."));
         consent.withdraw();
         return ConsentResponse.from(consent);
     }

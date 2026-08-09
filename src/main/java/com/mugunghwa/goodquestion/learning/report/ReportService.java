@@ -6,12 +6,11 @@ import com.mugunghwa.goodquestion.learning.report.dto.ReportDetailResponse;
 import com.mugunghwa.goodquestion.learning.report.dto.ReportListResponse;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,7 +32,7 @@ public class ReportService {
         throw new UnsupportedOperationException("TODO");
     }
 
-    public Page<ReportListResponse> getReports(UUID parentId, UUID childId, Pageable pageable) {
+    public List<ReportListResponse> getReports(UUID parentId, UUID childId) {
         // TODO: 아이 소유권 검증 → 목록 매핑
         throw new UnsupportedOperationException("TODO");
     }

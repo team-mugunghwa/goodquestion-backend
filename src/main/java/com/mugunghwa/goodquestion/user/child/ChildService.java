@@ -5,6 +5,7 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.user.child.dto.ChildCreateRequest;
 import com.mugunghwa.goodquestion.user.child.dto.ChildResponse;
 import com.mugunghwa.goodquestion.user.child.dto.ChildUpdateRequest;
+import com.mugunghwa.goodquestion.user.consent.ConsentStatus;
 import com.mugunghwa.goodquestion.user.consent.ConsentService;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
@@ -29,25 +30,25 @@ public class ChildService {
         Parent parent = parentRepository.getReferenceById(parentId);
         Child child = childRepository.save(Child.builder()
                 .parent(parent).name(request.name()).birthYear(request.birthYear()).build());
-        return ChildResponse.of(child, false);
+        return ChildResponse.of(child, ConsentStatus.NONE);
     }
 
     public List<ChildResponse> getMyChildren(UUID parentId) {
         return childRepository.findAllByParentId(parentId).stream()
-                .map(c -> ChildResponse.of(c, consentService.hasActiveConsent(c.getId())))
+                .map(c -> ChildResponse.of(c, consentService.getStatus(c.getId())))
                 .toList();
     }
 
     public ChildResponse getChild(UUID parentId, UUID childId) {
         Child child = getOwnedChild(parentId, childId);
-        return ChildResponse.of(child, consentService.hasActiveConsent(childId));
+        return ChildResponse.of(child, consentService.getStatus(childId));
     }
 
     @Transactional
     public ChildResponse update(UUID parentId, UUID childId, ChildUpdateRequest request) {
         Child child = getOwnedChild(parentId, childId);
         child.update(request.name(), request.birthYear());
-        return ChildResponse.of(child, consentService.hasActiveConsent(childId));
+        return ChildResponse.of(child, consentService.getStatus(childId));
     }
 
     /** 아동 개인정보 삭제권 대응 — 하위 데이터는 FK cascade로 함께 삭제 */

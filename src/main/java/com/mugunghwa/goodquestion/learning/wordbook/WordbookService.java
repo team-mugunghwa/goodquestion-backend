@@ -7,11 +7,10 @@ import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordResponse;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,12 +32,14 @@ public class WordbookService {
         throw new UnsupportedOperationException("TODO");
     }
 
-    public Page<WordResponse> getWords(UUID parentId, UUID childId, boolean favoriteOnly, Pageable pageable) {
+    /** entryType이 null이면 전체. 현재 모델은 is_favorite 이진값이라 그대로 매핑한다. */
+    public List<WordResponse> getWords(UUID parentId, UUID childId, WordEntryType entryType) {
         childService.getOwnedChild(parentId, childId);
-        Page<Wordbook> words = favoriteOnly
-                ? wordbookRepository.findAllByChildIdAndFavoriteTrue(childId, pageable)
-                : wordbookRepository.findAllByChildId(childId, pageable);
-        return words.map(WordResponse::from);
+        List<Wordbook> words = (entryType == null)
+                ? wordbookRepository.findAllByChildIdOrderByCreatedAtDesc(childId)
+                : wordbookRepository.findAllByChildIdAndFavoriteOrderByCreatedAtDesc(
+                        childId, entryType == WordEntryType.FAVORITE);
+        return words.stream().map(WordResponse::from).toList();
     }
 
     @Transactional
