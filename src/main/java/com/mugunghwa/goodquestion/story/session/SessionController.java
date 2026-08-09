@@ -4,6 +4,7 @@ import com.mugunghwa.goodquestion.global.security.CurrentParentId;
 import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SessionResumeResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,12 @@ public class SessionController {
     @GetMapping("/api/sessions/{sessionId}")
     public SessionResponse getSession(@CurrentParentId UUID parentId, @PathVariable UUID sessionId) {
         return sessionService.getSession(parentId, sessionId);
+    }
+
+    /** 이어하기 — 장면·대화 내역·마지막 대사·노출 미션을 한 번에 복원한다(홈-01~02). */
+    @GetMapping("/api/sessions/{sessionId}/resume")
+    public SessionResumeResponse resume(@CurrentParentId UUID parentId, @PathVariable UUID sessionId) {
+        throw new UnsupportedOperationException("미구현: 이어하기 복원");
     }
 
     @GetMapping("/api/sessions/{sessionId}/messages")
