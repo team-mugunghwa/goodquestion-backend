@@ -28,9 +28,12 @@ class SessionServiceTest {
                 .entries().forEach(e -> System.setProperty(e.getKey(), e.getValue()));
     }
 
-    // 로컬 DB에 직접 넣어둔 테스트 데이터
-    private static final UUID PARENT_ID = UUID.fromString("aaaaaaaa-1111-1111-1111-111111111111");
-    private static final UUID CHILD_ID = UUID.fromString("bbbbbbbb-2222-2222-2222-222222222222");
+    /**
+     * db/seed.sql이 적재된 DB를 전제한다.
+     * 보호자 "김보호" · 아이 "지우"(유효 동의) · 이야기 "방귀 뀌는 며느리"(PUBLISHED).
+     */
+    private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
+    private static final UUID CHILD_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-000000000001");
     private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Autowired
