@@ -21,9 +21,9 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     KAKAO_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "카카오 인증에 실패했습니다."),
 
-    // ---- 보상(섬 꾸미기) — 엔티티 구현 후 사용 ----
+    // ---- 보상(행성 꾸미기) — 엔티티 구현 후 사용 ----
     CELL_OCCUPIED(HttpStatus.CONFLICT, "이미 다른 아이템이 놓인 칸입니다."),
-    ITEM_ALREADY_PLACED(HttpStatus.CONFLICT, "이미 섬에 놓인 아이템입니다."),
+    ITEM_ALREADY_PLACED(HttpStatus.CONFLICT, "이미 행성에 놓인 아이템입니다."),
     ITEM_LOCKED(HttpStatus.CONFLICT, "아직 열리지 않은 아이템입니다."),
     STARDUST_INSUFFICIENT(HttpStatus.CONFLICT, "별가루가 부족합니다."),
     GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),

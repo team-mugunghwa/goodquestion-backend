@@ -22,6 +22,11 @@ public record UtteranceResponse(
         /** 값이 있으면 미션 오버레이를 노출한다 */
         MissionResponse mission,
         /** 장면이 끝날 때만 값이 있다 */
-        SceneTransitionResponse sceneTransition
+        SceneTransitionResponse sceneTransition,
+        /**
+         * 위험 신호로 대사 생성이 중단된 턴에만 값이 있다.
+         * 값이 있으면 characterMessage는 생성 대사가 아니라 안전 문구다.
+         */
+        SafetyResponse safety
 ) {
 }

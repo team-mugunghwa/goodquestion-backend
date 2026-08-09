@@ -1,8 +1,8 @@
 package com.mugunghwa.goodquestion.home;
 
 import com.mugunghwa.goodquestion.home.dto.HomeResponse;
-import com.mugunghwa.goodquestion.learning.reward.island.IslandItemRepository;
-import com.mugunghwa.goodquestion.learning.reward.island.IslandRepository;
+import com.mugunghwa.goodquestion.learning.reward.planet.PlanetItemRepository;
+import com.mugunghwa.goodquestion.learning.reward.planet.PlanetRepository;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransactionRepository;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
@@ -43,8 +43,8 @@ public class HomeService {
     private final StoryTopicRepository storyTopicRepository;
     private final StardustWalletRepository walletRepository;
     private final StardustTransactionRepository transactionRepository;
-    private final IslandRepository islandRepository;
-    private final IslandItemRepository islandItemRepository;
+    private final PlanetRepository planetRepository;
+    private final PlanetItemRepository planetItemRepository;
 
     public HomeResponse getHome(UUID parentId, UUID childId) {
         childService.getOwnedChild(parentId, childId);
@@ -63,7 +63,7 @@ public class HomeService {
                         topicNames.getOrDefault(s.getId(), List.of())))
                 .toList();
 
-        return new HomeResponse(inProgress, cards, toIslandWidget(childId));
+        return new HomeResponse(inProgress, cards, toPlanetWidget(childId));
     }
 
     private SessionSummaryResponse toSummary(StorySession session) {
@@ -77,20 +77,20 @@ public class HomeService {
     }
 
     /**
-     * 섬 위젯(홈-05). 지갑·섬은 아이 생성 시 함께 만들어지지만 그 이전에 만들어진 아이가
+     * 행성 위젯(홈-05). 지갑·행성은 아이 생성 시 함께 만들어지지만 그 이전에 만들어진 아이가
      * 있을 수 있어, 없으면 0으로 표시하고 홈 전체를 실패시키지는 않는다.
      */
-    private HomeResponse.IslandWidget toIslandWidget(UUID childId) {
+    private HomeResponse.PlanetWidget toPlanetWidget(UUID childId) {
         Optional<StardustWallet> wallet = walletRepository.findByChildId(childId);
         int balance = wallet.map(StardustWallet::getBalance).orElse(0);
         boolean hasUnacknowledged = wallet
                 .map(w -> !transactionRepository
                         .findAllByWalletIdAndAcknowledgedFalseOrderByCreatedAtAsc(w.getId()).isEmpty())
                 .orElse(false);
-        int placedCount = islandRepository.findByChildId(childId)
-                .map(island -> islandItemRepository.countByIslandId(island.getId()))
+        int placedCount = planetRepository.findByChildId(childId)
+                .map(planet -> planetItemRepository.countByPlanetId(planet.getId()))
                 .orElse(0);
-        return new HomeResponse.IslandWidget(balance, placedCount, hasUnacknowledged);
+        return new HomeResponse.PlanetWidget(balance, placedCount, hasUnacknowledged);
     }
 
     private Map<UUID, List<String>> findTopicNames(List<UUID> storyIds) {

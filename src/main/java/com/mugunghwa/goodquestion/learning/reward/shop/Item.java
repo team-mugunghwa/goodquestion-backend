@@ -57,13 +57,19 @@ public class Item {
     @Column(name = "display_order", nullable = false)
     private short displayOrder;
 
+    /** 운영 중 내리기 — child_items가 FK로 물고 있어 행 삭제가 불가능하므로 상태로 감춘다. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private ItemStatus status;
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
     @Builder
     public Item(String name, ItemCategory category, int price, UnlockType unlockType,
                 Story unlockStory, Integer unlockStardustTotal,
-                String modelUrl, String thumbnailUrl, short displayOrder) {
+                String modelUrl, String thumbnailUrl, short displayOrder, ItemStatus status) {
+        this.status = status != null ? status : ItemStatus.ACTIVE;
         this.name = name;
         this.category = category;
         this.price = price;
