@@ -41,3 +41,6 @@ out/
 
 ### env ###
 .env
+# .env.local, .env.bak 등 파생 파일도 시크릿을 담으므로 함께 무시한다
+.env.*
+!.env.example
