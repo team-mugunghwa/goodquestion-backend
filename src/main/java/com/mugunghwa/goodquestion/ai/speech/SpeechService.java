@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.ai.speech;
 
 import com.mugunghwa.goodquestion.ai.speech.dto.SynthesisRequest;
+import com.mugunghwa.goodquestion.ai.speech.dto.SynthesisResponse;
+import com.mugunghwa.goodquestion.ai.tts.SynthesizedAudio;
 import com.mugunghwa.goodquestion.ai.speech.dto.TranscriptionResponse;
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
@@ -26,8 +28,8 @@ public class SpeechService {
         return new TranscriptionResponse(text);
     }
 
-    public byte[] synthesize(SynthesisRequest request) {
-        // TODO: messageId면 메시지 텍스트 조회 후 합성, text면 바로 합성
-        throw new UnsupportedOperationException("TODO");
+    public SynthesisResponse synthesize(SynthesisRequest request) {
+        SynthesizedAudio audio = ttsClient.synthesize(request.text(), request.characterName());
+        return new SynthesisResponse(audio.audioUrl(), audio.expiresAt());
     }
 }

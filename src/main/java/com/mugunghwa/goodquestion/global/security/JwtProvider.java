@@ -40,6 +40,11 @@ public class JwtProvider {
                 .compact();
     }
 
+    /** 응답의 accessTokenExpiresIn(초)에 사용한다. */
+    public long getExpiresInSeconds() {
+        return expirationMs / 1000;
+    }
+
     /** @return 검증된 보호자 ID — 실패 시 JwtException */
     public UUID verifyAndGetParentId(String token) {
         Claims claims = Jwts.parser().verifyWith(key).build()

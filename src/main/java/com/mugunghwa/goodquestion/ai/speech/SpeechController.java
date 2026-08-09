@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.ai.speech;
 
 import com.mugunghwa.goodquestion.ai.speech.dto.SynthesisRequest;
+import com.mugunghwa.goodquestion.ai.speech.dto.SynthesisResponse;
+import jakarta.validation.Valid;
 import com.mugunghwa.goodquestion.ai.speech.dto.TranscriptionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -19,13 +21,9 @@ public class SpeechController {
         return speechService.transcribe(audio);
     }
 
-    /**
-     * 텍스트 → 음성.
-     * NOTE: 명세는 {@code {audioUrl, expiresAt}} JSON을 규정하지만 현재 구현은 audio/mpeg 바이트를
-     * 그대로 반환한다. 어느 쪽으로 갈지는 팀 확인 필요 — 경로만 명세에 맞춰 두었다.
-     */
-    @PostMapping(value = "/api/tts", produces = "audio/mpeg")
-    public byte[] synthesize(@RequestBody SynthesisRequest request) {
+    /** 텍스트 → 음성. 다시 듣기·단어 듣기가 공용으로 쓴다(장면-04, 단어-03). */
+    @PostMapping("/api/tts")
+    public SynthesisResponse synthesize(@Valid @RequestBody SynthesisRequest request) {
         return speechService.synthesize(request);
     }
 }

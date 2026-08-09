@@ -45,13 +45,4 @@ public class ConsentController {
     public ConsentResponse withdraw(@CurrentParentId UUID parentId, @PathVariable UUID childId) {
         throw new UnsupportedOperationException("미구현: 동의 철회(유효 동의 자동 탐색)");
     }
-
-    /** @deprecated 명세 경로는 {@code POST /consents/withdraw}다. 전환 후 제거한다. */
-    @Deprecated
-    @PatchMapping("/{consentId}/withdraw")
-    public ConsentResponse withdrawById(@CurrentParentId UUID parentId, @PathVariable UUID childId,
-                                        @PathVariable UUID consentId) {
-        childService.getOwnedChild(parentId, childId);
-        return consentService.withdraw(childId, consentId);
-    }
 }

@@ -4,7 +4,8 @@ import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.security.JwtProvider;
 import com.mugunghwa.goodquestion.user.auth.dto.AuthResponse;
-import com.mugunghwa.goodquestion.user.auth.dto.KakaoLoginRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
+import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoClient;
@@ -34,7 +35,7 @@ public class AuthService {
         }
         Parent parent = parentRepository.save(
                 Parent.ofLocal(request.email(), passwordEncoder.encode(request.password()), request.name()));
-        return AuthResponse.of(jwtProvider.issue(parent.getId()), parent);
+        return AuthResponse.of(jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -44,16 +45,28 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
-        return AuthResponse.of(jwtProvider.issue(parent.getId()), parent);
+        return AuthResponse.of(jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent);
     }
 
-    /** 최초 로그인이면 가입까지 함께 처리한다(find-or-create). */
+    /**
+     * 소셜 로그인. 인가 코드를 서버가 제공자 토큰으로 교환한 뒤 프로필을 조회하고,
+     * 최초 로그인이면 가입까지 함께 처리한다(find-or-create).
+     */
     @Transactional
-    public AuthResponse loginWithKakao(KakaoLoginRequest request) {
-        KakaoProfile profile = kakaoClient.getProfile(request.accessToken());
-        Parent parent = parentRepository.findByProviderAndProviderId(AuthProvider.KAKAO, profile.providerId())
-                .orElseGet(() -> parentRepository.save(
-                        Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname())));
-        return AuthResponse.of(jwtProvider.issue(parent.getId()), parent);
+    public SocialAuthResponse loginWithKakao(SocialLoginRequest request) {
+        String kakaoAccessToken =
+                kakaoClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
+        KakaoProfile profile = kakaoClient.getProfile(kakaoAccessToken);
+
+        Parent existing = parentRepository
+                .findByProviderAndProviderId(AuthProvider.KAKAO, profile.providerId())
+                .orElse(null);
+        boolean isNewUser = existing == null;
+        Parent parent = isNewUser
+                ? parentRepository.save(Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname()))
+                : existing;
+
+        return SocialAuthResponse.of(
+                jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent, isNewUser);
     }
 }
