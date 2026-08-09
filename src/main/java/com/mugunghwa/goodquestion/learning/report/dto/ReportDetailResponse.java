@@ -1,6 +1,6 @@
 package com.mugunghwa.goodquestion.learning.report.dto;
 
-import com.mugunghwa.goodquestion.common.ThinkingElement;
+import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
 
 import java.time.OffsetDateTime;
 import java.util.List;

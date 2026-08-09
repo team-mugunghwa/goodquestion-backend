@@ -1,12 +1,12 @@
 package com.mugunghwa.goodquestion.home;
 
 import com.mugunghwa.goodquestion.home.dto.HomeResponse;
-import com.mugunghwa.goodquestion.session.session.SessionStatus;
-import com.mugunghwa.goodquestion.session.session.StorySession;
-import com.mugunghwa.goodquestion.session.session.StorySessionRepository;
-import com.mugunghwa.goodquestion.story.story.Story;
-import com.mugunghwa.goodquestion.story.story.StoryRepository;
-import com.mugunghwa.goodquestion.story.story.StoryStatus;
+import com.mugunghwa.goodquestion.story.session.SessionStatus;
+import com.mugunghwa.goodquestion.story.session.StorySession;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
+import com.mugunghwa.goodquestion.story.content.Story;
+import com.mugunghwa.goodquestion.story.content.StoryRepository;
+import com.mugunghwa.goodquestion.story.content.StoryStatus;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

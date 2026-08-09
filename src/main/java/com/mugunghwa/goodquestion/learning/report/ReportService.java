@@ -1,10 +1,10 @@
 package com.mugunghwa.goodquestion.learning.report;
 
-import com.mugunghwa.goodquestion.dialog.analysis.UtteranceAnalysisRepository;
-import com.mugunghwa.goodquestion.infra.llm.ReportLlmClient;
+import com.mugunghwa.goodquestion.story.dialogue.UtteranceAnalysisRepository;
+import com.mugunghwa.goodquestion.ai.report.ReportLlmClient;
 import com.mugunghwa.goodquestion.learning.report.dto.ReportDetailResponse;
 import com.mugunghwa.goodquestion.learning.report.dto.ReportListResponse;
-import com.mugunghwa.goodquestion.session.session.SessionService;
+import com.mugunghwa.goodquestion.story.session.SessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +24,7 @@ public class ReportService {
     private final ReportLlmClient reportLlmClient;
     private final SessionService sessionService;
 
-    /** 세션 완료 시 ActivityService에서 호출 (비동기) */
+    /** 세션 완료 시 PostActivityService에서 호출 (비동기) */
     @Async
     @Transactional
     public void generate(UUID sessionId) {
