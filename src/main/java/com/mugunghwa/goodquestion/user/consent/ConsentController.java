@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.user.consent;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
+import com.mugunghwa.goodquestion.user.child.Child;
+import com.mugunghwa.goodquestion.user.child.ChildService;
 import com.mugunghwa.goodquestion.user.consent.dto.ConsentCreateRequest;
 import com.mugunghwa.goodquestion.user.consent.dto.ConsentResponse;
 import jakarta.validation.Valid;
@@ -16,18 +18,20 @@ import java.util.UUID;
 public class ConsentController {
 
     private final ConsentService consentService;
-    // TODO: ChildService 주입해 소유권 검증 선행
+    private final ChildService childService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ConsentResponse create(@CurrentParentId UUID parentId, @PathVariable UUID childId,
                                   @Valid @RequestBody ConsentCreateRequest request) {
-        return consentService.create(childId, request);
+        Child child = childService.getOwnedChild(parentId, childId);
+        return consentService.create(child, request);
     }
 
     @PatchMapping("/{consentId}/withdraw")
     public ConsentResponse withdraw(@CurrentParentId UUID parentId, @PathVariable UUID childId,
                                     @PathVariable UUID consentId) {
+        childService.getOwnedChild(parentId, childId);
         return consentService.withdraw(childId, consentId);
     }
 }
