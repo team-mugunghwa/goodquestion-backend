@@ -11,5 +11,5 @@ public interface WordbookRepository extends JpaRepository<Wordbook, UUID> {
 
     List<Wordbook> findAllByChildIdOrderByCreatedAtDesc(UUID childId);
 
-    List<Wordbook> findAllByChildIdAndFavoriteOrderByCreatedAtDesc(UUID childId, boolean favorite);
+    List<Wordbook> findAllByChildIdAndEntryTypeOrderByCreatedAtDesc(UUID childId, WordEntryType entryType);
 }
