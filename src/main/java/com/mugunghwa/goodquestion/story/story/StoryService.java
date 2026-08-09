@@ -31,7 +31,6 @@ public class StoryService {
         Page<Story> stories = (topicId == null)
                 ? storyRepository.findAllByStatus(StoryStatus.PUBLISHED, pageable)
                 : storyRepository.findAllByTopicAndStatus(topicId, StoryStatus.PUBLISHED, pageable);
-        // TODO: 각 이야기의 토픽 이름 배치 조회 후 매핑 (N+1 방지)
         Map<UUID, List<String>> topicNames = findTopicNames(
                 stories.getContent().stream().map(Story::getId).toList());
 
@@ -41,7 +40,6 @@ public class StoryService {
     }
 
     public StoryDetailResponse getStory(UUID storyId) {
-        // TODO: PUBLISHED 검증, 장면 수·토픽 이름 조회
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다."));
         if (story.getStatus() != StoryStatus.PUBLISHED) {

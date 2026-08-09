@@ -13,4 +13,6 @@ public interface StorySceneRepository extends JpaRepository<StoryScene, UUID> {
     Optional<StoryScene> findByStoryIdAndSceneOrder(UUID storyId, short sceneOrder);
 
     int countByStoryId(UUID storyId);
+
+    Optional<StoryScene> findFirstByStoryIdOrderBySceneOrderAsc(UUID storyId);
 }
