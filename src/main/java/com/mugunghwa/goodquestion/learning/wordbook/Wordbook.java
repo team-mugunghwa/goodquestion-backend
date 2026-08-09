@@ -1,6 +1,6 @@
 package com.mugunghwa.goodquestion.learning.wordbook;
 
-import com.mugunghwa.goodquestion.story.scene.StoryScene;
+import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.user.child.Child;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

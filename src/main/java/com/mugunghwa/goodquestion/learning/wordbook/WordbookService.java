@@ -2,7 +2,7 @@ package com.mugunghwa.goodquestion.learning.wordbook;
 
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
-import com.mugunghwa.goodquestion.infra.llm.WordMeaningLlmClient;
+import com.mugunghwa.goodquestion.ai.word.WordMeaningLlmClient;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordResponse;
 import com.mugunghwa.goodquestion.user.child.ChildService;

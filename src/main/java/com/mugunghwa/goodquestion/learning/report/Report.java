@@ -1,6 +1,6 @@
 package com.mugunghwa.goodquestion.learning.report;
 
-import com.mugunghwa.goodquestion.session.session.StorySession;
+import com.mugunghwa.goodquestion.story.session.StorySession;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
