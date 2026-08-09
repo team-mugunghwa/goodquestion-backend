@@ -4,6 +4,7 @@ import com.mugunghwa.goodquestion.global.security.CurrentParentId;
 import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionResumeResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import jakarta.validation.Valid;
@@ -23,8 +24,8 @@ public class SessionController {
 
     @PostMapping("/api/children/{childId}/sessions")
     @ResponseStatus(HttpStatus.CREATED)
-    public SessionResponse start(@CurrentParentId UUID parentId, @PathVariable UUID childId,
-                                 @Valid @RequestBody SessionStartRequest request) {
+    public SessionStartResponse start(@CurrentParentId UUID parentId, @PathVariable UUID childId,
+                                      @Valid @RequestBody SessionStartRequest request) {
         return sessionService.start(parentId, childId, request);
     }
 

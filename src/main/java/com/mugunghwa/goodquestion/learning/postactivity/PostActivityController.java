@@ -34,9 +34,10 @@ public class PostActivityController {
         return activityService.submitOrder(parentId, sessionId, request);
     }
 
+    /** 세션 완료 + 별가루 지급을 함께 수행하고 지급 내역을 돌려준다(활동-09~10). */
     @PostMapping("/retelling")
-    public void submitRetelling(@CurrentParentId UUID parentId, @PathVariable UUID sessionId,
-                                @Valid @RequestBody RetellingRequest request) {
-        activityService.submitRetelling(parentId, sessionId, request);
+    public RetellingResponse submitRetelling(@CurrentParentId UUID parentId, @PathVariable UUID sessionId,
+                                             @Valid @RequestBody RetellingRequest request) {
+        return activityService.submitRetelling(parentId, sessionId, request);
     }
 }

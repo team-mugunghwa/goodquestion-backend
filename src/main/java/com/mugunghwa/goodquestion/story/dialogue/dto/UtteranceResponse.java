@@ -1,29 +1,27 @@
 package com.mugunghwa.goodquestion.story.dialogue.dto;
 
-import com.mugunghwa.goodquestion.global.vocab.ResponseMode;
+import com.mugunghwa.goodquestion.story.mission.dto.MissionResponse;
+import com.mugunghwa.goodquestion.story.session.dto.CharacterMessageResponse;
 import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
-import com.mugunghwa.goodquestion.story.session.SceneEndReason;
-import com.mugunghwa.goodquestion.story.session.dto.SceneResponse;
+import com.mugunghwa.goodquestion.story.session.dto.ProgressResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SceneTransitionResponse;
 
-import java.util.List;
-
+/**
+ * 명세 4-6 발화 제출·턴 처리 응답.
+ *
+ * <p>단일 스키마이고 null 여부로 3분기한다.
+ * 대화 계속(mission·sceneTransition 모두 null) / 미션 노출(mission 있음) /
+ * 장면 종료(sceneTransition 있음, progress.mode=CLOSING).
+ */
 public record UtteranceResponse(
         MessageResponse childMessage,
-        MessageResponse characterMessage,
-        Progress progress,
-        MissionTrigger missionTrigger,    // 미션 노출 신호. 노출 아님 시 null
-        SceneTransition sceneTransition   // 장면 유지 시 null
+        AnalysisResponse analysis,
+        ProgressResponse progress,
+        /** 일반·유도는 생성 대사, 종료는 고정 마지막 대사(캐릭터-12) */
+        CharacterMessageResponse characterMessage,
+        /** 값이 있으면 미션 오버레이를 노출한다 */
+        MissionResponse mission,
+        /** 장면이 끝날 때만 값이 있다 */
+        SceneTransitionResponse sceneTransition
 ) {
-    public record Progress(ResponseMode mode, List<String> accumulatedElements,
-                           List<String> missingElements, boolean sceneGoalMet,
-                           SceneEndReason closingReason) {}
-
-    /** mission_config에서 클라이언트 표시에 필요한 부분만 추출해 전달 */
-    public record MissionTrigger(String missionId, String name, String purpose,
-                                 List<String> checkPoints, List<String> examples) {}
-
-    public record SceneTransition(Type type, SceneResponse nextScene,
-                                  MessageResponse openingMessage) {
-        public enum Type { NEXT_SCENE, POST_ACTIVITY }
-    }
 }

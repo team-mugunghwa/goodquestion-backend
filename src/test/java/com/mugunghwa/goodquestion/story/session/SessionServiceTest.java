@@ -2,8 +2,8 @@ package com.mugunghwa.goodquestion.story.session;
 
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
+import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,41 +36,45 @@ class SessionServiceTest {
     @Autowired
     private SessionService sessionService;
 
+    @Autowired
+    private MessageService messageService;
+
     @Test
     void 세션을_시작하면_첫_장면이_반환된다() {
-        SessionResponse response = sessionService.start(
+        SessionStartResponse response = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
         assertThat(response.sessionId()).isNotNull();
         assertThat(response.status()).isEqualTo(SessionStatus.IN_PROGRESS);
         assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 1);
-        assertThat(response.currentChildTurnCount()).isZero();
+        assertThat(response.phase()).isEqualTo(PlayPhase.STORY);
     }
 
     @Test
-    void 첫_장면이_STORY면_openingMessage가_없다() {
-        SessionResponse response = sessionService.start(
+    void 첫_장면이_STORY면_대화_기록이_남지_않는다() {
+        SessionStartResponse response = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
-        assertThat(response.openingMessage()).isNull();
+        // 고정 첫 대사는 DIALOGUE 장면에서만 messages에 남는다(캐릭터-14)
+        assertThat(messageService.getMessages(response.sessionId(), null)).isEmpty();
     }
 
     @Test
     void STORY_장면을_완료하면_다음_장면으로_이동한다() {
-        SessionResponse started = sessionService.start(
+        SessionStartResponse started = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
         SceneAdvanceResponse response =
                 sessionService.completeStoryScene(PARENT_ID, started.sessionId());
 
-        assertThat(response.postActivity()).isFalse();
-        assertThat(response.nextScene().sceneOrder()).isEqualTo((short) 2);
+        assertThat(response.phase()).isEqualTo(PlayPhase.STORY);
+        assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 2);
         assertThat(response.openingMessage()).isNull();   // 2번도 STORY 장면
     }
 
     @Test
     void 다음_장면이_DIALOGUE면_캐릭터_첫_대사가_반환된다() {
-        SessionResponse started = sessionService.start(
+        SessionStartResponse started = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
         // 1번(STORY) → 2번(STORY) → 3번(DIALOGUE)
@@ -78,14 +82,15 @@ class SessionServiceTest {
         SceneAdvanceResponse response =
                 sessionService.completeStoryScene(PARENT_ID, started.sessionId());
 
-        assertThat(response.nextScene().sceneOrder()).isEqualTo((short) 3);
+        assertThat(response.phase()).isEqualTo(PlayPhase.DIALOGUE);
+        assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 3);
         assertThat(response.openingMessage()).isNotNull();
         assertThat(response.openingMessage().text()).isNotBlank();
     }
 
     @Test
     void DIALOGUE_장면에서는_STORY_완료를_호출할_수_없다() {
-        SessionResponse started = sessionService.start(
+        SessionStartResponse started = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
         sessionService.completeStoryScene(PARENT_ID, started.sessionId());

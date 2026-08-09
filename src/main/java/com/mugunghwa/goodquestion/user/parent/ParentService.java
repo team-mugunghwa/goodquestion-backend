@@ -2,7 +2,7 @@ package com.mugunghwa.goodquestion.user.parent;
 
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
-import com.mugunghwa.goodquestion.user.parent.dto.ParentCreateRequest;
+import com.mugunghwa.goodquestion.user.parent.dto.ParentUpdateRequest;
 import com.mugunghwa.goodquestion.user.parent.dto.ParentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,17 +17,19 @@ public class ParentService {
 
     private final ParentRepository parentRepository;
 
-    /**
-     * 프로필 이름 등록/수정.
-     * NOTE: Supabase Auth 제거 이후 계정 자체는 user/auth 회원가입에서 생성되므로,
-     * 이 메서드는 더 이상 "최초 생성"이 아니라 already-존재하는 계정의 이름을 갱신하는 역할로 조정했다.
-     * (원래 계약: 이미 존재하면 그대로 반환(멱등) — 이름이 바뀌는 부분은 팀 확인 필요)
-     */
+    /** 전달한 필드만 반영한다(명세 4-2). 계정 생성은 user/auth 회원가입이 담당한다. */
     @Transactional
-    public ParentResponse register(UUID parentId, ParentCreateRequest request) {
+    public ParentResponse update(UUID parentId, ParentUpdateRequest request) {
         Parent parent = parentRepository.findById(parentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "보호자 계정을 찾을 수 없습니다."));
-        parent.updateName(request.name());
+
+        if (request.name() != null) {
+            parent.updateName(request.name());
+        }
+        if (request.newPassword() != null) {
+            // TODO: currentPassword 검증(불일치 401) 후 PasswordEncoder로 해시해 교체
+            throw new UnsupportedOperationException("미구현: 비밀번호 변경");
+        }
         return ParentResponse.from(parent);
     }
 
