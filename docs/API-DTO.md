@@ -1,0 +1,952 @@
+# 굿퀘스천 API 요청·응답 DTO
+
+> 원본은 `src/main/java/.../dto/` 의 record들이다. **불일치가 생기면 코드가 맞다.**
+> 스키마 대응은 [DB설계.md](DB설계.md)를 참고한다.
+
+---
+
+## 1. 공통 규약
+
+### 1.1 인증
+
+- `/api/auth/**` 와 `/actuator/health` 만 인증 없이 접근한다. 나머지는 전부 Bearer 토큰이 필요하다.
+- **보호자 식별자는 요청에 담지 않는다.** `@CurrentParentId`가 JWT에서 꺼내 주입한다. 아래 표의 요청 필드에 `parentId`가 없는 이유다.
+- 아이·세션 리소스는 컨트롤러 진입 시 **소유권을 검증**한다. 남의 아이면 403.
+
+### 1.2 오류 응답
+
+모든 오류는 형태가 같다.
+
+```json
+{ "code": "CONSENT_REQUIRED", "message": "유효한 아동 동의가 필요합니다." }
+```
+
+| 상황 | 상태 | `code` |
+|---|---|---|
+| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유` |
+| 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED` |
+| 남의 리소스 | 403 | `FORBIDDEN` |
+| 없는 리소스 | 404 | `NOT_FOUND` |
+| 상태 충돌 | 409 | 아래 목록 |
+| 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
+| 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
+| 그 외 | 500 | `INTERNAL_ERROR` |
+
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER`
+
+**501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
+
+**401과 403은 반드시 갈라 처리한다.** 리프레시 토큰이 없어 만료 복구 경로가 재로그인 하나뿐이므로, 클라이언트는 **401을 받으면 로그인 화면으로** 보내야 하고 403은 그냥 오류로 표시하면 된다. 스프링 시큐리티 기본값은 둘 다 403 + 빈 본문이라 `RestAuthenticationEntryPoint`·`RestAccessDeniedHandler`로 갈라 두었고, 두 응답 모두 위의 `{code, message}` 형태를 지킨다.
+
+### 1.3 구현 상태 표기
+
+| 표기 | 뜻 |
+|---|---|
+| ✅ | 호출하면 실제 값이 온다 |
+| ⚠️ | 일부 경로만 동작 (설명 참고) |
+| ⛔ | 호출하면 **501** — DTO 계약만 확정된 상태 |
+
+---
+
+## 2. 엔드포인트 총괄
+
+### 2.1 인증 — `/api/auth` (인증 불필요)
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/signup` | `SignUpRequest` | 201 `AuthResponse` | ✅ |
+| POST | `/login` | `LoginRequest` | 200 `AuthResponse` | ✅ |
+| POST | `/social/{provider}` | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
+| POST | `/refresh` | `TokenRefreshRequest` | 200 `TokenResponse` | ⛔ |
+| POST | `/logout` | `LogoutRequest` | 204 (본문 없음) | ⛔ |
+
+### 2.2 보호자 — `/api/parents`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/me` | — | `ParentResponse` | ✅ |
+| PATCH | `/me` | `ParentUpdateRequest` | `ParentResponse` | ⚠️ 이름만. `newPassword`를 보내면 501 |
+
+### 2.3 아이 — `/api/children`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `` | `ChildCreateRequest` | 201 `ChildResponse` | ✅ |
+| GET | `` | — | `List<ChildResponse>` | ✅ |
+| GET | `/{childId}` | — | `ChildResponse` | ✅ |
+| PATCH | `/{childId}` | `ChildUpdateRequest` | `ChildResponse` | ✅ |
+| DELETE | `/{childId}` | — | 204 | ✅ |
+
+아이를 만들면 행성·별가루 지갑이 같은 트랜잭션에서 함께 생긴다(응답에는 담지 않는다).
+
+### 2.4 아동 동의 — `/api/children/{childId}/consents`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `` | `ConsentCreateRequest` | 201 `ConsentResponse` | ✅ |
+| GET | `` | — | `ConsentStatusResponse` | ✅ |
+| POST | `/withdraw` | — | `ConsentResponse` | ✅ |
+
+### 2.5 홈
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/children/{childId}/home` | — | `HomeResponse` | ✅ |
+
+### 2.6 콘텐츠
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/stories` | `?topic=` (선택) | `StoryListResponse` | ✅ |
+| GET | `/api/stories/{storyId}` | — | `StoryDetailResponse` | ✅ |
+| GET | `/api/stories/{storyId}/scenes` | — | `List<SceneContentResponse>` | ✅ |
+| GET | `/api/topics` | — | `List<TopicResponse>` | ✅ |
+
+### 2.7 세션
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/api/children/{childId}/sessions` | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}` | — | `SessionResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}/resume` | — | `SessionResumeResponse` | ⛔ |
+| GET | `/api/sessions/{sessionId}/messages` | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
+| POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | — | `SceneAdvanceResponse` | ✅ |
+| POST | `/api/sessions/{sessionId}/stop` | — | 200 (본문 없음) | ✅ |
+| POST | `/api/sessions/{sessionId}/scenes/current/opening` | — | `SceneOpeningResponse` | ⛔ |
+| GET | `/api/sessions/{sessionId}/scenes/current` | — | `CurrentSceneResponse` | ⛔ |
+
+### 2.8 대화(턴) — `/api/sessions/{sessionId}`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/utterances` | `UtteranceRequest` | `UtteranceResponse` | ⛔ 하위 파이프라인 미구현 |
+| GET | `/turn-state` | — | `TurnStateResponse` | ⛔ |
+
+### 2.9 미션 — `/api/sessions/{sessionId}/missions`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/current` | — | `CurrentMissionResponse` | ⛔ |
+| POST | `/{missionId}/result` | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
+
+### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/start` | — | `PostActivityStartResponse` | ⛔ |
+| GET | `` | — | `PostActivityStatusResponse` | ⛔ |
+| POST | `/order` | `CardSubmitRequest` | `CardSubmitResponse` | ⛔ |
+| POST | `/retelling` | `RetellingRequest` | `RetellingResponse` | ⛔ |
+
+### 2.11 리포트
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/children/{childId}/reports` | — | `List<ReportListResponse>` | ⛔ |
+| GET | `/api/sessions/{sessionId}/report` | — | `ReportDetailResponse` | ⛔ |
+| POST | `/api/sessions/{sessionId}/report` | — | 201 `ReportDetailResponse` | ⛔ |
+
+### 2.12 단어장
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/api/children/{childId}/words` | `WordCreateRequest` | 201 `WordResponse` | ⛔ |
+| GET | `/api/children/{childId}/words` | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
+| PATCH | `/api/children/{childId}/words/{wordId}/favorite` | — | `WordResponse` | ✅ |
+| DELETE | `/api/words/{wordId}` | — | 204 | ⛔ |
+
+### 2.13 보상 — 상점·보관함
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/children/{childId}/shop/items` | — | `List<ShopItemResponse>` | ⛔ |
+| POST | `/api/children/{childId}/items` | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ⛔ |
+| GET | `/api/children/{childId}/items` | `?placed=` (선택) | `List<ChildItemResponse>` | ⛔ |
+
+### 2.14 보상 — 별가루
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/children/{childId}/stardust` | — | `StardustWalletResponse` | ⛔ |
+| POST | `/api/children/{childId}/stardust/acknowledge` | — | `StardustAcknowledgeResponse` | ⛔ |
+
+### 2.15 보상 — 행성·배치
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| GET | `/api/children/{childId}/planet` | — | `PlanetResponse` | ⛔ |
+| PATCH | `/api/children/{childId}/planet` | `PlanetRenameRequest` | `PlanetRenameResponse` | ⛔ |
+| POST | `/api/children/{childId}/planet/tutorial-complete` | — | `TutorialCompleteResponse` | ⛔ |
+| POST | `/api/children/{childId}/planet/placements` | `PlacementCreateRequest` | 201 `PlacementResponse` | ⛔ |
+| PATCH | `/api/planet/placements/{placementId}` | `PlacementMoveRequest` | `PlacementResponse` | ⛔ |
+| DELETE | `/api/planet/placements/{placementId}` | — | 204 | ⛔ |
+
+배치 3종은 **행 단위 조작**이다. 스냅샷 통짜 저장이 아니라 놓기·옮기기·치우기를 각각 호출한다. 되돌리기 전용 API는 없고 클라이언트가 직전 조작의 역조작을 부른다.
+
+### 2.16 음성
+
+| 메서드 | 경로 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| POST | `/api/stt` | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ✅ |
+| POST | `/api/tts` | `SynthesisRequest` | `SynthesisResponse` | ✅ |
+
+> **멀티파트 한도 주의** — 30초 16kHz mono WAV가 약 960KB인데 Spring Boot 기본 `max-file-size`가 1MB다. 아슬아슬하게 걸리므로 설정을 올려야 한다. (→ §6)
+
+---
+
+## 3. DTO 상세
+
+각 DTO 아래의 **사용처**가 그 DTO를 주고받는 엔드포인트다. `X에 중첩`은 단독 응답이 아니라 다른 DTO의 필드로만 실려 나간다는 뜻이고, 그때는 최종적으로 어느 엔드포인트가 전달하는지도 함께 적었다.
+
+여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/words/{wordId}`(204).
+
+### 3.1 공통
+
+#### `ErrorResponse`
+
+> **사용처** — 모든 엔드포인트의 4xx·5xx 응답 본문
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `code` | String | `ErrorCode` 이름 또는 `INVALID_REQUEST` |
+| `message` | String | 사람이 읽는 설명 |
+
+---
+
+### 3.2 인증·계정
+
+#### `SignUpRequest`
+
+> **사용처** — `POST /api/auth/signup` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `email` | String | `@NotBlank @Email @Size(max=255)` |
+| `password` | String | `@NotBlank @Size(min=8, max=64)` |
+| `name` | String | `@NotBlank @Size(max=50)` |
+
+#### `LoginRequest`
+
+> **사용처** — `POST /api/auth/login` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `email` | String | `@NotBlank @Email` |
+| `password` | String | `@NotBlank` |
+
+#### `SocialLoginRequest`
+
+> **사용처** — `POST /api/auth/social/{provider}` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `authorizationCode` | String | `@NotBlank` |
+| `redirectUri` | String | `@NotBlank` |
+
+**서버가 인가 코드를 제공자 토큰으로 교환한다.** 클라이언트가 액세스 토큰을 직접 넘기지 않는다 — 넘기면 검증 없이 신뢰해야 한다.
+
+#### `TokenRefreshRequest` / `LogoutRequest`
+
+> **사용처** — `POST /api/auth/refresh` 요청 / `POST /api/auth/logout` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `refreshToken` | String | `@NotBlank` |
+
+#### `TokenResponse`
+
+> **사용처** — `POST /api/auth/refresh` 응답 · `AuthResponse`·`SocialAuthResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `accessToken` | String | |
+| `refreshToken` | String | **현재 항상 null** — 회전 정책 미구현 |
+| `accessTokenExpiresIn` | long | 초 |
+
+#### `AuthResponse` / `SocialAuthResponse`
+
+> **사용처** — `POST /api/auth/signup`·`/login` 응답 / `POST /api/auth/social/{provider}` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `tokens` | `TokenResponse` | |
+| `parent` | `ParentResponse` | |
+| `isNewUser` | boolean | **`SocialAuthResponse`에만** — 최초 가입이면 true |
+
+#### `ParentResponse`
+
+> **사용처** — `GET /api/parents/me`·`PATCH /api/parents/me` 응답 · `AuthResponse`·`SocialAuthResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | UUID | |
+| `email` | String | 소셜 전용 계정은 null |
+| `name` | String | |
+| `provider` | `AuthProvider` | **소셜일 때만 값.** 이메일 계정은 null |
+
+DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `LOCAL`을 null로 바꿔 내린다. 클라이언트는 "값이 있으면 소셜"로만 판단하면 된다.
+
+#### `ParentUpdateRequest`
+
+> **사용처** — `PATCH /api/parents/me` 요청
+
+| 필드 | 타입 | 검증 | 설명 |
+|---|---|---|---|
+| `name` | String | `@Size(max=50)` | 전달한 필드만 반영 |
+| `currentPassword` | String | | `newPassword`와 함께 보낸다 |
+| `newPassword` | String | `@Size(min=8)` | 보내면 현재 501 |
+
+---
+
+### 3.3 아이·동의
+
+#### `ChildCreateRequest` / `ChildUpdateRequest`
+
+> **사용처** — `POST /api/children` 요청 / `PATCH /api/children/{childId}` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `name` | String | Create `@NotBlank @Size(max=50)` / Update `@Size(max=50)` |
+| `birthYear` | Short | Create `@NotNull @Min(2000) @Max(2100)` / Update 동일하되 선택 |
+
+#### `ChildResponse`
+
+> **사용처** — `POST /api/children` · `GET /api/children` · `GET /api/children/{childId}` · `PATCH /api/children/{childId}` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | UUID | |
+| `name` | String | |
+| `birthYear` | short | |
+| `age` | int | **저장하지 않는다** — 현재연도 − 출생연도 |
+| `consentStatus` | `ConsentStatus` | |
+
+#### `ConsentCreateRequest`
+
+> **사용처** — `POST /api/children/{childId}/consents` 요청
+
+| 필드 | 타입 | 검증 |
+|---|---|---|
+| `consentVersion` | String | `@NotBlank` (예: `mvp_v1`) |
+| `verificationMethod` | `VerificationMethod` | `@NotNull` — `AUTHENTICATED_PARENT` / `INSTITUTION_PAPER` / `MOBILE_VERIFICATION` |
+
+#### `ConsentResponse`
+
+> **사용처** — `POST /api/children/{childId}/consents` · `POST /api/children/{childId}/consents/withdraw` 응답 · `ConsentStatusResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` `consentVersion` `consentedAt` | | |
+| `withdrawnAt` | OffsetDateTime | null이면 유효 |
+
+#### `ConsentStatusResponse`
+
+> **사용처** — `GET /api/children/{childId}/consents` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `current` | `ConsentResponse` | **null이면 새 세션을 시작할 수 없다** |
+| `history` | `List<ConsentResponse>` | 철회분 포함 전체 이력 |
+
+---
+
+### 3.4 홈
+
+#### `HomeResponse`
+
+> **사용처** — `GET /api/children/{childId}/home` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `inProgressSession` | `SessionSummaryResponse` | 없으면 null |
+| `recommendedStories` | `List<StoryCardResponse>` | 현재는 PUBLISHED 최신 3개 |
+| `planetWidget` | `PlanetWidget` | |
+
+**`PlanetWidget`**: `stardustBalance` int, `placedCount` int, `hasUnacknowledged` boolean
+
+`hasUnacknowledged`가 true면 행성 진입 전에 연출 예고 점을 표시한다.
+
+---
+
+### 3.5 콘텐츠
+
+#### `StoryCardResponse` — 목록과 홈 추천이 공유
+
+> **사용처** — `StoryListResponse`·`StoryDetailResponse`·`HomeResponse`에 중첩 → 최종 전달: `GET /api/stories` · `GET /api/stories/{storyId}` · `GET /api/children/{childId}/home`
+
+`id` · `title` · `summary` · `difficulty` · `estimatedMinutes`(Short) · `imageUrl` · `topics`(`List<String>`)
+
+#### `StoryListResponse`
+
+> **사용처** — `GET /api/stories` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `stories` | `List<StoryCardResponse>` | `?topic=` 필터 적용 결과 |
+| `topics` | `List<String>` | **필터와 무관하게 항상 전체** — 필터 칩을 그리는 용도 |
+
+페이징은 없다. MVP 콘텐츠 수가 한 화면에 들어간다.
+
+#### `StoryDetailResponse`
+
+> **사용처** — `GET /api/stories/{storyId}` 응답
+
+| 필드 | 타입 |
+|---|---|
+| `story` | `StoryCardResponse` (중첩) |
+| `sceneCount` | int |
+| `childRole` | String |
+| `intro` | String |
+
+#### `SceneContentResponse` — 세션 시작·이어하기·장면 전환·현재 장면이 공유
+
+> **사용처** — `GET /api/stories/{storyId}/scenes` 응답 · `SessionStartResponse`·`SessionResumeResponse`·`SceneAdvanceResponse`·`CurrentSceneResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `sceneId` | UUID | |
+| `sceneOrder` | short | |
+| `sceneType` | `SceneType` | `STORY` / `DIALOGUE` |
+| `narrationSentences` | `List<String>` | STORY만. DIALOGUE는 빈 배열 |
+| `imageUrl` | String | |
+| `characterName` | String | DIALOGUE만 |
+| `maxTurns` | Short | DIALOGUE만 — 남은 턴 UI |
+
+**내레이션 분리는 서버가 한다.** 줄바꿈 기준으로 자른다 — 마침표로 자르면 `1.5km` 같은 표현이 깨진다.
+
+**서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`·`character_persona`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
+
+#### `TopicResponse`
+
+> **사용처** — `GET /api/topics` 응답
+
+`id`(UUID) · `name`(String)
+
+---
+
+### 3.6 세션
+
+#### `SessionStartRequest`
+
+> **사용처** — `POST /api/children/{childId}/sessions` 요청
+
+`storyId`(UUID)
+
+#### `SessionStartResponse`
+
+> **사용처** — `POST /api/children/{childId}/sessions` 응답
+
+`sessionId` · `status`(`SessionStatus`) · `currentScene`(`SceneContentResponse`) · `phase`(`PlayPhase`)
+
+도입 장면을 즉시 렌더할 수 있게 콘텐츠 전체를 함께 준다.
+
+#### `SessionResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}` 응답 · `SessionResumeResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `sessionId` `childId` `storyId` | UUID | |
+| `status` | `SessionStatus` | `IN_PROGRESS`/`POST_ACTIVITY`/`COMPLETED`/`STOPPED` |
+| `currentScene` | `SceneRef` | `{sceneId, sceneOrder, sceneType}` — 식별 정보만 |
+| `phase` | `PlayPhase` | `STORY`/`DIALOGUE`/`POST_ACTIVITY`/`ENDED` |
+| `progress` | `ProgressResponse` | |
+| `sceneGoalMet` | boolean | |
+| `lastActivityAt` | OffsetDateTime | |
+
+**`phase`는 저장값이 아니다.** `status` + 현재 장면 유형에서 파생한다. 프론트가 화면을 고르는 단일 근거라 서버가 계산해 내린다.
+
+#### `ProgressResponse`
+
+> **사용처** — `SessionResponse`·`UtteranceResponse`·`TurnStateResponse`에 중첩 → 최종 전달: `GET /api/sessions/{sessionId}` · `POST /api/sessions/{sessionId}/utterances` · `GET /api/sessions/{sessionId}/turn-state`
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `mode` | `ResponseMode` | `NORMAL`/`GUIDED`/`CLOSING` |
+| `accumulatedElements` | `List<ThinkingElement>` | 현재 장면 누적 |
+| `missingElements` | `List<ThinkingElement>` | **저장하지 않고 계산** (목표 − 누적) |
+| `turnCount` `maxTurns` | int | |
+| `guidanceTarget` | `ThinkingElement` | GUIDED일 때만 |
+
+#### `SessionResumeResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/resume` 응답
+
+`session`(`SessionResponse`) · `currentScene`(`SceneContentResponse`) · `messages`(`List<MessageResponse>`) · `lastCharacterMessage`(`CharacterMessageResponse`) · `exposedMission`(`MissionResponse`)
+
+#### `SessionSummaryResponse` — 홈 이어하기 카드
+
+> **사용처** — `HomeResponse`에 중첩 → 최종 전달: `GET /api/children/{childId}/home`
+
+`sessionId` · `storyId` · `storyTitle` · `storyImageUrl` · `status` · `currentSceneOrder`(short) · `totalScenes`(int) · `lastActivityAt`
+
+#### `MessageResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/messages` 응답 · `SessionResumeResponse`·`UtteranceResponse`에 중첩
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `messageId` | UUID | |
+| `speakerType` | `SpeakerType` | `CHILD`/`CHARACTER`/`SYSTEM` |
+| `turnOrder` | int | 세션 안에서 유일. 장면이 바뀌어도 이어진다 |
+| `text` | String | 이름 치환이 끝난 상태 |
+| `sttLowConfidence` | boolean | **아이 발화만 의미 있다** |
+| `characterEmotion` | `CharacterEmotion` | 캐릭터 발화만 |
+| `createdAt` | OffsetDateTime | |
+
+`sttConfidence` 원값은 내부 지표라 내리지 않는다. 화면은 "미덥지 않았다"는 사실만 알면 다시 말하기를 안내할 수 있다.
+
+#### `CharacterMessageResponse`
+
+> **사용처** — `SceneOpeningResponse`·`SceneAdvanceResponse`·`SessionResumeResponse`·`UtteranceResponse`에 중첩 → 최종 전달: `POST /api/sessions/{sessionId}/scenes/current/opening` · `POST /api/sessions/{sessionId}/scenes/current/story-complete` · `GET /api/sessions/{sessionId}/resume` · `POST /api/sessions/{sessionId}/utterances`
+
+`messageId` · `text` · `audioUrl`
+
+`audioUrl`이 null이면 클라이언트가 `/api/tts`를 호출한다. 고정 대사는 사전 렌더 음성(`scene_audio`)을 내려줄 수 있다.
+
+#### `SceneOpeningResponse`
+
+> **사용처** — `POST /api/sessions/{sessionId}/scenes/current/opening` 응답
+
+`message`(`CharacterMessageResponse`) · `alreadyOpened`(boolean)
+
+**멱등이다.** 재호출하면 새 메시지를 만들지 않고 `alreadyOpened=true`로 알린다.
+
+#### `SceneAdvanceResponse`
+
+> **사용처** — `POST /api/sessions/{sessionId}/scenes/current/story-complete` 응답
+
+`phase`(`PlayPhase`) · `currentScene`(`SceneContentResponse`) · `openingMessage`(`CharacterMessageResponse`)
+
+다음 장면이 DIALOGUE면 고정 첫 대사를 함께 저장·반환한다. 마지막 장면이 STORY로 끝났다면 `phase=POST_ACTIVITY`이고 `currentScene`은 null이다.
+
+#### `SceneTransitionResponse`
+
+> **사용처** — `UtteranceResponse`에 중첩 — 장면 종료 턴에만 → 최종 전달: `POST /api/sessions/{sessionId}/utterances`
+
+`next`(`SceneTransitionTarget`) · `nextSceneId` · `nextSceneOrder`(Integer) · `nextSceneType` · `closingReason`(`SceneEndReason`)
+
+#### `CurrentSceneResponse` / `TurnStateResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/scenes/current` 응답 / `GET /api/sessions/{sessionId}/turn-state` 응답
+
+`{currentScene, phase}` / `{progress, phase}`
+
+---
+
+### 3.7 대화(턴)
+
+#### `UtteranceRequest`
+
+> **사용처** — `POST /api/sessions/{sessionId}/utterances` 요청
+
+| 필드 | 타입 | 검증 | 설명 |
+|---|---|---|---|
+| `text` | String | `@NotBlank` | 확정 발화 텍스트 |
+| `sttRawText` | String | | STT 최초 변환 텍스트 |
+| `sttConfidence` | BigDecimal | `@DecimalMin(0.0) @DecimalMax(1.0)` | 선택 |
+| `sttRetryCount` | Short | `@PositiveOrZero` | 선택, 기본 0 |
+| `missionId` | String | | 이 발화가 미션 수행 결과일 때 |
+
+**`sttLowConfidence`는 요청에 없다.** 기준값 판정은 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. (기준값 자체는 아직 미정이라 지금은 저장만 한다.)
+
+#### `UtteranceResponse` — 단일 스키마, null 여부로 분기
+
+> **사용처** — `POST /api/sessions/{sessionId}/utterances` 응답
+
+| 필드 | 타입 | 언제 값이 있나 |
+|---|---|---|
+| `childMessage` | `MessageResponse` | 항상 |
+| `analysis` | `AnalysisResponse` | 항상 |
+| `progress` | `ProgressResponse` | 항상 |
+| `characterMessage` | `CharacterMessageResponse` | 항상 (종료 시엔 고정 마지막 대사) |
+| `mission` | `MissionResponse` | **미션 노출 턴** |
+| `sceneTransition` | `SceneTransitionResponse` | **장면 종료 턴** (`progress.mode=CLOSING`) |
+| `safety` | `SafetyResponse` | **위험 신호로 대사 생성이 중단된 턴** |
+
+**분기 판단**
+- 대화 계속 → `mission`·`sceneTransition`·`safety` 모두 null
+- 미션 노출 → `mission` 있음
+- 장면 종료 → `sceneTransition` 있음
+- 안전 개입 → `safety` 있음. 이때 `characterMessage`는 생성 대사가 아니라 **안전 문구**다
+
+#### `AnalysisResponse`
+
+> **사용처** — `UtteranceResponse`에 중첩 → 최종 전달: `POST /api/sessions/{sessionId}/utterances`
+
+`childIntent`(13종) · `mainPoint` · `detectedElements`(`List<DetectedElement>`) · `utteranceValidity`(5종)
+
+**캐릭터 표정·태도 변화의 트리거를 겸한다.** 프론트가 자체 판단하지 않고 이 값으로만 연출한다.
+
+`analysisVersion`·`modelId`·`droppedEvidence`는 내부 추적용이라 내리지 않는다.
+
+**`DetectedElement`**: `type`(`ThinkingElement`) · `evidence`(String — 아이 발화 원문의 근거 문구)
+
+#### `SafetyResponse`
+
+> **사용처** — `UtteranceResponse`에 중첩 — 안전 개입 턴에만 → 최종 전달: `POST /api/sessions/{sessionId}/utterances`
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `categories` | `List<String>` | 감지 범주만. **아이 발화 원문은 담지 않는다** |
+| `recoveryAvailable` | boolean | true면 오탐 복귀 버튼 노출 |
+
+---
+
+### 3.8 미션
+
+#### `MissionResponse`
+
+> **사용처** — `CurrentMissionResponse`·`UtteranceResponse`·`SessionResumeResponse`에 중첩 → 최종 전달: `GET /api/sessions/{sessionId}/missions/current` · `POST /api/sessions/{sessionId}/utterances` · `GET /api/sessions/{sessionId}/resume`
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `missionId` | String | |
+| `missionType` | `MissionType` | `PROBLEM_SOLVING` / `PERSPECTIVE_SHIFT` |
+| `title` `description` | String | |
+| `payload` | `Payload` | `{questions, cards}` — **유형에 따라 한쪽만 값이 있다** |
+
+- `Question`: `key`(`tool`/`safety`/`request`/`expectedResult`로 고정) · `label`
+- `Card`: `key` · `label` · `imageUrl` · `template`
+
+#### `CurrentMissionResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/missions/current` 응답
+
+`mission`(`MissionResponse`) — **미노출 상태면 null이고 404가 아니다.** 노출 여부는 정상 상태이지 오류가 아니다.
+
+#### `MissionResultRequest`
+
+> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 요청
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `answers` | `Map<String,String>` | 미션1 — Question의 key별 답 |
+| `cards` | `List<CardAnswer>` | 미션2 — `{key, strengthText}` |
+
+#### `MissionResultResponse`
+
+> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 응답
+
+`missionId` · `accepted`(boolean) — 결과는 다음 턴 캐릭터 대사에 반영된다.
+
+---
+
+### 3.9 말하기 후 활동
+
+#### `PostActivityStartResponse`
+
+> **사용처** — `POST /api/sessions/{sessionId}/post-activity/start` 응답 · 중첩 `Card`는 `PostActivityStatusResponse`도 재사용
+
+`cards`(`List<Card>`) · `attemptCount`(short)
+- `Card`: `cardId` · `text`
+
+**정답 순서는 담지 않는다.** 판정은 서버만 한다.
+카드 순서는 `card_order_seed`로 고정되어 재호출해도 같다.
+
+#### `PostActivityStatusResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/post-activity` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `status` | String | 후속 활동 진행 단계 |
+| `cards` | `List<PostActivityStartResponse.Card>` | 시작 응답과 **같은 순서** (시드로 고정) |
+| `attemptCount` | short | |
+| `isOrderCorrect` | Boolean | 아직 제출 전이면 null |
+| `retellingKeywords` | `List<String>` | 카드 순서를 맞춘 뒤에만 값이 있다 |
+| `retellingText` | String | |
+| `completedAt` | OffsetDateTime | |
+
+**새로고침 복구용이다.** 앱을 껐다 켜도 이 응답 하나로 후속 활동 화면을 그대로 되살린다 — 카드 순서가 시드로 고정돼 있어 같은 화면이 나온다.
+
+#### `CardSubmitRequest` / `CardSubmitResponse`
+
+> **사용처** — `POST /api/sessions/{sessionId}/post-activity/order` 요청 / 응답
+
+| | 필드 | 설명 |
+|---|---|---|
+| 요청 | `submittedOrder` `List<String>` `@NotEmpty` | cardId 순서 |
+| 응답 | `correct` boolean, `retellingKeywords` `List<String>` | **오답이면 `retellingKeywords`가 null** (재시도) |
+
+#### `RetellingRequest`
+
+> **사용처** — `POST /api/sessions/{sessionId}/post-activity/retelling` 요청
+
+`text`(`@NotBlank`) · `sttRawText`
+
+#### `RetellingResponse` — 재구성 발화 제출 = 세션 완료 + 별가루 지급
+
+> **사용처** — `POST /api/sessions/{sessionId}/post-activity/retelling` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `sessionStatus` | String | |
+| `completedAt` | OffsetDateTime | |
+| `stardust` | `Stardust` | `{earned, breakdown, balance}` |
+| `unlockedItems` | `List<UnlockedItem>` | `{itemId, name, thumbnailUrl}` — 이번 완주로 열린 것 |
+
+지급 결과를 이 응답에 담아야 하므로 **세션 완료 처리는 같은 트랜잭션에서 동기로 끝낸다.**
+
+---
+
+### 3.10 리포트
+
+#### `ReportListResponse`
+
+> **사용처** — `GET /api/children/{childId}/reports` 응답
+
+`id` · `sessionId` · `storyTitle` · `createdAt`
+
+#### `ReportDetailResponse`
+
+> **사용처** — `GET /api/sessions/{sessionId}/report` · `POST /api/sessions/{sessionId}/report` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` `sessionId` `storyTitle` `summary` | | |
+| `strengths` | `List<ReportItem>` | `{element, comment}` |
+| `nextFocus` | `List<ReportItem>` | `{element, comment}` |
+| `representativeUtterances` | `List<RepresentativeUtterance>` | `{text, element}` |
+| `createdAt` | OffsetDateTime | |
+
+**`ReportItem`을 그대로 내린다.** 요소 코드만 내리면 화면에 "REASON"만 뜨고 왜 잘했는지가 사라진다 — 보호자에게 보여줄 문장이 `comment`에 있다.
+
+**대표 발화는 저장값이 아니다.** 조회 시 `messages` + `utterance_analyses`의 근거에서 구성하고, `sttLowConfidence=true`인 발화는 후보에서 제외한다.
+
+---
+
+### 3.11 단어장
+
+#### `WordCreateRequest`
+
+> **사용처** — `POST /api/children/{childId}/words` 요청
+
+| 필드 | 타입 | 검증 | 설명 |
+|---|---|---|---|
+| `word` | String | `@NotBlank @Size(max=50)` | |
+| `entryType` | `WordEntryType` | `@NotNull` | `UNKNOWN` / `FAVORITE` |
+| `sourceSceneId` | UUID | | |
+| `meaning` | String | | **없으면 서버가 LLM으로 생성** |
+| `exampleSentence` | String | | |
+
+같은 아이가 같은 단어를 또 저장하면 409 `DUPLICATE_WORD`.
+
+#### `WordResponse`
+
+> **사용처** — `POST /api/children/{childId}/words` · `GET /api/children/{childId}/words` · `PATCH /api/children/{childId}/words/{wordId}/favorite` 응답
+
+`id` · `word` · `meaning` · `exampleSentence` · `entryType` · `sourceSceneId` · `createdAt`
+
+---
+
+### 3.12 보상
+
+#### `ShopItemResponse`
+
+> **사용처** — `GET /api/children/{childId}/shop/items` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `itemId` `name` `category` `price` `modelUrl` `thumbnailUrl` | | |
+| `unlocked` | boolean | |
+| `silhouette` | boolean | 잠긴 아이템을 실루엣으로 표시할지 |
+| `unlockGuide` | `UnlockGuide` | `{storyTitle, storyImageUrl}` — 이야기 완주 해금만 |
+| `purchasable` | boolean | 해금 + 잔액 충분 |
+| `shortfall` | int | 모자란 별가루 |
+
+**해금·구매 가능·부족 수량은 전부 서버가 계산해 내린다.** 프론트 판정 금지 — 가격 규칙이 두 곳에 있으면 어긋난다.
+
+`status=HIDDEN`인 아이템은 목록에서 빠진다(응답 필드로 노출하지 않는다).
+
+#### `ItemPurchaseRequest` / `ItemPurchaseResponse`
+
+> **사용처** — `POST /api/children/{childId}/items` 요청 / 응답
+
+`itemId`(`@NotNull`) → `{item: ChildItemResponse, balance: int}`
+
+#### `ChildItemResponse`
+
+> **사용처** — `GET /api/children/{childId}/items` 응답 · `ItemPurchaseResponse`에 중첩
+
+`childItemId` · `itemId` · `name` · `category` · `thumbnailUrl` · `modelUrl` · `acquiredAt` · `placed`(boolean)
+
+**`placed=false`면 보관함에 있다.** 보관함은 `child_items` − `planet_items`로 계산하는 파생값이다.
+
+#### `StardustWalletResponse`
+
+> **사용처** — `GET /api/children/{childId}/stardust` 응답
+
+`balance` · `totalEarned` · `unacknowledged`(`List<StardustTransactionResponse>`)
+
+`unacknowledged`가 비어 있지 않으면 행성 진입 시 별가루가 떨어지는 연출을 재생한다.
+
+#### `StardustTransactionResponse`
+
+> **사용처** — `StardustWalletResponse`·`RetellingResponse`에 중첩 → 최종 전달: `GET /api/children/{childId}/stardust` · `POST /api/sessions/{sessionId}/post-activity/retelling`
+
+`transactionId` · `amount`(지급 +, 사용 −) · `reason` · `createdAt`
+
+`reason`: `STORY_COMPLETED` / `SCENE_BONUS` / `ITEM_PURCHASE` / `ADMIN_ADJUST`
+한 세션에서 `SCENE_BONUS`가 **최대 2건** 나올 수 있다.
+
+`sessionId`·`sceneId`는 서버 멱등 판정용이라 내리지 않는다.
+
+#### `StardustAcknowledgeResponse`
+
+> **사용처** — `POST /api/children/{childId}/stardust/acknowledge` 응답
+
+`acknowledgedCount`(int)
+
+#### `PlanetResponse`
+
+> **사용처** — `GET /api/children/{childId}/planet` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `planetId` `name` | | |
+| `tutorialCompleted` | boolean | |
+| `placedItems` | `List<PlacementResponse>` | |
+| `progress` | `Progress` | `{placedCount, nextUnlock}` |
+
+- `NextUnlock`: `itemName` · `thumbnailUrl` · `conditionText` — 모두 해금되면 null
+
+**판 크기·모양은 응답에 없다.** 클라이언트 카탈로그가 단일 소스다.
+
+#### `PlacementCreateRequest` / `PlacementMoveRequest` / `PlacementResponse`
+
+> **사용처** — `POST /api/children/{childId}/planet/placements` 요청 / `PATCH /api/planet/placements/{placementId}` 요청 / 두 엔드포인트의 응답 · `PlanetResponse`에 중첩
+
+| | 필드 |
+|---|---|
+| Create | `childItemId`(`@NotNull`) · `placedQ`(`@NotNull`) · `placedR`(`@NotNull`) |
+| Move | `placedQ` · `placedR` |
+| Response | `placementId` · `childItemId` · `itemId` · `modelUrl` · `placedQ` · `placedR` |
+
+**좌표는 축좌표(q, r)이고 음수가 유효하다.** 원점 기준이라 `@PositiveOrZero`를 붙이면 절반의 판이 막힌다.
+
+같은 칸에 놓으면 409 `CELL_OCCUPIED`, 이미 배치된 아이템이면 409 `ITEM_ALREADY_PLACED`.
+
+#### `PlanetRenameRequest` / `PlanetRenameResponse` / `TutorialCompleteResponse`
+
+> **사용처** — `PATCH /api/children/{childId}/planet` 요청 / 응답 · `POST /api/children/{childId}/planet/tutorial-complete` 응답
+
+`name`(`@NotBlank @Size(1..30)`) → `{planetId, name}` / `{tutorialCompleted}`
+
+---
+
+### 3.13 음성
+
+#### `TranscriptionResponse`
+
+> **사용처** — `POST /api/stt` 응답
+
+`text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`.
+
+#### `SynthesisRequest` / `SynthesisResponse`
+
+> **사용처** — `POST /api/tts` 요청 / 응답
+
+| | 필드 | 설명 |
+|---|---|---|
+| 요청 | `text`(`@NotBlank`) · `characterName` | 이름이 있으면 캐릭터 보이스, 없으면 내레이션 보이스 |
+| 응답 | `audioUrl` · `expiresAt` | **바이트를 직접 내리지 않는다** — URL이라야 다시 듣기·캐싱이 된다 |
+
+---
+
+## 4. 여러 응답이 공유하는 DTO
+
+정확한 경로는 §3의 각 DTO **사용처**에 있다. 이 표는 "어떤 것이 공유되는지"만 한눈에 보기 위한 것이다.
+
+| DTO | 쓰이는 곳 |
+|---|---|
+| `StoryCardResponse` | 이야기 목록, 이야기 상세, 홈 추천 |
+| `SceneContentResponse` | 세션 시작, 이어하기, 장면 전환, 현재 장면 |
+| `ProgressResponse` | 세션 조회, 턴 처리, 턴 상태 |
+| `MessageResponse` | 대화 기록 조회, 이어하기, 턴 처리 |
+| `CharacterMessageResponse` | 턴 처리, 첫 대사 재생, 장면 이동, 이어하기 |
+| `ParentResponse` | 회원가입, 로그인, 소셜 로그인, 내 정보 |
+| `StardustTransactionResponse` | 지갑 조회, 후속 활동 완료 |
+| `ChildItemResponse` | 보관함 조회, 구매 결과 |
+| `PlacementResponse` | 행성 조회, 놓기, 옮기기 |
+| `SessionSummaryResponse` | 홈 이어하기 |
+
+한 화면이 아니라 **한 개념이 하나의 DTO를 갖는다.** 화면마다 DTO를 만들면 같은 개념이 여러 형태로 갈라진다.
+
+---
+
+## 5. 응답 설계 원칙
+
+**1. 판정은 전부 서버가 한다.** 해금 여부·구매 가능·부족 수량·정답 여부·진행 단계·부족 요소를 클라이언트가 계산하지 않는다. 규칙이 두 곳에 있으면 반드시 어긋난다.
+
+**2. 파생값은 저장하지 않고 응답에서 계산한다.** `age`, `missingElements`, `phase`, `placed`, 보관함, 대표 발화.
+
+**3. 서버 내부 설정은 내리지 않는다.** LLM·STT 입력(`element_criteria`, `remaining_worries`, `character_persona`, `scene_stance`, `proper_nouns`), 추적용 메타(`analysisVersion`, `modelId`, `droppedEvidence`), 멱등 키(`card_order_seed`, 거래의 `sessionId`/`sceneId`).
+
+**4. 분기는 필드 null로 표현한다.** 응답 스키마를 유형별로 나누지 않는다 — `UtteranceResponse` 하나로 대화 계속·미션 노출·장면 종료·안전 개입을 모두 표현한다.
+
+**5. 정답은 내리지 않는다.** 카드 정답 순서, 미션 모범 답안.
+
+**6. 아이 발화 원문은 안전 응답에 담지 않는다.** `SafetyResponse.categories`는 범주만 담는다.
+
+---
+
+## 6. 미해결 항목
+
+| # | 항목 | 현재 | 조치 |
+|---|---|---|---|
+| 1 | **`TokenResponse.refreshToken`이 항상 null** | 저장소(`refresh_tokens` 테이블·`RefreshToken` 엔티티)는 준비됐고 발급·회전·무효화 로직만 없다 | 그때까지 **Access 토큰 단일 전략으로 완결 동작한다**(→ §8). 도입해도 응답 스키마는 그대로라 클라이언트 변경이 없다 |
+| 2 | **멀티파트 1MB 한도** | `application.yml`에 `spring.servlet.multipart` 설정 없음 → Boot 기본 1MB | 30초 WAV ≈ 960KB라 아슬아슬하다. 10MB로 올린다 |
+| 3 | **STT 신뢰도 기준값** | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 후 서버 판정 |
+| 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
+| 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
+| 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추거나 조회로 역추적 |
+| 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
+
+---
+
+## 7. 구현 현황 요약
+
+| 영역 | 엔드포인트 | ✅ | ⚠️ | ⛔ |
+|---|---|---|---|---|
+| 인증 | 5 | 2 | 1 | 2 |
+| 보호자 | 2 | 1 | 1 | 0 |
+| 아이·동의 | 8 | 8 | 0 | 0 |
+| 홈 | 1 | 1 | 0 | 0 |
+| 콘텐츠 | 4 | 4 | 0 | 0 |
+| 세션·장면 | 8 | 5 | 0 | 3 |
+| 대화·미션 | 4 | 0 | 0 | 4 |
+| 후속 활동 | 4 | 0 | 0 | 4 |
+| 리포트 | 3 | 0 | 0 | 3 |
+| 단어장 | 4 | 2 | 0 | 2 |
+| 보상 | 11 | 0 | 0 | 11 |
+| 음성 | 2 | 2 | 0 | 0 |
+| **합계** | **56** | **25** | **2** | **29** |
+
+⛔ 29건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+---
+
+## 8. Access 토큰 단일 전략 — 동작 확인
+
+리프레시 토큰 없이도 인증이 완결되는지 실제로 앱을 띄워 확인했다(2026-08-10).
+
+**구조상 결합이 없다** — `RefreshToken` 엔티티와 `RefreshTokenRepository`는 존재하지만 **어떤 서비스도 참조하지 않는다.** 인증 경로는 `JwtProvider`(발급·검증) → `JwtAuthFilter`(헤더 파싱) → `SecurityContext`로 끝난다. 리프레시 미구현이 다른 기능을 막지 않는다.
+
+**검증한 흐름**
+
+| 단계 | 결과 |
+|---|---|
+| 가입 → 토큰 발급 | 201, `accessTokenExpiresIn=604800`(7일), `refreshToken=null` |
+| 로그인 → 토큰 발급 | 200 |
+| 토큰으로 아이 생성 | 201 — 행성·지갑이 각 1건 자동 생성됨 |
+| 토큰으로 동의 등록 → 세션 시작 → 장면 진행 | 201 / 201 / 200 |
+| 토큰 없음 / 위조 / **만료** | 전부 **401** `UNAUTHORIZED` |
+| 남의 아이 조회 | **403** `FORBIDDEN` |
+| 만료 후 **재로그인** → 같은 세션 재조회 | 200 — **진행 상태가 그대로 이어진다** |
+
+**결론: 리프레시 없이 운영 가능하다.** 서버가 무상태라 토큰만 새로 받으면 세션·진행 기록이 그대로 살아 있다. 사용자 입장의 유일한 비용은 7일마다 재로그인이다.
+
+**단, 확인 과정에서 결함 하나를 고쳤다.** 스프링 시큐리티 기본값은 미인증·권한없음을 **모두 403 + 빈 본문**으로 돌려줘서, 만료된 토큰이 "권한 없음"으로 보였다. 재로그인이 유일한 복구 경로인 상황에서 클라이언트가 그 시점을 알아챌 방법이 없다는 뜻이다. `RestAuthenticationEntryPoint`(401)와 `RestAccessDeniedHandler`(403)를 붙여 갈랐다.
+
+**리프레시를 넣게 되면** — `TokenResponse` 스키마는 그대로 두고 `accessOnly(...)` 대신 두 토큰을 채우면 된다. 응답 형태가 바뀌지 않으므로 클라이언트 변경이 필요 없다. 액세스 토큰 만료를 짧게(예: 30분) 줄이는 것이 함께 따라온다.
