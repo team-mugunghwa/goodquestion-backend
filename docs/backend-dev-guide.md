@@ -29,7 +29,10 @@ cp .env.example .env
 DB_URL=jdbc:postgresql://localhost:5432/goodquestion
 DB_USERNAME=
 DB_PASSWORD=
-SUPABASE_JWT_SECRET=
+# 자체 발급 Access 토큰 서명 키 (HS256, 32바이트 이상) — openssl rand -base64 32
+JWT_SECRET=
+# Access 토큰 만료(ms). 미설정 시 7일
+JWT_EXPIRATION_MS=
 ```
 
 ### DB 스키마·시드 데이터 실행
