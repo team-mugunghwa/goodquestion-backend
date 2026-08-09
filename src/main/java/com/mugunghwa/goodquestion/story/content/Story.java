@@ -32,6 +32,14 @@ public class Story {
     @Column(nullable = false, columnDefinition = "text")
     private String summary;
 
+    /** 아이가 맡는 역할 — 상세 화면 표시용 (선택-03) */
+    @Column(name = "child_role", length = 50)
+    private String childRole;
+
+    /** 도입·상황 소개 — 상세 화면 표시용 (선택-03) */
+    @Column(columnDefinition = "text")
+    private String intro;
+
     /** 대표 이미지 (Supabase Storage 경로) */
     @Column(name = "image_url", columnDefinition = "text")
     private String imageUrl;
@@ -55,10 +63,13 @@ public class Story {
     private OffsetDateTime createdAt;
 
     @Builder
-    public Story(String title, String summary, String imageUrl, String difficulty,
-                 Short estimatedMinutes, Map<String, Object> postActivityConfig, StoryStatus status) {
+    public Story(String title, String summary, String childRole, String intro, String imageUrl,
+                 String difficulty, Short estimatedMinutes,
+                 Map<String, Object> postActivityConfig, StoryStatus status) {
         this.title = title;
         this.summary = summary;
+        this.childRole = childRole;
+        this.intro = intro;
         this.imageUrl = imageUrl;
         this.difficulty = difficulty;
         this.estimatedMinutes = estimatedMinutes;

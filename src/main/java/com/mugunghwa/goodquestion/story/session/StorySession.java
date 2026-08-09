@@ -76,6 +76,13 @@ public class StorySession {
     @Column(name = "scene_end_reason", length = 20)
     private SceneEndReason sceneEndReason;
 
+    /**
+     * 현재 장면에서 유도 모드가 한 번이라도 발생했는지 (진행-18).
+     * 유도 없이 목표를 통과하면 별가루 장면 보너스 대상이 된다 (보상-04).
+     */
+    @Column(name = "guided_used_in_scene", nullable = false)
+    private boolean guidedUsedInScene;
+
     /** 현재 장면에서 미션이 노출되었는지 (재노출 방지) */
     @Column(name = "mission_exposed", nullable = false)
     private boolean missionExposed;
@@ -134,11 +141,20 @@ public class StorySession {
         this.lastDetectedElements = new ArrayList<>();
         this.turnsWithoutNewElement = 0;
         this.consecutiveLowInformationTurns = 0;
+        this.guidedUsedInScene = false;
         this.sceneGoalMet = false;
         this.sceneEndReason = null;
         this.missionExposed = false;
         this.missionCompleted = false;
         touch();
+    }
+
+    /** 유도 모드가 발생하면 기록한다. 장면 보너스 자격은 이 값이 false일 때만 생긴다. */
+    public void markGuidanceUsed() { this.guidedUsedInScene = true; touch(); }
+
+    /** 장면 보너스 자격 — 유도 없이 목표를 달성하고 끝났는가 (보상-04). */
+    public boolean isSceneBonusEligible() {
+        return !guidedUsedInScene && sceneGoalMet;
     }
 
     public void exposeMission() { this.missionExposed = true; touch(); }

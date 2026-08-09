@@ -54,7 +54,8 @@ public class StoryService {
         }
         List<String> topics = findTopicNames(List.of(storyId)).getOrDefault(storyId, List.of());
         int sceneCount = sceneRepository.countByStoryId(storyId);
-        return new StoryDetailResponse(toCard(story, topics), sceneCount, null, null);
+        return new StoryDetailResponse(toCard(story, topics), sceneCount,
+                story.getChildRole(), story.getIntro());
     }
 
     private StoryCardResponse toCard(Story story, List<String> topics) {

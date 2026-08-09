@@ -32,13 +32,12 @@ public class WordbookService {
         throw new UnsupportedOperationException("TODO");
     }
 
-    /** entryType이 null이면 전체. 현재 모델은 is_favorite 이진값이라 그대로 매핑한다. */
+    /** entryType이 null이면 전체. */
     public List<WordResponse> getWords(UUID parentId, UUID childId, WordEntryType entryType) {
         childService.getOwnedChild(parentId, childId);
         List<Wordbook> words = (entryType == null)
                 ? wordbookRepository.findAllByChildIdOrderByCreatedAtDesc(childId)
-                : wordbookRepository.findAllByChildIdAndFavoriteOrderByCreatedAtDesc(
-                        childId, entryType == WordEntryType.FAVORITE);
+                : wordbookRepository.findAllByChildIdAndEntryTypeOrderByCreatedAtDesc(childId, entryType);
         return words.stream().map(WordResponse::from).toList();
     }
 
@@ -48,7 +47,8 @@ public class WordbookService {
         Wordbook word = wordbookRepository.findById(wordId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         // TODO: word.child == childId 검증
-        word.toggleFavorite();
+        word.changeEntryType(word.getEntryType() == WordEntryType.FAVORITE
+                ? WordEntryType.UNKNOWN : WordEntryType.FAVORITE);
         return WordResponse.from(word);
     }
 
