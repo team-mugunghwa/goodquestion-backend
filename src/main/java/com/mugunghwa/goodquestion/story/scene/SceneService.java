@@ -47,7 +47,6 @@ public class SceneService {
 
 
     public StoryScene getFirstScene(UUID storyId) {
-        // TODO: sceneOrder 최솟값 장면 반환
         return sceneRepository.findFirstByStoryIdOrderBySceneOrderAsc(storyId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "장면이 없습니다."));
     }
