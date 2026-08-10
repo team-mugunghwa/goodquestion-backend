@@ -1,9 +1,13 @@
+server:
+  # Railway 같은 PaaS는 PORT 환경변수로 리스닝 포트를 지정한다. 로컬은 8080.
+  port: ${PORT:8080}
+
 spring:
   application:
     name: goodquestion-backend
 
   datasource:
-    url: ${DB_URL}          # Supabase Postgres 연결 문자열
+    url: ${DB_URL}          # JDBC URL. Railway에서는 Postgres 서비스 참조로 조립한다.
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   # 스키마는 Flyway가 관리한다. 앱 기동 시 db/migration의 V*.sql을 순서대로 적용하고
@@ -42,3 +46,15 @@ external:
     api-key: ${LLM_API_KEY}
     analysis-model: ${ANALYSIS_MODEL:}
     character-model: ${CHARACTER_MODEL:}
+
+# Railway의 헬스체크가 /actuator/health를 호출한다. 인증 없이 응답하도록 노출한다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
