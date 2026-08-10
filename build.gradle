@@ -63,6 +63,48 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+/**
+ * .env를 key=value 맵으로 읽는다. dotenv-java는 런타임 의존성이라 빌드 스크립트에서 못 쓴다.
+ * 따옴표로 감싼 값과 주석/빈 줄만 처리하면 충분하다.
+ */
+def readDotenv = { File file ->
+    def values = [:]
+    file.eachLine('UTF-8') { line ->
+        def trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith('#')) return
+        def sep = trimmed.indexOf('=')
+        if (sep <= 0) return
+        def value = trimmed.substring(sep + 1).trim()
+        if (value.length() >= 2 && (value.startsWith('"') && value.endsWith('"')
+                || value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1)
+        }
+        values[trimmed.substring(0, sep).trim()] = value
+    }
+    return values
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+
+    // 기본은 Testcontainers다. Docker를 쓰지 않고 이미 설치해 둔 PostgreSQL로 돌리려면
+    // ./gradlew test -PlocalDb 로 실행한다. 접속 정보는 bootRun과 같은 .env에서 읽는다.
+    //
+    // 시스템 프로퍼티로 넘기는 이유는 우선순위 때문이다. 설정 파일보다 시스템 프로퍼티가
+    // 우선하므로 application-test.yml의 자리 채우기 값을 확실히 덮는다.
+    if (project.hasProperty('localDb')) {
+        def envFile = rootProject.file('.env')
+        if (!envFile.exists()) {
+            throw new GradleException('-PlocalDb를 쓰려면 .env가 있어야 한다. .env.example을 복사해 값을 채운다.')
+        }
+        def env = readDotenv(envFile)
+        if (!env['DB_URL']) {
+            throw new GradleException('.env에 DB_URL이 없다. -PlocalDb는 접속할 DB를 스스로 준비해야 한다.')
+        }
+        systemProperty 'test.datasource.mode', 'local'
+        systemProperty 'spring.datasource.url', env['DB_URL']
+        systemProperty 'spring.datasource.username', env['DB_USERNAME'] ?: ''
+        systemProperty 'spring.datasource.password', env['DB_PASSWORD'] ?: ''
+        doFirst { logger.lifecycle("테스트가 로컬 DB를 사용한다: ${env['DB_URL']}") }
+    }
 }

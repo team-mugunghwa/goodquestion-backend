@@ -684,6 +684,14 @@ Docker만 떠 있으면 된다.
 ./gradlew test
 ```
 
+Docker를 쓰지 않는다면 검증용 DB를 만들고 `.env`의 `DB_URL`을 그쪽으로 돌린 뒤
+`./gradlew test -PlocalDb`로 돌린다. 자세한 내용은
+[개발 가이드 2절](backend-dev-guide.md#docker-없이-로컬-postgresql로-돌리기)에 있다.
+
+```bash
+psql -U postgres -c "create database gq_check;"
+```
+
 로컬 개발 DB에서 직접 확인하고 싶을 때만 아래처럼 이력을 조회한다.
 
 적용 이력 확인:

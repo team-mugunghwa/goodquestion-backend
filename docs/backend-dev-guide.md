@@ -43,8 +43,9 @@
 ### 요구 사항
 
 - JDK 25 (`build.gradle`의 toolchain이 25로 고정)
-- Docker (로컬 PostgreSQL 용, 테스트도 Docker로 DB를 띄운다)
 - PostgreSQL 17
+- Docker (로컬 PostgreSQL 용, 테스트도 기본적으로 Docker로 DB를 띄운다).
+  직접 설치한 PostgreSQL을 쓴다면 [Docker 없이 로컬 PostgreSQL로 돌리기](#docker-없이-로컬-postgresql로-돌리기)를 본다
 
 ### .env 파일 생성
 
@@ -124,7 +125,35 @@ Flyway가 그 빈 DB에 스키마와 시드를 전부 만들기 때문에 로컬
 
 `ArchitectureTest`는 컨텍스트도 DB도 쓰지 않으므로 Docker 없이도 돈다.
 
+```bash
+./gradlew test --tests '*ArchitectureTest'
+```
+
 `main()`은 여전히 `.env`를 읽는다. 위 방식은 테스트에만 적용된다.
+
+### Docker 없이 로컬 PostgreSQL로 돌리기
+
+Docker를 쓰지 않고 직접 설치한 PostgreSQL이 있다면 `-PlocalDb`를 붙인다.
+접속 정보는 `bootRun`과 같은 `.env`의 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`를 그대로 쓴다.
+
+```bash
+./gradlew test -PlocalDb
+```
+
+Testcontainers는 뜨지 않고 그 DB에 바로 붙는다. `.env`가 없거나 `DB_URL`이 비면
+빌드가 이유를 말하고 멈춘다.
+
+대신 알고 써야 할 것이 있다.
+
+- 그 DB에 Flyway가 실제로 돈다. 테스트가 쓴 데이터는 `@Transactional`이라 롤백되지만
+  마이그레이션과 `R__` 시드는 커밋된다. `bootRun` 한 번 한 것과 같은 상태가 된다.
+- 그래서 `R__1_seed_content.sql`을 손으로 고쳐 실험 중이라면 그 내용이 덮인다.
+  개발 DB와 섞기 싫으면 테스트용 DB를 따로 만들고 `.env`의 `DB_URL`을 그쪽으로 돌린다.
+- 앞선 실행이 남긴 데이터가 다음 실행에 보이므로 컨테이너 방식만큼 깨끗하지 않다.
+  테스트가 실패했을 때 DB 상태부터 의심해야 한다.
+
+기본값은 Testcontainers다. 특별한 이유가 없으면 `-PlocalDb` 없이 쓰는 쪽을 권한다.
+CI도 기본 경로로 돈다.
 
 ---
 
