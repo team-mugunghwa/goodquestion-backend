@@ -1,15 +1,24 @@
 # 굿퀘스천 DB 설계
 
 > PostgreSQL. Supabase Auth 미사용 — 인증 포함 전 테이블을 자체 스키마로 관리한다.
-> 스키마 원본은 [`db/schema.sql`](../src/main/resources/db/schema.sql)이고 이 문서는 그 설계 근거다.
-> **불일치가 생기면 `schema.sql`이 맞다.** `ddl-auto=validate`라 엔티티도 함께 맞춰야 앱이 뜬다.
+> 스키마 원본은 [`db/migration/V1__init_schema.sql`](../src/main/resources/db/migration/V1__init_schema.sql)이고
+> 이 문서는 그 설계 근거다. **불일치가 생기면 마이그레이션 파일이 맞다.**
+> `ddl-auto=validate`라 엔티티도 함께 맞춰야 앱이 뜬다.
 
 | | |
 |---|---|
 | 버전 | v4 (24개 테이블) |
-| 신규 생성 | `schema.sql` |
-| v3 → v4 이행 | `migration-to-v4.sql` (재실행 안전) |
-| 시드 | `seed.sql` (콘텐츠 + 데모 계정, 단일 트랜잭션) |
+| 관리 도구 | **Flyway** — 앱 기동 시 자동 적용 |
+| 스키마 | `db/migration/V1__init_schema.sql` |
+| 시드 | `db/migration/V2__seed_data.sql` (콘텐츠 + 데모 계정) |
+
+**스키마를 바꾸려면 새 버전 파일을 추가한다.** 이미 적용된 `V1`·`V2`는 수정하지 않는다 —
+Flyway가 체크섬을 `flyway_schema_history`에 기록해 두고 기동할 때마다 대조하므로,
+고치면 `Migration checksum mismatch`로 앱이 뜨지 않는다.
+
+```
+V3__add_something.sql   ← 다음 변경은 이렇게
+```
 
 ---
 
@@ -653,18 +662,27 @@ parents ─1:N─ children ─1:N─ child_consents
 
 ## 12. 검증 방법
 
-스키마·시드·엔티티 매핑은 실제 PostgreSQL에 적재해 확인한다.
+**SQL을 직접 실행하지 않는다.** 빈 DB만 만들면 앱 기동 시 Flyway가 `V1` → `V2`를 순서대로
+적용하고, 이어서 `ddl-auto=validate`가 엔티티 매핑을 전수 검사한다.
 
 ```bash
 docker exec goodquestion-postgres psql -U postgres -c "create database gq_check;"
-docker exec -i goodquestion-postgres psql -U postgres -d gq_check -v ON_ERROR_STOP=1 < src/main/resources/db/schema.sql
-docker exec -i goodquestion-postgres psql -U postgres -d gq_check -v ON_ERROR_STOP=1 < src/main/resources/db/seed.sql
 ```
-
-엔티티 매핑은 `ddl-auto=validate`가 앱 기동 시 전수 검사한다.
 
 ```bash
 DB_URL="jdbc:postgresql://localhost:5432/gq_check" DB_USERNAME=postgres DB_PASSWORD=... ./gradlew test
+```
+
+적용 이력 확인:
+
+```sql
+select installed_rank, version, description, success from flyway_schema_history order by installed_rank;
+```
+
+**로컬 DB를 갈아엎을 때**는 스키마만 비우면 된다. 다음 기동에서 Flyway가 처음부터 다시 만든다.
+
+```bash
+docker exec goodquestion-postgres psql -U postgres -d goodquestion -c 'drop schema public cascade; create schema public;'
 ```
 
 정합성 확인 질의 — 아래 둘 다 **0행이어야 정상**이다.
@@ -681,7 +699,13 @@ from stardust_wallets w left join stardust_transactions t on t.wallet_id = w.id
 group by w.id having w.total_earned <> coalesce(sum(t.amount) filter (where t.amount > 0), 0);
 ```
 
-마이그레이션은 v3 스키마를 세운 뒤 `migration-to-v4.sql`을 적용한 결과가 `schema.sql` 신규 생성 결과와 컬럼 단위로 일치하는지 대조한다.
+**새 마이그레이션(`V3` 이후)을 추가했을 때**는 두 경로가 같은 결과를 내는지 대조한다 —
+빈 DB에 전체를 적용한 결과와, 기존 DB에 새 버전만 적용한 결과가 컬럼 단위로 일치해야 한다.
+
+```sql
+select table_name||'.'||column_name||' '||data_type||' null='||is_nullable
+from information_schema.columns where table_schema='public' order by 1;
+```
 
 ```sql
 select table_name||'.'||column_name||' '||data_type||' null='||is_nullable
