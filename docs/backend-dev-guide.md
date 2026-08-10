@@ -43,8 +43,8 @@ JWT_EXPIRATION_MS=
 | 파일 | 역할 |
 | --- | --- |
 | `resources/db/migration/V1__init_schema.sql` | 테이블·인덱스·제약 조건 생성 (24개 테이블) — **수정 금지** |
-| `resources/db/migration/R__seed_content.sql` | MVP 콘텐츠 (`ON CONFLICT DO UPDATE` upsert) — **편집 자유** |
-| `resources/db/migration/R__seed_demo_data.sql` | 데모 계정·진행 기록 (`DO NOTHING` insert-if-missing) — **편집 자유** |
+| `resources/db/migration/R__1_seed_content.sql` | MVP 콘텐츠 (`ON CONFLICT DO UPDATE` upsert) — **편집 자유** |
+| `resources/db/migration/R__2_seed_demo_data.sql` | 데모 계정·진행 기록 (`DO NOTHING` insert-if-missing) — **편집 자유** |
 
 #### 스키마 변경 (컬럼 추가·테이블 신설 등)
 
@@ -53,15 +53,15 @@ JWT_EXPIRATION_MS=
 1. 다음 번호로 `V{n}__{설명}.sql` 파일을 새로 만들고 `alter table …` / `create table …` 작성
 2. 엔티티(`@Entity`) 필드·매핑을 함께 수정 — `ddl-auto=validate`가 불일치를 잡는다
 3. 앱 실행 → Flyway가 자동 적용, 엔티티 검증 통과 확인
-4. 시드에 새 컬럼 값이 필요하면 `R__seed_content.sql`도 수정
+4. 시드에 새 컬럼 값이 필요하면 `R__1_seed_content.sql`도 수정
 5. 커밋
 
 #### 데이터 변경 (콘텐츠 편집·데모 추가 등)
 
 `R__` 파일을 직접 편집하면 다음 기동에서 자동 재실행된다.
 
-- 콘텐츠(이야기·장면·캐릭터·아이템) → `R__seed_content.sql` (`ON CONFLICT DO UPDATE`)
-- 데모 계정·진행 기록 → `R__seed_demo_data.sql` (`ON CONFLICT DO NOTHING`)
+- 콘텐츠(이야기·장면·캐릭터·아이템) → `R__1_seed_content.sql` (`ON CONFLICT DO UPDATE`)
+- 데모 계정·진행 기록 → `R__2_seed_demo_data.sql` (`ON CONFLICT DO NOTHING`)
 
 행 삭제는 자동으로 반영되지 않는다 — 파일에서 지우고 수동 `DELETE`가 필요하다.
 
@@ -71,7 +71,7 @@ JWT_EXPIRATION_MS=
 docker exec goodquestion-postgres psql -U postgres -d goodquestion -c 'drop schema public cascade; create schema public;'
 ```
 
-다음 기동에서 Flyway가 `V1 → R__seed_content → R__seed_demo_data`를 처음부터 다시 만든다.
+다음 기동에서 Flyway가 `V1 → R__1_seed_content → R__2_seed_demo_data`를 처음부터 다시 만든다.
 
 ---
 

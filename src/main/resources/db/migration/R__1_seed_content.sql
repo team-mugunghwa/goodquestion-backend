@@ -12,10 +12,10 @@
 --                    수동 DELETE + 정합성 확인이 필요하다 (upsert만으로는 삭제 안 됨)
 --
 -- 담는 것: topics · stories · story_topics · story_scenes · characters · items (6종)
--- 안 담는 것: parents/children/sessions/보상 이력 등 — 데모 데이터는 R__seed_demo_data.sql
+-- 안 담는 것: parents/children/sessions/보상 이력 등 — 데모 데이터는 R__2_seed_demo_data.sql
 --
 -- 실행 순서 (Flyway): 모든 V__ 완료 후 R__ 파일들이 알파벳순 실행
---   R__seed_content.sql (이 파일) → R__seed_demo_data.sql (데모)
+--   R__1_seed_content.sql (이 파일) → R__2_seed_demo_data.sql (데모)
 --
 -- 원본 시드 문서의 확인 필요 값
 -- · 콘텐츠 문서 문자열 ID(s_banggui_..., sc_banggui_01~09)는 uuid로 치환 (주석에 원본 병기)
