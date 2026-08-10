@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.support;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +15,13 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  *
  * <p>스프링 테스트 컨텍스트 캐시 덕분에 같은 설정을 쓰는 테스트 클래스끼리는
  * 컨테이너를 한 번만 띄우고 공유한다.
+ *
+ * <p>{@code ./gradlew test -PlocalDb}로 실행하면 {@code test.datasource.mode=local}이
+ * 넘어와 이 설정이 통째로 꺼지고, 이미 설치해 둔 PostgreSQL에 붙는다. Docker를 쓰지 않는
+ * 팀원을 위한 경로다.
  */
 @TestConfiguration(proxyBeanMethods = false)
+@ConditionalOnProperty(name = "test.datasource.mode", havingValue = "testcontainers", matchIfMissing = true)
 public class PostgresContainerConfig {
 
     /** 운영/로컬과 같은 메이저 버전을 쓴다. 버전이 갈리면 잡히지 않는 문법 차이가 생긴다. */
