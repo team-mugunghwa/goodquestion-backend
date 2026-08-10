@@ -51,6 +51,13 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+
+    // 테스트용 PostgreSQL을 컨테이너로 직접 띄운다. 마이그레이션이 gen_random_uuid(), jsonb,
+    // timestamptz 같은 PostgreSQL 전용 기능을 쓰므로 인메모리 DB로 대체할 수 없고,
+    // ddl-auto=validate라 Flyway가 실제 스키마를 만들어야 컨텍스트가 뜬다.
+    // Testcontainers 2.0부터 모듈 아티팩트에 testcontainers- 접두어가 붙는다(구 org.testcontainers:postgresql).
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
