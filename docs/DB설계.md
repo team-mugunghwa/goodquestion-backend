@@ -677,13 +677,14 @@ parents -1:N- children -1:N- child_consents
 **SQL을 직접 실행하지 않는다.** 빈 DB만 만들면 앱 기동 시 Flyway가 `V1` -> `V2`를 순서대로
 적용하고, 이어서 `ddl-auto=validate`가 엔티티 매핑을 전수 검사한다.
 
-```bash
-docker exec goodquestion-postgres psql -U postgres -c "create database gq_check;"
-```
+테스트가 Testcontainers로 매번 빈 PostgreSQL을 띄우므로 검증용 DB를 따로 만들 필요가 없다.
+Docker만 떠 있으면 된다.
 
 ```bash
-DB_URL="jdbc:postgresql://localhost:5432/gq_check" DB_USERNAME=postgres DB_PASSWORD=... ./gradlew test
+./gradlew test
 ```
+
+로컬 개발 DB에서 직접 확인하고 싶을 때만 아래처럼 이력을 조회한다.
 
 적용 이력 확인:
 

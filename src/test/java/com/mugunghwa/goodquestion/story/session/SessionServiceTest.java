@@ -4,10 +4,9 @@ import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.mugunghwa.goodquestion.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -15,18 +14,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-@SpringBootTest
+@IntegrationTest
 @Transactional
 class SessionServiceTest {
-
-    /**
-     * 테스트는 main()을 거치지 않아 .env가 로딩되지 않는다.
-     * 스프링 컨텍스트가 뜨기 전에 직접 읽어 시스템 속성으로 넣는다.
-     */
-    static {
-        Dotenv.configure().ignoreIfMissing().load()
-                .entries().forEach(e -> System.setProperty(e.getKey(), e.getValue()));
-    }
 
     /**
      * Flyway가 적용하는 R__2_seed_demo_data.sql의 데모 계정을 전제한다 - 빈 DB로 시작해도 자동으로 들어간다.

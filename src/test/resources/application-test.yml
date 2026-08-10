@@ -1,0 +1,30 @@
+# 테스트 전용 설정. src/main의 application.yml 위에 덮어쓴다.
+#
+# 목적은 하나다 - 환경변수 없이도 테스트가 뜨게 한다.
+# main의 application.yml은 ${DB_URL} 처럼 기본값 없는 플레이스홀더를 쓴다.
+# 운영에서 설정 누락을 조용히 넘기지 않으려는 의도이므로 그쪽은 그대로 두고,
+# 테스트에서만 여기서 값을 덮는다.
+spring:
+  datasource:
+    # 실제 접속 정보는 PostgresContainerConfig의 @ServiceConnection이 주입한다.
+    # 여기 값은 플레이스홀더 미해석 오류를 막기 위한 자리 채우기이고 쓰이지 않는다.
+    url: jdbc:postgresql://testcontainers/unused
+    username: unused
+    password: unused
+
+jwt:
+  # 테스트 고정 키. HS256이라 32바이트 이상이어야 한다. 운영 키와 무관하다.
+  secret: goodquestion-test-only-secret-key-32bytes-or-longer
+  expiration-ms: 604800000
+
+kakao:
+  client-id: test-kakao-client-id
+  client-secret: test-kakao-client-secret
+
+external:
+  stt:
+    api-key: test-stt-api-key
+  tts:
+    api-key: test-tts-api-key
+  llm:
+    api-key: test-llm-api-key

@@ -43,7 +43,7 @@
 ### 요구 사항
 
 - JDK 25 (`build.gradle`의 toolchain이 25로 고정)
-- Docker (로컬 PostgreSQL 용)
+- Docker (로컬 PostgreSQL 용, 테스트도 Docker로 DB를 띄운다)
 - PostgreSQL 17
 
 ### .env 파일 생성
@@ -102,17 +102,29 @@ curl http://localhost:8080/actuator/health
 
 ### 테스트 실행
 
-`.env`는 `main()`에서만 읽어 시스템 프로퍼티로 올린다. 테스트는 `main()`을 거치지 않으므로
-`./gradlew test`를 그냥 실행하면 `DB_URL`이 비어 **`'url' must start with "jdbc"`** 로 실패한다.
-스프링 컨텍스트를 띄우는 테스트 6건이 여기 걸린다(`ArchitectureTest` 8건은 컨텍스트가 필요 없어 통과한다).
-
-셸에 환경변수를 올린 뒤 실행한다.
+Docker만 떠 있으면 된다. 환경변수도 `.env`도 필요 없다.
 
 ```bash
-set -a && . ./.env && set +a && ./gradlew test
+./gradlew test
 ```
 
-IntelliJ에서는 실행 구성의 EnvFile 플러그인이나 Environment variables에 같은 값을 넣는다.
+테스트는 Testcontainers로 `postgres:17` 컨테이너를 직접 띄우고 거기에 붙는다.
+Flyway가 그 빈 DB에 스키마와 시드를 전부 만들기 때문에 로컬 개발 DB는 건드리지 않는다.
+컨테이너는 임의 포트에 뜨고 테스트가 끝나면 사라진다. IntelliJ에서도 그냥 실행하면 된다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `support/PostgresContainerConfig.java` | 컨테이너 정의. `@ServiceConnection`이 접속 정보를 주입한다 |
+| `support/IntegrationTest.java` | 컨텍스트가 필요한 테스트에 붙이는 애노테이션 |
+| `src/test/resources/application-test.yml` | DB 외 설정(`jwt.secret` 등)의 테스트 기본값 |
+
+스프링 컨텍스트가 필요한 테스트에는 `@SpringBootTest` 대신 `@IntegrationTest`를 붙인다.
+세 가지 설정을 한 애노테이션으로 묶어 두었으므로 조합이 갈려 컨텍스트 캐시가 쪼개지지 않는다.
+컨테이너는 테스트 클래스마다가 아니라 전체 실행에서 한 번만 뜬다.
+
+`ArchitectureTest`는 컨텍스트도 DB도 쓰지 않으므로 Docker 없이도 돈다.
+
+`main()`은 여전히 `.env`를 읽는다. 위 방식은 테스트에만 적용된다.
 
 ---
 
