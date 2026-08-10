@@ -42,11 +42,13 @@ JWT_EXPIRATION_MS=
 
 | 파일 | 역할 |
 | --- | --- |
-| `resources/db/migration/V1__init_schema.sql` | 테이블·인덱스·제약 조건 생성 (24개 테이블) |
-| `resources/db/migration/V2__seed_data.sql` | MVP 콘텐츠 '방귀 뀌는 며느리' + 데모 계정·진행 기록 |
+| `resources/db/migration/V1__init_schema.sql` | 테이블·인덱스·제약 조건 생성 (24개 테이블) — **수정 금지** |
+| `resources/db/migration/R__seed_content.sql` | MVP 콘텐츠 (`ON CONFLICT DO UPDATE` upsert) — **편집 자유** |
+| `resources/db/migration/R__seed_demo_data.sql` | 데모 계정·진행 기록 (`DO NOTHING` insert-if-missing) — **편집 자유** |
 
-**이미 적용된 마이그레이션은 수정하지 않는다.** Flyway가 체크섬을 대조하므로 고치면
-`Migration checksum mismatch`로 앱이 뜨지 않는다. 스키마를 바꾸려면 `V3__*.sql`을 새로 추가한다.
+**스키마 변경은 새 파일로.** V1은 이미 적용된 파일이라 수정하면 체크섬 위반으로 앱이 안 뜬다.
+스키마를 바꾸려면 `V2__*.sql`을 새로 추가한다. 시드 변경은 R__ 파일을 직접 편집한다 —
+Flyway가 체크섬 변경을 감지하고 다음 기동에서 자동 재실행한다.
 
 로컬 DB를 갈아엎으려면 스키마만 비운다 — 다음 기동에서 Flyway가 처음부터 다시 만든다.
 
