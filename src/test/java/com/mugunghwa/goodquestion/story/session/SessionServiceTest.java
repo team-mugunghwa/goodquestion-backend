@@ -29,7 +29,7 @@ class SessionServiceTest {
     }
 
     /**
-     * Flyway가 적용하는 R__seed_demo_data.sql의 데모 계정을 전제한다 — 빈 DB로 시작해도 자동으로 들어간다.
+     * Flyway가 적용하는 R__2_seed_demo_data.sql의 데모 계정을 전제한다 — 빈 DB로 시작해도 자동으로 들어간다.
      * 보호자 "김보호" · 아이 "지우"(유효 동의) · 이야기 "방귀 뀌는 며느리"(PUBLISHED).
      */
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
