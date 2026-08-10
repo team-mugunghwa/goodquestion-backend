@@ -35,14 +35,24 @@ JWT_SECRET=
 JWT_EXPIRATION_MS=
 ```
 
-### DB 스키마·시드 데이터 실행
+### DB 스키마·시드 데이터
 
-`src/main/resources/db` 하위의 SQL 파일 2개를 순서대로 실행한다.
+**SQL을 직접 실행하지 않는다.** Flyway가 앱 기동 시 `resources/db/migration`의 파일을
+버전 순서대로 적용하고, 적용 이력을 `flyway_schema_history`에 남긴다. 빈 DB만 만들어 두면 된다.
 
 | 파일 | 역할 |
 | --- | --- |
-| `resources/db/schema.sql` | 테이블·인덱스·제약 조건 생성 (13개 테이블) |
-| `resources/db/seed.sql` | MVP 콘텐츠 '방귀 뀌는 며느리' 시드 데이터 (topics 3건, stories 1건, story_scenes 9건) |
+| `resources/db/migration/V1__init_schema.sql` | 테이블·인덱스·제약 조건 생성 (24개 테이블) |
+| `resources/db/migration/V2__seed_data.sql` | MVP 콘텐츠 '방귀 뀌는 며느리' + 데모 계정·진행 기록 |
+
+**이미 적용된 마이그레이션은 수정하지 않는다.** Flyway가 체크섬을 대조하므로 고치면
+`Migration checksum mismatch`로 앱이 뜨지 않는다. 스키마를 바꾸려면 `V3__*.sql`을 새로 추가한다.
+
+로컬 DB를 갈아엎으려면 스키마만 비운다 — 다음 기동에서 Flyway가 처음부터 다시 만든다.
+
+```bash
+docker exec goodquestion-postgres psql -U postgres -d goodquestion -c 'drop schema public cascade; create schema public;'
+```
 
 ---
 
