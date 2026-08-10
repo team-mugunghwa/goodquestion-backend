@@ -10,15 +10,27 @@
 | 버전 | v4 (24개 테이블) |
 | 관리 도구 | **Flyway** — 앱 기동 시 자동 적용 |
 | 스키마 | `db/migration/V1__init_schema.sql` |
-| 시드 | `db/migration/V2__seed_data.sql` (콘텐츠 + 데모 계정) |
+| 콘텐츠 시드 | `db/migration/R__seed_content.sql` (upsert — 편집 자유) |
+| 데모 시드 | `db/migration/R__seed_demo_data.sql` (do-nothing — 편집 자유, 사용자 상태 보존) |
 
-**스키마를 바꾸려면 새 버전 파일을 추가한다.** 이미 적용된 `V1`·`V2`는 수정하지 않는다 —
+**스키마를 바꾸려면 새 버전 파일을 추가한다.** 이미 적용된 `V1`은 수정하지 않는다 —
 Flyway가 체크섬을 `flyway_schema_history`에 기록해 두고 기동할 때마다 대조하므로,
 고치면 `Migration checksum mismatch`로 앱이 뜨지 않는다.
 
 ```
-V3__add_something.sql   ← 다음 변경은 이렇게
+V2__add_something.sql   ← 다음 스키마 변경은 이렇게
 ```
+
+**시드는 Repeatable 마이그레이션(`R__`)이라 자유롭게 편집한다.** 파일 체크섬이 바뀌면
+다음 기동에서 다시 실행된다.
+
+- `R__seed_content.sql` — `ON CONFLICT (id) DO UPDATE`로 콘텐츠를 upsert한다. 이야기·장면·
+  캐릭터·아이템 편집은 이 파일만 고치면 반영된다
+- `R__seed_demo_data.sql` — `ON CONFLICT (id) DO NOTHING`으로 데모 데이터를 넣는다.
+  데모 아이가 실제로 아이템을 사거나 배치를 바꾸어도 그 상태를 덮지 않는다
+
+`R__`는 `V__`가 모두 끝난 뒤에 알파벳순으로 실행되므로 `content → demo_data` 순서다.
+데모 데이터가 콘텐츠를 FK 참조하므로 이 순서가 필수다.
 
 ---
 
