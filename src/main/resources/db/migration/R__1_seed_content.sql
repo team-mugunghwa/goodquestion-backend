@@ -1,31 +1,31 @@
 -- ============================================================
--- 굿퀘스천 콘텐츠 시드 — Repeatable 마이그레이션
+-- 굿퀘스천 콘텐츠 시드 - Repeatable 마이그레이션
 --
--- Flyway가 파일 체크섬이 바뀔 때마다 다시 실행한다 — 콘텐츠팀이 이야기 문구·아이템·
--- 캐릭터 설정을 수정하고 앱을 재기동하면 그 변경이 반영된다. 새 파일(V3, V4…)을
+-- Flyway가 파일 체크섬이 바뀔 때마다 다시 실행한다 - 콘텐츠팀이 이야기 문구/아이템/
+-- 캐릭터 설정을 수정하고 앱을 재기동하면 그 변경이 반영된다. 새 파일(V3, V4...)을
 -- 만들 필요 없다.
 --
 -- 편집 규칙
---   · 행 수정      → 이 파일의 VALUES를 고친다. 다음 기동에서 upsert된다
---   · 행 추가      → 새 (id, ...) 를 VALUES에 덧붙인다
---   · 행 삭제      → 이 파일에서 지우고, FK가 걸린 데모/실사용 데이터가 있다면
+--   - 행 수정      -> 이 파일의 VALUES를 고친다. 다음 기동에서 upsert된다
+--   - 행 추가      -> 새 (id, ...) 를 VALUES에 덧붙인다
+--   - 행 삭제      -> 이 파일에서 지우고, FK가 걸린 데모 또는 실사용 데이터가 있다면
 --                    수동 DELETE + 정합성 확인이 필요하다 (upsert만으로는 삭제 안 됨)
 --
--- 담는 것: topics · stories · story_topics · story_scenes · characters · items (6종)
--- 안 담는 것: parents/children/sessions/보상 이력 등 — 데모 데이터는 R__2_seed_demo_data.sql
+-- 담는 것: topics / stories / story_topics / story_scenes / characters / items (6종)
+-- 안 담는 것: parents/children/sessions/보상 이력 등 - 데모 데이터는 R__2_seed_demo_data.sql
 --
 -- 실행 순서 (Flyway): 모든 V__ 완료 후 R__ 파일들이 알파벳순 실행
---   R__1_seed_content.sql (이 파일) → R__2_seed_demo_data.sql (데모)
+--   R__1_seed_content.sql (이 파일) -> R__2_seed_demo_data.sql (데모)
 --
 -- 원본 시드 문서의 확인 필요 값
--- · 콘텐츠 문서 문자열 ID(s_banggui_..., sc_banggui_01~09)는 uuid로 치환 (주석에 원본 병기)
--- · preferred_turns는 문서에 없어 제안값 (max_turns - 2)
--- · 대화1 target_elements의 'EXPRESSION'은 사고 요소 8종에 없어 시드 제외
+-- - 콘텐츠 문서 문자열 ID(s_banggui_..., sc_banggui_01~09)는 uuid로 치환 (주석에 원본 병기)
+-- - preferred_turns는 문서에 없어 제안값 (max_turns - 2)
+-- - 대화1 target_elements의 'EXPRESSION'은 사고 요소 8종에 없어 시드 제외
 -- ============================================================
 
 
 -- ------------------------------------------------------------
--- 1. topics — 이야기 주제 3종
+-- 1. topics - 이야기 주제 3종
 -- ------------------------------------------------------------
 insert into topics (id, name, display_order) values
     ('22222222-2222-2222-2222-000000000001', '다름',      1),
@@ -36,7 +36,7 @@ on conflict (id) do update set
     display_order = excluded.display_order;
 
 -- ------------------------------------------------------------
--- 2. stories — 방귀 뀌는 며느리 (원본 ID: s_banggui_daughter_in_law_001)
+-- 2. stories - 방귀 뀌는 며느리 (원본 ID: s_banggui_daughter_in_law_001)
 -- ------------------------------------------------------------
 insert into stories (id, title, summary, image_url, difficulty, estimated_minutes, post_activity_config, status) values
 (
@@ -74,10 +74,10 @@ insert into story_topics (story_id, topic_id) values
 on conflict (story_id, topic_id) do nothing;
 
 -- ------------------------------------------------------------
--- 3. story_scenes — 9개 장면 (도입1 + 전개4 + 대화4)
+-- 3. story_scenes - 9개 장면 (도입1 + 전개4 + 대화4)
 -- ------------------------------------------------------------
 
--- 장면 1. 도입 (원본 ID: sc_banggui_01) — 전체 화면 스토리
+-- 장면 1. 도입 (원본 ID: sc_banggui_01) - 전체 화면 스토리
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
 (
     '33333333-3333-3333-3333-000000000001',
@@ -93,7 +93,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     image_url = excluded.image_url;
 
--- 장면 2. 전개1 (sc_banggui_02) — 말 못할 사정이 있는 며느리
+-- 장면 2. 전개1 (sc_banggui_02) - 말 못할 사정이 있는 며느리
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
 (
     '33333333-3333-3333-3333-000000000002',
@@ -109,9 +109,9 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     image_url = excluded.image_url;
 
--- 장면 3. 대화1 (sc_banggui_03) — 방귀쟁이 며느리와의 대화
+-- 장면 3. 대화1 (sc_banggui_03) - 방귀쟁이 며느리와의 대화
 -- 문서 target_elements: PERSPECTIVE, EMOTION, EXPRESSION, SOLUTION
--- ※ EXPRESSION은 사고 요소 8종에 없는 미정의 값 → 제외하고 시드. 콘텐츠팀 확인 필요.
+-- 참고: EXPRESSION은 사고 요소 8종에 없는 미정의 값 -> 제외하고 시드. 콘텐츠팀 확인 필요.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_persona, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -130,7 +130,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '며느리의 걱정에 공감하며, 며느리의 마음과 상황에 대한 자기 생각을 표현하고 해결 방법을 함께 생각한다.',
     array['PERSPECTIVE', 'EMOTION', 'SOLUTION'],
     '{
-      "PERSPECTIVE": "며느리나 가족의 상황·입장을 헤아려 말함 (예: 가족들도 놀라긴 하겠지만 이해해 줄 거예요)",
+      "PERSPECTIVE": "며느리나 가족의 상황/입장을 헤아려 말함 (예: 가족들도 놀라긴 하겠지만 이해해 줄 거예요)",
       "EMOTION": "며느리의 감정이나 그 상황에 대한 자신의 감정을 직접 표현함 (예: 많이 힘들겠어요, 답답할 것 같아요)",
       "SOLUTION": "며느리가 할 수 있는 구체적인 행동을 제안함 (예: 가족들에게 솔직하게 말해 보세요)"
     }'::jsonb,
@@ -159,7 +159,7 @@ on conflict (id) do update set
     preferred_turns = excluded.preferred_turns,
     max_turns = excluded.max_turns;
 
--- 장면 4. 전개2 (sc_banggui_04) — 며느리의 엄청난 방귀
+-- 장면 4. 전개2 (sc_banggui_04) - 며느리의 엄청난 방귀
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
 (
     '33333333-3333-3333-3333-000000000004',
@@ -175,7 +175,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     image_url = excluded.image_url;
 
--- 장면 5. 대화2 (sc_banggui_05) — 시아버지와의 대화
+-- 장면 5. 대화2 (sc_banggui_05) - 시아버지와의 대화
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_persona, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -194,7 +194,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '시아버지의 관점을 이해하면서도, 며느리가 그렇게 행동한 이유를 설명하고 며느리를 이해해 달라고 요청한다.',
     array['PERSPECTIVE', 'EMPATHY', 'REASON', 'REQUEST'],
     '{
-      "PERSPECTIVE": "시아버지 또는 며느리의 상황·입장을 고려해 말함 (예: 며느리도 일부러 그런 게 아니에요)",
+      "PERSPECTIVE": "시아버지 또는 며느리의 상황/입장을 고려해 말함 (예: 며느리도 일부러 그런 게 아니에요)",
       "EMPATHY": "며느리의 부끄럽고 속상한 마음을 이해하고 배려함 (예: 며느리가 얼마나 창피하고 속상하겠어요)",
       "REASON": "며느리가 방귀를 오래 참았던 까닭이나 크게 터진 까닭을 설명함 (예: 오래 참아서 그런 거예요)",
       "REQUEST": "시아버지에게 며느리를 이해해 달라고 구체적으로 요청함 (예: 한 번만 며느리 이야기를 들어 주세요)"
@@ -225,7 +225,7 @@ on conflict (id) do update set
     preferred_turns = excluded.preferred_turns,
     max_turns = excluded.max_turns;
 
--- 장면 6. 전개3 (sc_banggui_06) — 높은 배나무를 만난 시아버지와 며느리
+-- 장면 6. 전개3 (sc_banggui_06) - 높은 배나무를 만난 시아버지와 며느리
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
 (
     '33333333-3333-3333-3333-000000000006',
@@ -241,7 +241,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     image_url = excluded.image_url;
 
--- 장면 7. 대화3 (sc_banggui_07) — 마을 이장과의 대화 + 미션1
+-- 장면 7. 대화3 (sc_banggui_07) - 마을 이장과의 대화 + 미션1
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_persona, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -305,7 +305,7 @@ on conflict (id) do update set
     preferred_turns = excluded.preferred_turns,
     max_turns = excluded.max_turns;
 
--- 장면 8. 전개4 (sc_banggui_08) — 후회하고 사과하는 시아버지
+-- 장면 8. 전개4 (sc_banggui_08) - 후회하고 사과하는 시아버지
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
 (
     '33333333-3333-3333-3333-000000000008',
@@ -321,7 +321,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     image_url = excluded.image_url;
 
--- 장면 9. 대화4 (sc_banggui_09) — 방귀쟁이 며느리와의 마지막 대화 + 미션2
+-- 장면 9. 대화4 (sc_banggui_09) - 방귀쟁이 며느리와의 마지막 대화 + 미션2
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_persona, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -391,11 +391,11 @@ on conflict (id) do update set
     max_turns = excluded.max_turns;
 
 -- ------------------------------------------------------------
--- 4. characters — 캐릭터 레지스트리 (3명)
+-- 4. characters - 캐릭터 레지스트리 (3명)
 --    장면에 흩어져 있던 캐릭터 속성을 모은다. personality는 장면과 무관한 공통 성격이고,
 --    장면마다 달라지는 부분은 story_scenes.scene_stance에 둔다.
 --
---    story_scenes.character_persona는 기존 파이프라인 호환을 위해 그대로 남겨 둔다 —
+--    story_scenes.character_persona는 기존 파이프라인 호환을 위해 그대로 남겨 둔다  - 
 --    지금은 personality + scene_stance와 내용이 겹친다.
 --    TODO: 캐릭터 LLM 프롬프트를 characters + scene_stance로 옮기면 character_persona를 없앤다.
 -- ------------------------------------------------------------
@@ -446,8 +446,8 @@ on conflict (id) do update set
     expression_keys = excluded.expression_keys;
 
 -- ------------------------------------------------------------
--- 5. story_scenes 보강 — 캐릭터 참조 · 장면별 입장 · STT 고유명사 힌트
---    scene_stance는 기존 character_persona의 "이 장면에서는 …" 부분을 옮긴 것이다.
+-- 5. story_scenes 보강 - 캐릭터 참조 / 장면별 입장 / STT 고유명사 힌트
+--    scene_stance는 기존 character_persona의 "이 장면에서는 ..." 부분을 옮긴 것이다.
 --    proper_nouns는 아동 발화에서 오인식이 잦은 낱말이라 STT 디코딩 힌트로 넘긴다.
 -- ------------------------------------------------------------
 update story_scenes set
@@ -481,16 +481,16 @@ update story_scenes set proper_nouns = array['며느리', '방귀', '이장', '�
 where id = '33333333-3333-3333-3333-000000000007';
 
 -- ------------------------------------------------------------
--- 6. items — 꾸미기 아이템 마스터 16종
---    가격: 소품 3 / 중형 5 / 대형·동물 10
+-- 6. items - 꾸미기 아이템 마스터 16종
+--    가격: 소품 3 / 중형 5 / 대형/동물 10
 --    해금: ALWAYS 12 / STARDUST_CUMULATIVE 3 / STORY_COMPLETE 1
 --
---    토끼·거북이는 후속 이야기(토끼전 등) 완주 보상으로 예약된 것이지만,
---    아직 그 이야기가 없어 unlock_story_id를 채울 수 없다 —
+--    토끼/거북이는 후속 이야기(토끼전 등) 완주 보상으로 예약된 것이지만,
+--    아직 그 이야기가 없어 unlock_story_id를 채울 수 없다  - 
 --    스키마 check가 STORY_COMPLETE에 대상 이야기를 요구하므로 누적 해금으로 둔다.
 --    TODO: 후속 이야기가 들어오면 STORY_COMPLETE + unlock_story_id로 바꾼다.
 --
---    model_url·thumbnail_url은 Kenney CC0 에셋 업로드 후 실제 경로로 교체한다(플레이스홀더).
+--    model_url/thumbnail_url은 Kenney CC0 에셋 업로드 후 실제 경로로 교체한다(플레이스홀더).
 -- ------------------------------------------------------------
 insert into items (id, name, category, price, unlock_type, unlock_story_id, unlock_stardust_total,
                    model_url, thumbnail_url, display_order) values

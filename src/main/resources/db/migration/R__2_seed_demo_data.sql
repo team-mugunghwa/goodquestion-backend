@@ -1,10 +1,10 @@
 -- ============================================================
--- 굿퀘스천 데모 데이터 — Repeatable 마이그레이션 (개발·시연 전용)
+-- 굿퀘스천 데모 데이터 - Repeatable 마이그레이션 (개발/시연 전용)
 --
--- ⚠ TODO(배포 전): 이 파일을 삭제하거나 dev 프로파일로 옮긴다.
+-- TODO(배포 전): 이 파일을 삭제하거나 dev 프로파일로 옮긴다.
 --   운영 DB에도 그대로 적용되면 demo@goodquestion.kr 계정과 가짜 진행 기록이 들어간다.
 --
--- 모든 INSERT에 ON CONFLICT DO NOTHING이 붙어 있어 재실행 시 기존 행을 덮지 않는다 —
+-- 모든 INSERT에 ON CONFLICT DO NOTHING이 붙어 있어 재실행 시 기존 행을 덮지 않는다  - 
 -- 데모 아이가 실제로 아이템을 사거나 배치를 바꾸어도 그 상태가 보존된다.
 -- 새 행(예: 데모 아이 한 명 추가)만 다음 기동에서 들어간다.
 --
@@ -14,12 +14,12 @@
 --   password_hash는 BCryptPasswordEncoder 기본 설정(강도 10)으로 생성해 검증한 값이다.
 --
 -- 실행 순서
---   R__1_seed_content.sql (콘텐츠) → 이 파일 (데모가 콘텐츠를 FK 참조하므로 순서 중요)
+--   R__1_seed_content.sql (콘텐츠) -> 이 파일 (데모가 콘텐츠를 FK 참조하므로 순서 중요)
 -- ============================================================
 
 
 -- ------------------------------------------------------------
--- 7. parents — 보호자 2명 (이메일 가입 1 · 카카오 1)
+-- 7. parents - 보호자 2명 (이메일 가입 1 / 카카오 1)
 --    provider=LOCAL은 email+password_hash로, KAKAO는 provider_id로 식별한다.
 -- ------------------------------------------------------------
 insert into parents (id, email, password_hash, provider, provider_id, name) values
@@ -36,9 +36,9 @@ insert into parents (id, email, password_hash, provider, provider_id, name) valu
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 8. children — 아이 3명
---    아이 생성 API는 planets·stardust_wallets를 이벤트로 함께 만들지만,
---    시드는 API를 거치지 않으므로 아래 8·12번에서 직접 넣는다.
+-- 8. children - 아이 3명
+--    아이 생성 API는 planets/stardust_wallets를 이벤트로 함께 만들지만,
+--    시드는 API를 거치지 않으므로 아래 8/12번에서 직접 넣는다.
 -- ------------------------------------------------------------
 insert into children (id, parent_id, name, birth_year) values
 ('aaaaaaaa-aaaa-aaaa-aaaa-000000000001', '99999999-9999-9999-9999-000000000001', '지우', 2018),
@@ -47,8 +47,8 @@ insert into children (id, parent_id, name, birth_year) values
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 9. child_consents — 아동 개인정보 처리 동의
---    지우: 유효 / 하준: 유효 / 서연: 철회됨(withdrawn_at) — 세션 생성이 막히는 경우 확인용
+-- 9. child_consents - 아동 개인정보 처리 동의
+--    지우: 유효 / 하준: 유효 / 서연: 철회됨(withdrawn_at) - 세션 생성이 막히는 경우 확인용
 -- ------------------------------------------------------------
 insert into child_consents (id, child_id, consent_version, verification_method, consented_at, withdrawn_at) values
 ('11110000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001',
@@ -60,9 +60,9 @@ insert into child_consents (id, child_id, consent_version, verification_method, 
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 10. refresh_tokens — 리프레시 토큰
+-- 10. refresh_tokens - 리프레시 토큰
 --    원문은 저장하지 않고 해시만 둔다. 아래 값은 실제 발급 토큰의 해시가 아니라
---    자리 확인용이라 이 행으로는 재발급이 되지 않는다 — 실제 값은 로그인으로만 생긴다.
+--    자리 확인용이라 이 행으로는 재발급이 되지 않는다 - 실제 값은 로그인으로만 생긴다.
 --    유효 1건 + 로그아웃으로 무효화된 1건.
 -- ------------------------------------------------------------
 insert into refresh_tokens (id, parent_id, token_hash, expires_at, revoked_at) values
@@ -75,9 +75,9 @@ insert into refresh_tokens (id, parent_id, token_hash, expires_at, revoked_at) v
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 11. story_sessions — 세션 3개
---    A 완주 세션(리포트·후속 활동·별가루 지급까지 완결)
---    B 대화 진행 중(장면5, 유도 1회 사용 — 장면 보너스 대상 아님)
+-- 11. story_sessions - 세션 3개
+--    A 완주 세션(리포트/후속 활동/별가루 지급까지 완결)
+--    B 대화 진행 중(장면5, 유도 1회 사용 - 장면 보너스 대상 아님)
 --    C 도입 장면만 본 상태
 -- ------------------------------------------------------------
 insert into story_sessions (
@@ -133,15 +133,15 @@ insert into story_sessions (
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 12. messages — 대화 기록
+-- 12. messages - 대화 기록
 --    turn_order는 세션 안에서 유일하다(장면이 바뀌어도 이어진다).
---    도입·전개 내레이션은 저장하지 않는다 — 콘텐츠에서 재생한다.
+--    도입/전개 내레이션은 저장하지 않는다 - 콘텐츠에서 재생한다.
 --    stt_confidence는 아이 발화에만 있고, 낮은 신뢰 1건을 섞어 뒀다.
 -- ------------------------------------------------------------
 insert into messages (id, session_id, scene_id, speaker_type, turn_order, text,
                       stt_raw_text, stt_confidence, stt_low_confidence, stt_retry_count,
                       character_emotion, created_at) values
--- 세션 A · 장면3 (며느리)
+-- 세션 A / 장면3 (며느리)
 ('cccccccc-cccc-cccc-cccc-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
  '33333333-3333-3333-3333-000000000003', 'CHARACTER', 1,
  '지우야, 내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
@@ -164,7 +164,7 @@ insert into messages (id, session_id, scene_id, speaker_type, turn_order, text,
  '33333333-3333-3333-3333-000000000003', 'CHARACTER', 5,
  '그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.',
  null, null, false, 0, 'NEUTRAL', now() - interval '3 days' + interval '4 minutes'),
--- 세션 A · 장면9 (며느리, 마지막 대화)
+-- 세션 A / 장면9 (며느리, 마지막 대화)
 ('cccccccc-cccc-cccc-cccc-000000000006', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
  '33333333-3333-3333-3333-000000000009', 'CHARACTER', 6,
  '지우 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어. 이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?',
@@ -178,7 +178,7 @@ insert into messages (id, session_id, scene_id, speaker_type, turn_order, text,
  '33333333-3333-3333-3333-000000000009', 'CHARACTER', 8,
  '이제는 부끄러워하며 숨기지 않고, 조심해서 좋은 일에 써 볼게.',
  null, null, false, 0, 'RELIEVED', now() - interval '3 days' + interval '20 minutes'),
--- 세션 B · 장면5 (시아버지, 진행 중 — 마지막 응답이 유도 모드)
+-- 세션 B / 장면5 (시아버지, 진행 중 - 마지막 응답이 유도 모드)
 ('cccccccc-cccc-cccc-cccc-000000000009', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002',
  '33333333-3333-3333-3333-000000000005', 'CHARACTER', 1,
  '아이고, 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못 살겠다! 그렇지 않니?',
@@ -195,9 +195,9 @@ insert into messages (id, session_id, scene_id, speaker_type, turn_order, text,
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 13. utterance_analyses — 아이 발화 분석 (CHILD 메시지 1건당 1건)
+-- 13. utterance_analyses - 아이 발화 분석 (CHILD 메시지 1건당 1건)
 --    detected_elements는 서버 후처리를 통과한 요소만 담는다.
---    dropped_evidence는 근거 문구가 발화 원문에 없어 폐기된 것 — 프롬프트 개선 추적용.
+--    dropped_evidence는 근거 문구가 발화 원문에 없어 폐기된 것 - 프롬프트 개선 추적용.
 -- ------------------------------------------------------------
 insert into utterance_analyses (id, message_id, child_intent, main_point, detected_elements,
                                 utterance_validity, analysis_version, model_id, dropped_evidence) values
@@ -223,7 +223,7 @@ insert into utterance_analyses (id, message_id, child_intent, main_point, detect
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 14. planets / stardust_wallets — 아이당 1개씩
+-- 14. planets / stardust_wallets - 아이당 1개씩
 --    운영에서는 아이 생성 시 ChildCreatedEvent로 함께 만들어진다.
 -- ------------------------------------------------------------
 insert into planets (id, child_id, name, tutorial_completed) values
@@ -240,15 +240,15 @@ insert into stardust_wallets (id, child_id, balance, total_earned) values
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 15. stardust_transactions — 별가루 증감 이력
---    장면 보너스가 한 세션에 2건 들어간다 — scene_id를 나눠 넣어야 멱등 인덱스에 걸리지 않는다.
+-- 15. stardust_transactions - 별가루 증감 이력
+--    장면 보너스가 한 세션에 2건 들어간다 - scene_id를 나눠 넣어야 멱등 인덱스에 걸리지 않는다.
 --    acknowledged=false인 행이 있으면 행성 진입 시 떨어지는 연출을 재생한다.
 -- ------------------------------------------------------------
 insert into stardust_transactions (id, wallet_id, amount, reason, session_id, scene_id, item_id, acknowledged, created_at) values
 -- 완주 보상 (세션 단위, scene_id 없음)
 ('a1110000-0000-0000-0000-000000000001', 'ffff0000-0000-0000-0000-000000000001',
   3, 'STORY_COMPLETED', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001', null, null, true, now() - interval '3 days'),
--- 장면 보너스 2건 (유도 없이 목표 통과한 장면 3·9)
+-- 장면 보너스 2건 (유도 없이 목표 통과한 장면 3/9)
 ('a1110000-0000-0000-0000-000000000002', 'ffff0000-0000-0000-0000-000000000001',
   1, 'SCENE_BONUS', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001', '33333333-3333-3333-3333-000000000003', null, true, now() - interval '3 days'),
 ('a1110000-0000-0000-0000-000000000003', 'ffff0000-0000-0000-0000-000000000001',
@@ -266,7 +266,7 @@ insert into stardust_transactions (id, wallet_id, amount, reason, session_id, sc
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 16. child_story_play_counts — 이야기별 완주 횟수
+-- 16. child_story_play_counts - 이야기별 완주 횟수
 --     지우는 방귀 이야기를 1회 완주했다. 다음 완주는 절반(1), 3회차부터는 지급 없음.
 -- ------------------------------------------------------------
 insert into child_story_play_counts (child_id, story_id, play_count) values
@@ -274,9 +274,9 @@ insert into child_story_play_counts (child_id, story_id, play_count) values
 on conflict (child_id, story_id) do nothing;
 
 -- ------------------------------------------------------------
--- 17. child_items / planet_items — 보유 아이템과 배치
+-- 17. child_items / planet_items - 보유 아이템과 배치
 --     좌표는 프론트와 같은 축좌표(q, r). 원점 기준이라 음수가 나온다.
---     배치되지 않은 child_items가 보관함이다 — 풀 1개가 보관함에 남아 있다.
+--     배치되지 않은 child_items가 보관함이다 - 풀 1개가 보관함에 남아 있다.
 -- ------------------------------------------------------------
 insert into child_items (id, child_id, item_id, acquired_at) values
 ('b2220000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001',
@@ -295,7 +295,7 @@ insert into planet_items (id, planet_id, child_item_id, placed_q, placed_r) valu
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 18. mission_results — 미션 결과 (세션·미션당 1건)
+-- 18. mission_results - 미션 결과 (세션/미션당 1건)
 -- ------------------------------------------------------------
 insert into mission_results (id, session_id, scene_id, mission_id, mission_type, result) values
 ('d4440000-0000-0000-0000-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
@@ -307,8 +307,8 @@ insert into mission_results (id, session_id, scene_id, mission_id, mission_type,
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 19. post_activity_results — 말하기 후 활동 (세션당 1건)
---     card_order_seed로 카드 셔플을 고정한다 — 재진입해도 같은 순서가 나온다.
+-- 19. post_activity_results - 말하기 후 활동 (세션당 1건)
+--     card_order_seed로 카드 셔플을 고정한다 - 재진입해도 같은 순서가 나온다.
 --     attempt_count=2는 한 번 틀린 뒤 맞혔다는 뜻이다.
 -- ------------------------------------------------------------
 insert into post_activity_results (id, session_id, card_order_seed, submitted_order,
@@ -322,7 +322,7 @@ insert into post_activity_results (id, session_id, card_order_seed, submitted_or
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 20. reports — 보호자 리포트 (세션당 1건)
+-- 20. reports - 보호자 리포트 (세션당 1건)
 --     대표 발화는 저장하지 않고 조회 시 messages에서 구성한다.
 -- ------------------------------------------------------------
 insert into reports (id, session_id, summary, strengths, next_focus) values
@@ -334,8 +334,8 @@ insert into reports (id, session_id, summary, strengths, next_focus) values
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 21. wordbook — 단어장
---     meaning이 비어 있으면 서버가 LLM으로 아이 수준의 뜻을 채운다 — 미채움 상태 1건을 둔다.
+-- 21. wordbook - 단어장
+--     meaning이 비어 있으면 서버가 LLM으로 아이 수준의 뜻을 채운다 - 미채움 상태 1건을 둔다.
 -- ------------------------------------------------------------
 insert into wordbook (id, child_id, word, meaning, example_sentence, entry_type, source_scene_id) values
 ('17770000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001',
@@ -353,11 +353,11 @@ insert into wordbook (id, child_id, word, meaning, example_sentence, entry_type,
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 22. scene_audio — TTS 사전 생성 음성 13건
---     내레이션 5(도입·전개1~4) + 고정 첫·마지막 대사 8 = 13.
+-- 22. scene_audio - TTS 사전 생성 음성 13건
+--     내레이션 5(도입/전개1~4) + 고정 첫/마지막 대사 8 = 13.
 --
---     ⚠ engine·voice·duration_ms·sentence_timings는 PLACEHOLDER다.
---       이 값들은 실제 렌더 산출물의 메타데이터라 만들어 낼 수 없다 —
+--     engine/voice/duration_ms/sentence_timings는 PLACEHOLDER다.
+--       이 값들은 실제 렌더 산출물의 메타데이터라 만들어 낼 수 없다  - 
 --       TTS초안/{chirp3,gemini}/manifest.json의 실측값으로 반드시 교체한다.
 --
 --     text_hash만은 진짜다. 렌더 원본 텍스트에서 그대로 계산하므로,
