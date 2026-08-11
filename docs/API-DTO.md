@@ -263,9 +263,9 @@
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `accessToken` | String | |
+| `accessToken` | String | 이후 요청의 `Authorization: Bearer` 헤더에 담는다 |
 | `refreshToken` | String | **현재 항상 null** — 회전 정책 미구현 |
-| `accessTokenExpiresIn` | long | 초 |
+| `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 7일 |
 
 #### `AuthResponse` / `SocialAuthResponse`
 
@@ -273,8 +273,8 @@
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `tokens` | `TokenResponse` | |
-| `parent` | `ParentResponse` | |
+| `tokens` | `TokenResponse` | 발급된 토큰 묶음. 별도 로그인 없이 바로 쓴다 |
+| `parent` | `ParentResponse` | 가입 또는 로그인한 보호자 프로필 |
 | `isNewUser` | boolean | **`SocialAuthResponse`에만** — 최초 가입이면 true |
 
 #### `ParentResponse`
@@ -283,9 +283,9 @@
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `id` | UUID | |
+| `id` | UUID | 보호자 식별자 |
 | `email` | String | 소셜 전용 계정은 null |
-| `name` | String | |
+| `name` | String | 보호자 이름 |
 | `provider` | `AuthProvider` | **소셜일 때만 값.** 이메일 계정은 null |
 
 DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `LOCAL`을 null로 바꿔 내린다. 클라이언트는 "값이 있으면 소셜"로만 판단하면 된다.
@@ -319,11 +319,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `id` | UUID | |
-| `name` | String | |
-| `birthYear` | short | |
+| `id` | UUID | 아이 식별자 |
+| `name` | String | 아이 이름. 고정 대사의 `ㅇㅇ` 자리에 치환된다 |
+| `birthYear` | short | 출생연도 |
 | `age` | int | **저장하지 않는다** — 현재연도 − 출생연도 |
-| `consentStatus` | `ConsentStatus` | |
+| `consentStatus` | `ConsentStatus` | `VALID`/`NONE`/`WITHDRAWN` — 목록의 동의 뱃지용 파생값 |
 
 #### `ConsentCreateRequest`
 
@@ -340,8 +340,10 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `id` `consentVersion` `consentedAt` | | |
-| `withdrawnAt` | OffsetDateTime | null이면 유효 |
+| `id` | UUID | 동의 식별자 |
+| `consentVersion` | String | 동의한 약관 버전 (예: `mvp_v1`) |
+| `consentedAt` | OffsetDateTime | 동의한 시각 |
+| `withdrawnAt` | OffsetDateTime | 철회 시각. null이면 유효 |
 
 #### `ConsentStatusResponse`
 
@@ -364,7 +366,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 |---|---|---|
 | `inProgressSession` | `SessionSummaryResponse` | 없으면 null |
 | `recommendedStories` | `List<StoryCardResponse>` | 현재는 PUBLISHED 최신 3개 |
-| `planetWidget` | `PlanetWidget` | |
+| `planetWidget` | `PlanetWidget` | 홈에 띄우는 행성 요약. 별가루 잔액과 배치 수 |
 
 **`PlanetWidget`**: `stardustBalance` int, `placedCount` int, `hasUnacknowledged` boolean
 
@@ -408,11 +410,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `sceneId` | UUID | |
-| `sceneOrder` | short | |
+| `sceneId` | UUID | 장면 식별자 |
+| `sceneOrder` | short | 이야기 안에서의 장면 순서 |
 | `sceneType` | `SceneType` | `STORY` / `DIALOGUE` |
 | `narrationSentences` | `List<String>` | STORY만. DIALOGUE는 빈 배열 |
-| `imageUrl` | String | |
+| `imageUrl` | String | 장면 배경 이미지 |
 | `characterName` | String | DIALOGUE만 |
 | `maxTurns` | Short | DIALOGUE만 — 남은 턴 UI |
 
@@ -450,13 +452,13 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `sessionId` `childId` `storyId` | UUID | |
+| `sessionId` `childId` `storyId` | UUID | 세션과 그 세션이 물고 있는 아이·이야기 식별자 |
 | `status` | `SessionStatus` | `IN_PROGRESS`/`POST_ACTIVITY`/`COMPLETED`/`STOPPED` |
 | `currentScene` | `SceneRef` | `{sceneId, sceneOrder, sceneType}` — 식별 정보만 |
 | `phase` | `PlayPhase` | `STORY`/`DIALOGUE`/`POST_ACTIVITY`/`ENDED` |
-| `progress` | `ProgressResponse` | |
-| `sceneGoalMet` | boolean | |
-| `lastActivityAt` | OffsetDateTime | |
+| `progress` | `ProgressResponse` | 현재 장면의 누적 진행 상태 |
+| `sceneGoalMet` | boolean | 현재 장면의 목표 요소를 다 채웠는지 |
+| `lastActivityAt` | OffsetDateTime | 마지막으로 상태가 바뀐 시각. 이어하기 카드 정렬에 쓴다 |
 
 **`phase`는 저장값이 아니다.** `status` + 현재 장면 유형에서 파생한다. 프론트가 화면을 고르는 단일 근거라 서버가 계산해 내린다.
 
@@ -469,7 +471,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `mode` | `ResponseMode` | `NORMAL`/`GUIDED`/`CLOSING` |
 | `accumulatedElements` | `List<ThinkingElement>` | 현재 장면 누적 |
 | `missingElements` | `List<ThinkingElement>` | **저장하지 않고 계산** (목표 − 누적) |
-| `turnCount` `maxTurns` | int | |
+| `turnCount` `maxTurns` | int | 현재 장면에서 아이가 말한 횟수와 그 장면의 최대 대화 범위 |
 | `guidanceTarget` | `ThinkingElement` | GUIDED일 때만 |
 
 #### `SessionResumeResponse`
@@ -492,13 +494,13 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `messageId` | UUID | |
+| `messageId` | UUID | 메시지 식별자 |
 | `speakerType` | `SpeakerType` | `CHILD`/`CHARACTER`/`SYSTEM` |
 | `turnOrder` | int | 세션 안에서 유일. 장면이 바뀌어도 이어진다 |
 | `text` | String | 이름 치환이 끝난 상태 |
 | `sttLowConfidence` | boolean | **아이 발화만 의미 있다** |
 | `characterEmotion` | `CharacterEmotion` | 캐릭터 발화만 |
-| `createdAt` | OffsetDateTime | |
+| `createdAt` | OffsetDateTime | 발화가 기록된 시각 |
 
 `sttConfidence` 원값은 내부 지표라 내리지 않는다. 화면은 "미덥지 않았다"는 사실만 알면 다시 말하기를 안내할 수 있다.
 
@@ -607,9 +609,9 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `missionId` | String | |
+| `missionId` | String | 장면 `mission_config`에 정의된 미션 키. 결과 제출 경로에 그대로 쓴다 |
 | `missionType` | `MissionType` | `PROBLEM_SOLVING` / `PERSPECTIVE_SHIFT` |
-| `title` `description` | String | |
+| `title` `description` | String | 미션 오버레이에 띄우는 제목과 안내 문구 |
 | `payload` | `Payload` | `{questions, cards}` — **유형에 따라 한쪽만 값이 있다** |
 
 - `Question`: `key`(`tool`/`safety`/`request`/`expectedResult`로 고정) · `label`
@@ -658,11 +660,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 |---|---|---|
 | `status` | String | 후속 활동 진행 단계 |
 | `cards` | `List<PostActivityStartResponse.Card>` | 시작 응답과 **같은 순서** (시드로 고정) |
-| `attemptCount` | short | |
+| `attemptCount` | short | 카드 순서를 제출한 횟수. 오답마다 늘어난다 |
 | `isOrderCorrect` | Boolean | 아직 제출 전이면 null |
 | `retellingKeywords` | `List<String>` | 카드 순서를 맞춘 뒤에만 값이 있다 |
-| `retellingText` | String | |
-| `completedAt` | OffsetDateTime | |
+| `retellingText` | String | 아이가 제출한 다시 이야기하기 원문. 제출 전이면 null |
+| `completedAt` | OffsetDateTime | 후속 활동을 마친 시각. 진행 중이면 null |
 
 **새로고침 복구용이다.** 앱을 껐다 켜도 이 응답 하나로 후속 활동 화면을 그대로 되살린다 — 카드 순서가 시드로 고정돼 있어 같은 화면이 나온다.
 
@@ -687,8 +689,8 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `sessionStatus` | String | |
-| `completedAt` | OffsetDateTime | |
+| `sessionStatus` | String | 처리 후 세션 상태. 정상 완료면 `COMPLETED` |
+| `completedAt` | OffsetDateTime | 세션을 완료 처리한 시각 |
 | `stardust` | `Stardust` | `{earned, breakdown, balance}` |
 | `unlockedItems` | `List<UnlockedItem>` | `{itemId, name, thumbnailUrl}` — 이번 완주로 열린 것 |
 
@@ -710,11 +712,13 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `id` `sessionId` `storyTitle` `summary` | | |
-| `strengths` | `List<ReportItem>` | `{element, comment}` |
-| `nextFocus` | `List<ReportItem>` | `{element, comment}` |
-| `representativeUtterances` | `List<RepresentativeUtterance>` | `{text, element}` |
-| `createdAt` | OffsetDateTime | |
+| `id` `sessionId` | UUID | 리포트 식별자와 대상 세션 |
+| `storyTitle` | String | 어떤 이야기를 한 회차인지 보여주는 제목 |
+| `summary` | String | 보호자에게 보여줄 전체 요약 문장 |
+| `strengths` | `List<ReportItem>` | `{element, comment}` — 이번 회차에 잘 보여준 요소 |
+| `nextFocus` | `List<ReportItem>` | `{element, comment}` — 다음에 연습하면 좋을 요소 |
+| `representativeUtterances` | `List<RepresentativeUtterance>` | `{text, element}` — 근거가 된 아이 발화 |
+| `createdAt` | OffsetDateTime | 리포트가 생성된 시각 |
 
 **`ReportItem`을 그대로 내린다.** 요소 코드만 내리면 화면에 "REASON"만 뜨고 왜 잘했는지가 사라진다 — 보호자에게 보여줄 문장이 `comment`에 있다.
 
@@ -730,11 +734,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 검증 | 설명 |
 |---|---|---|---|
-| `word` | String | `@NotBlank @Size(max=50)` | |
+| `word` | String | `@NotBlank @Size(max=50)` | 저장할 단어 |
 | `entryType` | `WordEntryType` | `@NotNull` | `UNKNOWN` / `FAVORITE` |
-| `sourceSceneId` | UUID | | |
+| `sourceSceneId` | UUID | | 단어가 나온 장면. 뜻 생성의 문맥으로 쓴다 |
 | `meaning` | String | | **없으면 서버가 LLM으로 생성** |
-| `exampleSentence` | String | | |
+| `exampleSentence` | String | | 이야기 속 예문. 없으면 뜻과 함께 서버가 생성 |
 
 같은 아이가 같은 단어를 또 저장하면 409 `DUPLICATE_WORD`.
 
@@ -754,8 +758,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `itemId` `name` `category` `price` `modelUrl` `thumbnailUrl` | | |
-| `unlocked` | boolean | |
+| `itemId` | UUID | 아이템 식별자. 구매 요청에 그대로 쓴다 |
+| `name` `category` | String, `ItemCategory` | 아이템 이름과 분류 |
+| `price` | int | 별가루 가격. 화면에는 아이콘 개수로 표시한다 |
+| `modelUrl` `thumbnailUrl` | String | 3D 모델과 목록 썸네일 |
+| `unlocked` | boolean | 해금 조건을 채웠는지. 서버가 아이 상태로 매번 계산한다 |
 | `silhouette` | boolean | 잠긴 아이템을 실루엣으로 표시할지 |
 | `unlockGuide` | `UnlockGuide` | `{storyTitle, storyImageUrl}` — 이야기 완주 해금만 |
 | `purchasable` | boolean | 해금 + 잔액 충분 |
@@ -810,9 +817,10 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `planetId` `name` | | |
-| `tutorialCompleted` | boolean | |
-| `placedItems` | `List<PlacementResponse>` | |
+| `planetId` | UUID | 행성 식별자. 아이 1명당 1개 |
+| `name` | String | 아이가 붙인 행성 이름 |
+| `tutorialCompleted` | boolean | 배치 튜토리얼을 봤는지. false면 첫 진입 안내를 띄운다 |
+| `placedItems` | `List<PlacementResponse>` | 지금 행성에 놓여 있는 아이템과 좌표 |
 | `progress` | `Progress` | `{placedCount, nextUnlock}` |
 
 - `NextUnlock`: `itemName` · `thumbnailUrl` · `conditionText` — 모두 해금되면 null
