@@ -4,7 +4,11 @@
 > 이 문서는 그 스키마를 관계 중심으로 다시 그린 것이다. 컬럼 하나하나의 제약과
 > 그렇게 정한 근거는 [DB설계.md](DB설계.md)를 본다.
 >
-> 스키마를 바꾸면(`V2`, `V3` 추가) 이 문서도 함께 고친다.
+> 스키마를 바꾸면(`V2`, `V3` 추가) 이 문서와 [erd-view.html](erd-view.html)을 함께 고친다.
+>
+> **그림이 코드로 보인다면** 에디터에 mermaid 렌더러가 없는 것이다. GitHub에서는 그냥
+> 보이고, 로컬에서는 [erd-view.html](erd-view.html)을 브라우저로 열면 된다.
+> IntelliJ는 Mermaid 플러그인, VS Code는 Markdown Preview Mermaid Support 확장이 필요하다.
 
 ---
 
