@@ -140,14 +140,40 @@ public class StorySession {
 
     // ----- 진행 판단·파이프라인에서 사용하는 상태 전이 메서드 -----
 
-    /** 아이 발화 1턴 반영 — TODO: 누적 요소·정체 카운터 갱신 로직 */
+    /**
+     * 아이 발화 1턴 반영.
+     *
+     * <p>진행 판단이 참조하는 누적 상태를 여기서만 갱신한다(진행-02).
+     * 누적 요소는 검증을 통과한 요소 이름만 담고, 부족 요소는 저장하지 않는다(진행-03·04).
+     */
     public void applyTurn(List<String> newElements, boolean lowInformation,
                           ResponseMode mode, ThinkingElement guidanceTarget) {
         this.currentChildTurnCount++;
-        this.lastDetectedElements = newElements;
+        this.lastDetectedElements = newElements != null ? new ArrayList<>(newElements) : new ArrayList<>();
         this.lastResponseMode = mode;
         this.lastGuidanceTarget = guidanceTarget;
-        // TODO: accumulatedElements 병합(중복 제거), turnsWithoutNewElement / consecutiveLowInformationTurns 갱신
+
+        // 이번 턴에 처음 확인된 요소가 있는지 — 이미 누적된 요소만 다시 나왔으면 진전이 없는 것으로 본다.
+        boolean hasNewElement = false;
+        for (String element : this.lastDetectedElements) {
+            if (!this.accumulatedElements.contains(element)) {
+                this.accumulatedElements.add(element);
+                hasNewElement = true;
+            }
+        }
+
+        // 신규 요소 없이 이어진 턴이 2회면 유도 대상이 된다(진행-10).
+        this.turnsWithoutNewElement = hasNewElement
+                ? 0 : (short) (this.turnsWithoutNewElement + 1);
+
+        // 저정보는 SHORT·UNCLEAR·OFF_TOPIC만 센다. PLAYFUL은 제외한다(진행-15).
+        this.consecutiveLowInformationTurns = lowInformation
+                ? (short) (this.consecutiveLowInformationTurns + 1) : 0;
+
+        if (mode == ResponseMode.GUIDED) {
+            this.guidedUsedInScene = true;
+        }
+
         touch();
     }
 
