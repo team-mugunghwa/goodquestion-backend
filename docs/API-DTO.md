@@ -108,12 +108,14 @@
 |---|---|---|---|---|
 | POST | `/api/children/{childId}/sessions` | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
 | GET | `/api/sessions/{sessionId}` | — | `SessionResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}/resume` | — | `SessionResumeResponse` | ⛔ |
+| GET | `/api/sessions/{sessionId}/resume` | — | `SessionResumeResponse` | ⚠️ `exposedMission`은 항상 null |
 | GET | `/api/sessions/{sessionId}/messages` | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
 | POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | — | `SceneAdvanceResponse` | ✅ |
 | POST | `/api/sessions/{sessionId}/stop` | — | 200 (본문 없음) | ✅ |
-| POST | `/api/sessions/{sessionId}/scenes/current/opening` | — | `SceneOpeningResponse` | ⛔ |
-| GET | `/api/sessions/{sessionId}/scenes/current` | — | `CurrentSceneResponse` | ⛔ |
+| POST | `/api/sessions/{sessionId}/scenes/current/opening` | — | `SceneOpeningResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}/scenes/current` | — | `CurrentSceneResponse` | ✅ |
+
+첫 대사 재생은 멱등이다. 세션 시작과 장면 전환이 이미 저장해 뒀으면 그 메시지를 그대로 돌려주고 `alreadyOpened=true`로 알린다.
 
 ### 2.8 대화(턴) — `/api/sessions/{sessionId}`
 
@@ -187,8 +189,10 @@
 
 | 메서드 | 경로 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|
-| POST | `/api/stt` | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ✅ |
-| POST | `/api/tts` | `SynthesisRequest` | `SynthesisResponse` | ✅ |
+| POST | `/api/stt` | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+| POST | `/api/tts` | `SynthesisRequest` | `SynthesisResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+
+두 건은 컨트롤러와 `SpeechService`까지 구현돼 있고 `DefaultSttClient`, `DefaultTtsClient`가 비어 있어 호출하면 501이 온다. 벤더를 정해 클라이언트만 채우면 그대로 동작한다.
 
 > **멀티파트 한도 주의** — 30초 16kHz mono WAV가 약 960KB인데 Spring Boot 기본 `max-file-size`가 1MB다. 아슬아슬하게 걸리므로 설정을 올려야 한다. (→ §6)
 
@@ -473,6 +477,8 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 > **사용처** — `GET /api/sessions/{sessionId}/resume` 응답
 
 `session`(`SessionResponse`) · `currentScene`(`SceneContentResponse`) · `messages`(`List<MessageResponse>`) · `lastCharacterMessage`(`CharacterMessageResponse`) · `exposedMission`(`MissionResponse`)
+
+`messages`는 세션 전체 내역이고 `lastCharacterMessage`는 마지막 캐릭터 발화다. `exposedMission`은 노출 판정이 `story.mission`에 있어 지금은 항상 null이다. 미션 구현 후 채워지며 응답 스키마는 바뀌지 않는다.
 
 #### `SessionSummaryResponse` — 홈 이어하기 카드
 
@@ -914,16 +920,27 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
 | 콘텐츠 | 4 | 4 | 0 | 0 |
-| 세션·장면 | 8 | 5 | 0 | 3 |
+| 세션·장면 | 8 | 7 | 1 | 0 |
 | 대화·미션 | 4 | 0 | 0 | 4 |
 | 후속 활동 | 4 | 0 | 0 | 4 |
 | 리포트 | 3 | 0 | 0 | 3 |
 | 단어장 | 4 | 2 | 0 | 2 |
 | 보상 | 11 | 0 | 0 | 11 |
-| 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **56** | **25** | **2** | **29** |
+| 음성 | 2 | 0 | 0 | 2 |
+| **합계** | **56** | **25** | **3** | **28** |
 
-⛔ 29건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 28건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+**2026-08-11 갱신분** (직전 집계는 25/2/29였다)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `GET /api/sessions/{sessionId}/resume` | ⛔ | ⚠️ | 구현됨. `exposedMission`만 미션 미구현이라 null |
+| `POST /api/sessions/{sessionId}/scenes/current/opening` | ⛔ | ✅ | 구현됨(멱등) |
+| `GET /api/sessions/{sessionId}/scenes/current` | ⛔ | ✅ | 구현됨 |
+| `POST /api/stt`, `POST /api/tts` | ✅ | ⛔ | 표기 오류 정정. 벤더 클라이언트가 비어 있어 호출하면 501이다 |
+
+세션·장면 8건이 모두 열리면서 **이야기 시작부터 장면 전환, 새로고침 복구까지 대화 턴을 제외한 재생 흐름 전체가 동작한다.** 남은 구멍은 `POST /utterances` 하나이고, 그 안의 누적 상태 갱신(`StorySession.applyTurn`)은 이미 구현돼 단위 테스트까지 있다.
 
 ---
 
