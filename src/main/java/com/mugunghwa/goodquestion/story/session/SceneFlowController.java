@@ -12,7 +12,7 @@ import java.util.UUID;
  * 장면 재생 흐름(장면-01~10).
  *
  * <p>스토리 재생 완료 보고(story-complete)는 세션 상태를 전이시키므로
- * {@link SessionController}에 이미 구현되어 있다. TODO: 아래 두 개 구현.
+ * {@link SessionController}에 이미 구현되어 있다.
  */
 @RestController
 @RequestMapping("/api/sessions/{sessionId}/scenes/current")
