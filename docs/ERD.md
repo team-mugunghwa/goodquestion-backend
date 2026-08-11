@@ -10,6 +10,10 @@
 
 ## 0. 읽는 법
 
+그림이 두 종류다. **전체 지도**는 도메인 묶음과 소유 방향만 보는 흐름도이고,
+**도메인별 그림**은 컬럼과 카디널리티까지 담은 ER 다이어그램이다. 아래 표기는
+도메인별 그림에 적용된다.
+
 **관계 표기**
 
 | 기호 | 뜻 |
@@ -38,52 +42,87 @@
 
 ## 1. 전체 지도
 
-24개 테이블의 관계만 그린 것이다. 컬럼은 아래 도메인별 그림에서 본다.
+24개 테이블이 어느 도메인에 속하고 무엇을 소유하는지만 본다. 컬럼과 카디널리티는
+아래 도메인별 그림에 있다.
 
 ```mermaid
-erDiagram
-    parents ||--o{ children : "보호자"
-    parents ||--o{ refresh_tokens : "발급"
+flowchart TB
+  subgraph U["사용자"]
+    direction LR
+    parents[parents] --> children[children]
+    parents --> refresh_tokens[refresh_tokens]
+    children --> child_consents[child_consents]
+  end
 
-    children ||--o{ child_consents : "동의"
-    children ||--o{ story_sessions : "진행"
-    children ||--o{ wordbook : "저장"
-    children ||--|| stardust_wallets : "지갑"
-    children ||--|| planets : "행성"
-    children ||--o{ child_items : "보유"
-    children ||--o{ child_story_play_counts : "완주 횟수"
-    children |o--o{ scene_audio : "아이별 음성"
+  subgraph C["콘텐츠"]
+    direction LR
+    topics[topics] --> story_topics[story_topics]
+    stories[stories] --> story_topics
+    stories --> characters[characters]
+    stories --> story_scenes[story_scenes]
+    characters -.-> story_scenes
+    story_scenes --> scene_audio[scene_audio]
+  end
 
-    stories ||--o{ story_topics : "분류"
-    topics ||--o{ story_topics : "분류"
-    stories ||--o{ characters : "등장"
-    stories ||--o{ story_scenes : "장면"
-    stories ||--o{ story_sessions : "재생"
-    stories ||--o{ child_story_play_counts : "완주 횟수"
-    stories |o--o{ items : "완주 해금"
+  subgraph R["런타임"]
+    direction LR
+    story_sessions[story_sessions] --> messages[messages]
+    story_sessions --> mission_results[mission_results]
+    messages --> utterance_analyses[utterance_analyses]
+  end
 
-    characters |o--o{ story_scenes : "화자"
-    story_scenes ||--o{ scene_audio : "사전 음성"
-    story_scenes |o--o{ story_sessions : "현재 장면"
-    story_scenes ||--o{ messages : "발생 장면"
-    story_scenes ||--o{ mission_results : "발생 장면"
-    story_scenes |o--o{ wordbook : "출처 장면"
-    story_scenes |o--o{ stardust_transactions : "보너스 장면"
+  subgraph L["학습"]
+    direction LR
+    post_activity_results[post_activity_results]
+    reports[reports]
+    wordbook[wordbook]
+  end
 
-    story_sessions ||--o{ messages : "대화"
-    story_sessions ||--o{ mission_results : "미션"
-    story_sessions ||--o| post_activity_results : "후속 활동"
-    story_sessions ||--o| reports : "리포트"
-    story_sessions |o--o{ stardust_transactions : "지급 근거"
+  subgraph W["보상"]
+    direction LR
+    stardust_wallets[stardust_wallets] --> stardust_transactions[stardust_transactions]
+    items[items] --> child_items[child_items]
+    planets[planets] --> planet_items[planet_items]
+    child_items --> planet_items
+    child_story_play_counts[child_story_play_counts]
+  end
 
-    messages ||--o| utterance_analyses : "분석"
-
-    stardust_wallets ||--o{ stardust_transactions : "이력"
-    items ||--o{ child_items : "구매"
-    items |o--o{ stardust_transactions : "구매 대상"
-    planets ||--o{ planet_items : "배치"
-    child_items ||--o| planet_items : "놓임"
+  children -->|child_id| story_sessions
+  stories -->|story_id| story_sessions
+  story_scenes -->|scene_id| messages
+  story_scenes -->|scene_id| mission_results
+  story_sessions -->|session_id| post_activity_results
+  story_sessions -->|session_id| reports
+  children -->|child_id| wordbook
+  children -->|child_id| stardust_wallets
+  children -->|child_id| planets
+  children -->|child_id| child_items
+  children -->|child_id| child_story_play_counts
+  stories -->|story_id| child_story_play_counts
 ```
+
+**선을 정리한 기준**
+
+FK 35개를 다 그리면 선이 엉켜 읽을 수 없다. 두 가지로 줄였다.
+
+1. 테이블을 도메인으로 묶었다. **상자 안 관계는 빠짐없이 그렸다.**
+2. 도메인을 넘는 참조는 **not null만** 그리고 화살표에 FK 컬럼 이름을 달았다.
+   화살표는 소유 방향이며 카디널리티는 표시하지 않는다.
+
+이 기준으로 생략되는 것은 아래 7개이고, 전부 nullable 크로스 도메인 참조다.
+없어도 소유 구조가 그대로 읽히고, 도메인별 그림에는 모두 그려져 있다.
+
+| 참조 | FK 컬럼 | 무엇인가 |
+| --- | --- | --- |
+| `story_sessions` -> `story_scenes` | `current_scene_id` | 세션이 지금 있는 장면 |
+| `wordbook` -> `story_scenes` | `source_scene_id` | 단어가 나온 장면 |
+| `items` -> `stories` | `unlock_story_id` | 완주로 해금되는 이야기 |
+| `stardust_transactions` -> `story_sessions` | `session_id` | 지급 근거 세션 |
+| `stardust_transactions` -> `story_scenes` | `scene_id` | 장면 보너스의 장면 |
+| `stardust_transactions` -> `items` | `item_id` | 구매 대상 아이템 |
+| `scene_audio` -> `children` | `child_id` | 아이별로 렌더한 음성 |
+
+점선으로 그린 `characters -> story_scenes`도 nullable이지만 도메인 안이라 남겼다.
 
 ---
 
@@ -312,7 +351,7 @@ erDiagram
 
 ## 5. 학습
 
-**이 문서를 읽는 사람이 담당하는 영역이다.** 세션이 끝난 뒤의 산출물을 다룬다.
+세션이 끝난 뒤의 산출물을 다룬다.
 
 ```mermaid
 erDiagram
