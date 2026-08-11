@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>굿퀘스천 ERD</title>
+<!--
+  테이블 관계를 그림으로 보는 페이지. 브라우저로 그냥 열면 된다(플러그인 불필요).
+  mermaid를 CDN에서 받으므로 처음 열 때 인터넷이 필요하다.
+
+  같은 내용이 docs/ERD.md에도 있다. 그쪽은 GitHub에서 바로 렌더링되는 정본이고
+  이 파일은 오프라인 열람과 공유용 사본이다. 스키마가 바뀌면 둘 다 고친다.
+-->
+</head>
+<body>
+<style>
+  :root {
+    --ink:        #101a21;
+    --paper:      #f2f6f7;
+    --surface:    #ffffff;
+    --sheet:      #fcfcfa;
+    --sheet-edge: #d8dfe2;
+    --text:       #16232b;
+    --text-muted: #5d6e79;
+    --rule:       #d5dee1;
+    --teal:       #0c6b74;
+    --teal-soft:  #e2eff0;
+    --amber:      #8f5405;
+    --amber-soft: #f8eedd;
+    --rust:       #9c3227;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI",
+            "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+
+    --measure: 63ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:        #e8eef1;
+      --paper:      #0d151a;
+      --surface:    #141f26;
+      --sheet:      #f7f8f4;
+      --sheet-edge: #2a3a44;
+      --text:       #dde6ea;
+      --text-muted: #93a6b1;
+      --rule:       #253440;
+      --teal:       #5cc9d3;
+      --teal-soft:  #10333a;
+      --amber:      #e8ab52;
+      --amber-soft: #2e2415;
+      --rust:       #ef9187;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink:        #e8eef1;
+    --paper:      #0d151a;
+    --surface:    #141f26;
+    --sheet:      #f7f8f4;
+    --sheet-edge: #2a3a44;
+    --text:       #dde6ea;
+    --text-muted: #93a6b1;
+    --rule:       #253440;
+    --teal:       #5cc9d3;
+    --teal-soft:  #10333a;
+    --amber:      #e8ab52;
+    --amber-soft: #2e2415;
+    --rust:       #ef9187;
+  }
+
+  :root[data-theme="light"] {
+    --ink:        #101a21;
+    --paper:      #f2f6f7;
+    --surface:    #ffffff;
+    --sheet:      #fcfcfa;
+    --sheet-edge: #d8dfe2;
+    --text:       #16232b;
+    --text-muted: #5d6e79;
+    --rule:       #d5dee1;
+    --teal:       #0c6b74;
+    --teal-soft:  #e2eff0;
+    --amber:      #8f5405;
+    --amber-soft: #f8eedd;
+    --rust:       #9c3227;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: 56px 0 28px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  .masthead p {
+    margin: 0;
+    max-width: var(--measure);
+    color: var(--text-muted);
+  }
+
+  .counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 6px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .counts div {
+    padding: 12px 22px 12px 0;
+    margin-right: 22px;
+    border-right: 1px solid var(--rule);
+  }
+
+  .counts div:last-child { border-right: 0; }
+
+  .counts b {
+    display: block;
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  .counts span {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- nav ---------- */
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+
+  .navscroll {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: thin;
+  }
+
+  nav a {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 5px 11px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  nav a:hover { background: var(--teal-soft); color: var(--teal); }
+  nav a:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+  /* ---------- sections ---------- */
+
+  section { padding-top: 52px; scroll-margin-top: 60px; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 2px 8px;
+  }
+
+  .tag.mine {
+    color: var(--amber);
+    border-color: var(--amber);
+    background: var(--amber-soft);
+  }
+
+  .lede {
+    max-width: var(--measure);
+    margin: 0 0 20px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- diagram sheet ---------- */
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--sheet-edge);
+    border-radius: 4px;
+    overflow-x: auto;
+    padding: 22px;
+  }
+
+  .sheet pre.mermaid {
+    margin: 0;
+    min-width: max-content;
+    background: none;
+  }
+
+  .sheet-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 8px 2px 0;
+  }
+
+  /* ---------- constraint notes ---------- */
+
+  .notes {
+    margin: 24px 0 0;
+    padding: 2px 0 2px 20px;
+    border-left: 3px solid var(--teal);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .notes.mine { border-left-color: var(--amber); }
+
+  .notes h3 {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+  }
+
+  .notes.mine h3 { color: var(--amber); }
+
+  .notes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .notes li { max-width: var(--measure); }
+  .notes p { margin: 0; max-width: var(--measure); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.855em;
+    background: var(--teal-soft);
+    color: var(--teal);
+    padding: 1px 5px;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+
+  .notes.mine code { background: var(--amber-soft); color: var(--amber); }
+
+  /* ---------- legend table ---------- */
+
+  .legend {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    font-size: 14.5px;
+  }
+
+  .legend th, .legend td {
+    text-align: left;
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  .legend th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .legend td:first-child {
+    font-family: var(--mono);
+    color: var(--teal);
+    white-space: nowrap;
+    width: 1%;
+    padding-right: 26px;
+  }
+
+  .table-scroll { overflow-x: auto; }
+  .legend.wide { min-width: 620px; }
+
+  .cols { display: grid; grid-template-columns: 1fr; gap: 0 44px; }
+
+  @media (min-width: 760px) { .cols { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- cascade tree ---------- */
+
+  .tree {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rust);
+    border-radius: 4px;
+    overflow-x: auto;
+    padding: 18px 20px;
+    margin: 0;
+  }
+
+  .tree pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text);
+    min-width: max-content;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 13.5px;
+    color: var(--text-muted);
+    max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">goodquestion-backend / V1__init_schema.sql</p>
+    <h1>굿퀘스천 ERD</h1>
+    <p>
+      스키마 원본은 <code>V1__init_schema.sql</code>이다. 이 페이지는 그 구조를 관계 중심으로
+      다시 그린 것이고, 컬럼 제약의 근거는 DB설계.md에 있다.
+    </p>
+    <div class="counts">
+      <div><b>24</b><span>테이블</span></div>
+      <div><b>35</b><span>외래키</span></div>
+      <div><b>5</b><span>도메인</span></div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="navscroll">
+      <a href="#legend">읽는 법</a>
+      <a href="#map">전체 지도</a>
+      <a href="#user">사용자와 인증</a>
+      <a href="#content">콘텐츠</a>
+      <a href="#runtime">런타임</a>
+      <a href="#learning">학습</a>
+      <a href="#reward">보상</a>
+      <a href="#cascade">삭제 전파</a>
+    </div>
+  </nav>
+
+  <section id="legend">
+    <div class="sec-head">
+      <h2>읽는 법</h2>
+      <span class="tag">표기법</span>
+    </div>
+    <p class="lede">
+      그림이 두 종류다. 전체 지도는 도메인 묶음과 소유 방향만 보는 흐름도이고,
+      도메인별 그림은 컬럼과 카디널리티까지 담은 ER 다이어그램이다.
+      아래 표기는 도메인별 그림에 적용된다.
+    </p>
+    <div class="cols">
+      <table class="legend">
+        <thead><tr><th>관계 기호</th><th>뜻</th></tr></thead>
+        <tbody>
+          <tr><td>||--o{</td><td>1 대 N</td></tr>
+          <tr><td>||--o|</td><td>1 대 0~1. 있으면 정확히 1건</td></tr>
+          <tr><td>||--||</td><td>1 대 1. 양쪽 모두 반드시 1건</td></tr>
+          <tr><td>|o--o{</td><td>0~1 대 N. FK가 nullable</td></tr>
+        </tbody>
+      </table>
+      <table class="legend">
+        <thead><tr><th>컬럼 표기</th><th>뜻</th></tr></thead>
+        <tbody>
+          <tr><td>PK</td><td>기본키</td></tr>
+          <tr><td>FK</td><td>외래키</td></tr>
+          <tr><td>UK</td><td>유니크 제약</td></tr>
+          <tr><td>text_array</td><td>배열 타입 <code>text[]</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="notes">
+      <h3>생략한 것</h3>
+      <p>
+        관계와 식별에 관여하는 컬럼 위주로 실었다. 나머지 컬럼과 check 제약은
+        스키마 원본을 본다.
+      </p>
+    </div>
+  </section>
+
+  <section id="map">
+    <div class="sec-head">
+      <h2>전체 지도</h2>
+      <span class="tag">24 tables</span>
+    </div>
+    <p class="lede">
+      24개 테이블이 어느 도메인에 속하고 무엇을 소유하는지만 본다. 컬럼과 카디널리티는
+      아래 도메인별 그림에 있다.
+    </p>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#6f8791","clusterBkg":"#f2f7f7","clusterBorder":"#c3d3d6"}} }%%
+flowchart TB
+  subgraph U["사용자"]
+    direction LR
+    parents[parents] --&gt; children[children]
+    parents --&gt; refresh_tokens[refresh_tokens]
+    children --&gt; child_consents[child_consents]
+  end
+
+  subgraph C["콘텐츠"]
+    direction LR
+    topics[topics] --&gt; story_topics[story_topics]
+    stories[stories] --&gt; story_topics
+    stories --&gt; characters[characters]
+    stories --&gt; story_scenes[story_scenes]
+    characters -.-&gt; story_scenes
+    story_scenes --&gt; scene_audio[scene_audio]
+  end
+
+  subgraph R["런타임"]
+    direction LR
+    story_sessions[story_sessions] --&gt; messages[messages]
+    story_sessions --&gt; mission_results[mission_results]
+    messages --&gt; utterance_analyses[utterance_analyses]
+  end
+
+  subgraph L["학습"]
+    direction LR
+    post_activity_results[post_activity_results]
+    reports[reports]
+    wordbook[wordbook]
+  end
+
+  subgraph W["보상"]
+    direction LR
+    stardust_wallets[stardust_wallets] --&gt; stardust_transactions[stardust_transactions]
+    items[items] --&gt; child_items[child_items]
+    planets[planets] --&gt; planet_items[planet_items]
+    child_items --&gt; planet_items
+    child_story_play_counts[child_story_play_counts]
+  end
+
+  children --&gt;|child_id| story_sessions
+  stories --&gt;|story_id| story_sessions
+  story_scenes --&gt;|scene_id| messages
+  story_scenes --&gt;|scene_id| mission_results
+  story_sessions --&gt;|session_id| post_activity_results
+  story_sessions --&gt;|session_id| reports
+  children --&gt;|child_id| wordbook
+  children --&gt;|child_id| stardust_wallets
+  children --&gt;|child_id| planets
+  children --&gt;|child_id| child_items
+  children --&gt;|child_id| child_story_play_counts
+  stories --&gt;|story_id| child_story_play_counts
+</pre>
+    </div>
+    <p class="sheet-note">그림이 잘리면 좌우로 스크롤한다</p>
+
+    <div class="notes">
+      <h3>선을 정리한 기준</h3>
+      <p>
+        FK 35개를 다 그리면 선이 엉켜 읽을 수 없다. 두 가지로 줄였다.
+      </p>
+      <ul>
+        <li>테이블을 도메인으로 묶었다. 상자 안 관계는 빠짐없이 그렸다.</li>
+        <li>
+          도메인을 넘는 참조는 not null만 그리고 화살표에 FK 컬럼 이름을 달았다.
+          화살표는 소유 방향이며 카디널리티는 표시하지 않는다.
+        </li>
+      </ul>
+      <p>
+        이 기준으로 생략되는 것은 아래 7개이고, 전부 nullable 크로스 도메인 참조다.
+        없어도 소유 구조가 그대로 읽히고 도메인별 그림에는 모두 그려져 있다.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+    <table class="legend wide">
+      <thead><tr><th>생략한 참조</th><th>FK 컬럼</th><th>무엇인가</th></tr></thead>
+      <tbody>
+        <tr><td>story_sessions -&gt; story_scenes</td><td><code>current_scene_id</code></td><td>세션이 지금 있는 장면</td></tr>
+        <tr><td>wordbook -&gt; story_scenes</td><td><code>source_scene_id</code></td><td>단어가 나온 장면</td></tr>
+        <tr><td>items -&gt; stories</td><td><code>unlock_story_id</code></td><td>완주로 해금되는 이야기</td></tr>
+        <tr><td>stardust_transactions -&gt; story_sessions</td><td><code>session_id</code></td><td>지급 근거 세션</td></tr>
+        <tr><td>stardust_transactions -&gt; story_scenes</td><td><code>scene_id</code></td><td>장면 보너스의 장면</td></tr>
+        <tr><td>stardust_transactions -&gt; items</td><td><code>item_id</code></td><td>구매 대상 아이템</td></tr>
+        <tr><td>scene_audio -&gt; children</td><td><code>child_id</code></td><td>아이별로 렌더한 음성</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sheet-note">점선으로 그린 characters -&gt; story_scenes도 nullable이지만 도메인 안이라 남겼다</p>
+  </section>
+
+  <section id="user">
+    <div class="sec-head">
+      <h2>사용자와 인증</h2>
+      <span class="tag">user / 4 tables</span>
+    </div>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#728b96","attributeBackgroundColorOdd":"#ffffff","attributeBackgroundColorEven":"#f1f5f6"}} }%%
+erDiagram
+    parents ||--o{ children : "보호자"
+    parents ||--o{ refresh_tokens : "발급"
+    children ||--o{ child_consents : "동의"
+
+    parents {
+        uuid id PK
+        varchar email UK "provider=LOCAL"
+        varchar password_hash
+        varchar provider "LOCAL, KAKAO"
+        varchar provider_id UK "provider와 복합"
+        varchar name
+    }
+
+    children {
+        uuid id PK
+        uuid parent_id FK
+        varchar name
+        smallint birth_year
+    }
+
+    child_consents {
+        uuid id PK
+        uuid child_id FK
+        varchar consent_version
+        varchar verification_method "3종"
+        timestamptz consented_at
+        timestamptz withdrawn_at "null이면 유효"
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid parent_id FK
+        varchar token_hash UK "원문 미저장"
+        timestamptz expires_at
+        timestamptz revoked_at
+    }
+</pre>
+    </div>
+    <div class="notes">
+      <h3>알아둘 것</h3>
+      <ul>
+        <li>
+          <code>refresh_tokens</code>는 테이블만 있고 어떤 서비스도 참조하지 않는다.
+          현재는 Access 토큰 단일 전략이다.
+        </li>
+        <li>
+          동의는 행을 지우지 않고 <code>withdrawn_at</code>을 채워 철회한다. 이력이 남아야 하기 때문이다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="content">
+    <div class="sec-head">
+      <h2>콘텐츠</h2>
+      <span class="tag">story.content / 6 tables</span>
+    </div>
+    <p class="lede">
+      정적 콘텐츠다. 런타임 상태를 알지 못하며, 수정은 복사 등록으로 처리한다.
+    </p>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#728b96","attributeBackgroundColorOdd":"#ffffff","attributeBackgroundColorEven":"#f1f5f6"}} }%%
+erDiagram
+    stories ||--o{ story_topics : "분류"
+    topics ||--o{ story_topics : "분류"
+    stories ||--o{ characters : "등장"
+    stories ||--o{ story_scenes : "장면"
+    characters |o--o{ story_scenes : "화자"
+    story_scenes ||--o{ scene_audio : "사전 음성"
+
+    stories {
+        uuid id PK
+        varchar title
+        varchar child_role "아이가 맡는 역할"
+        varchar difficulty
+        jsonb post_activity_config "후속 활동 카드 정의"
+        varchar status "DRAFT, PUBLISHED, ARCHIVED"
+    }
+
+    topics {
+        uuid id PK
+        varchar name UK
+        smallint display_order
+    }
+
+    story_topics {
+        uuid story_id PK "FK"
+        uuid topic_id PK "FK"
+    }
+
+    characters {
+        uuid id PK
+        uuid story_id FK
+        varchar character_key UK "표정 파일명의 키"
+        varchar name
+        text personality "캐릭터 LLM 페르소나"
+        varchar tts_voice
+        varchar tts_gender "MALE, FEMALE"
+        text_array expression_keys
+    }
+
+    story_scenes {
+        uuid id PK
+        uuid story_id FK
+        smallint scene_order UK "story_id와 복합"
+        varchar scene_type "STORY, DIALOGUE"
+        uuid character_id FK "nullable"
+        varchar character_name "화면 표시용"
+        text character_opening "고정 첫 대사"
+        text character_closing "고정 마지막 대사"
+        text scene_goal
+        text_array required_elements
+        jsonb element_criteria "요소 인정 기준"
+        jsonb mission_config "미션 없으면 null"
+        smallint preferred_turns
+        smallint max_turns
+    }
+
+    scene_audio {
+        uuid id PK
+        uuid scene_id FK
+        varchar slot "NARRATION, OPENING, CLOSING"
+        uuid child_id FK "null이면 공용 음성"
+        text storage_path
+        char text_hash "렌더 원본의 SHA-256"
+        varchar voice
+        jsonb sentence_timings "문장별 실측 시각"
+    }
+</pre>
+    </div>
+    <div class="notes">
+      <h3>알아둘 것</h3>
+      <ul>
+        <li>
+          <code>story_scenes</code>가 <code>character_name</code>과 <code>character_id</code>를 함께 가진다.
+          이름은 화면 표시용이고 페르소나와 보이스, 표정은 FK로 찾는다. 장면마다 페르소나가 따로 있으면
+          같은 캐릭터가 장면별로 다른 목소리로 합성되는 것을 막을 수 없어 분리했다.
+        </li>
+        <li>
+          <code>scene_audio.child_id</code>가 nullable인 이유는, 아이 이름이 들어가는 대사만
+          아이별로 렌더하고 나머지는 공용 음성을 쓰기 때문이다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="runtime">
+    <div class="sec-head">
+      <h2>런타임</h2>
+      <span class="tag">story.session, dialogue, mission / 4 tables</span>
+    </div>
+    <p class="lede">
+      세션이 진행되면서 쌓이는 상태다. 여기부터는 아이별 데이터다.
+    </p>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#728b96","attributeBackgroundColorOdd":"#ffffff","attributeBackgroundColorEven":"#f1f5f6"}} }%%
+erDiagram
+    children ||--o{ story_sessions : "진행"
+    stories ||--o{ story_sessions : "재생"
+    story_scenes |o--o{ story_sessions : "현재 장면"
+    story_sessions ||--o{ messages : "대화"
+    story_scenes ||--o{ messages : "발생 장면"
+    messages ||--o| utterance_analyses : "분석"
+    story_sessions ||--o{ mission_results : "미션"
+    story_scenes ||--o{ mission_results : "발생 장면"
+
+    story_sessions {
+        uuid id PK
+        uuid child_id FK
+        uuid story_id FK
+        uuid current_scene_id FK "nullable"
+        smallint current_child_turn_count
+        text_array accumulated_elements "누적 말하기 요소"
+        varchar last_response_mode "NORMAL, GUIDED, CLOSING"
+        boolean scene_goal_met
+        varchar scene_end_reason "GOAL_MET, MAX_TURNS"
+        boolean guided_used_in_scene "장면 보너스 판정"
+        boolean mission_exposed
+        boolean mission_completed
+        boolean safety_flagged "위험 신호 감지 이력"
+        text_array safety_categories "범주만. 원문 미저장"
+        varchar status "IN_PROGRESS, POST_ACTIVITY, COMPLETED, STOPPED"
+        bigint version "낙관적 락"
+    }
+
+    messages {
+        uuid id PK
+        uuid session_id FK
+        uuid scene_id FK
+        varchar speaker_type "CHILD, CHARACTER, SYSTEM"
+        integer turn_order UK "session_id와 복합"
+        text text
+        text stt_raw_text "아이 발화만. 원본 음성 미저장"
+        numeric stt_confidence "0~1"
+        boolean stt_low_confidence
+        smallint stt_retry_count
+        varchar character_emotion "캐릭터 발화만"
+    }
+
+    utterance_analyses {
+        uuid id PK
+        uuid message_id FK "UK. 아이 메시지 1건당 1건"
+        varchar child_intent
+        jsonb detected_elements
+        varchar utterance_validity "VALID, SHORT, UNCLEAR, OFF_TOPIC, PLAYFUL"
+        varchar model_id "모델만 교체한 경우를 구분"
+        jsonb dropped_evidence "폐기된 근거"
+    }
+
+    mission_results {
+        uuid id PK
+        uuid session_id FK
+        uuid scene_id FK
+        varchar mission_id UK "session_id와 복합"
+        varchar mission_type "PROBLEM_SOLVING, PERSPECTIVE_SHIFT"
+        jsonb result
+    }
+</pre>
+    </div>
+    <div class="notes">
+      <h3>알아둘 것</h3>
+      <ul>
+        <li>
+          <code>story_sessions.version</code>은 낙관적 락이다. 턴 처리가 STT, 분석, 대사 생성으로
+          수 초 걸려 연타가 들어오면 턴 카운터와 누적 요소가 덮어써지는데, 이걸 409로 바꾼다.
+        </li>
+        <li>
+          <code>messages</code>의 <code>unique (session_id, turn_order)</code>가 턴 중복을 막는다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="learning">
+    <div class="sec-head">
+      <h2>학습</h2>
+      <span class="tag">learning / 3 tables</span>
+    </div>
+    <p class="lede">
+      세션이 끝난 뒤의 산출물이다. 후속 활동, 리포트, 단어장 세 개다.
+    </p>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#728b96","attributeBackgroundColorOdd":"#ffffff","attributeBackgroundColorEven":"#f1f5f6"}} }%%
+erDiagram
+    story_sessions ||--o| post_activity_results : "후속 활동"
+    story_sessions ||--o| reports : "리포트"
+    children ||--o{ wordbook : "저장"
+    story_scenes |o--o{ wordbook : "출처 장면"
+
+    story_sessions {
+        uuid id PK
+        varchar status "POST_ACTIVITY에서 진입"
+    }
+
+    story_scenes {
+        uuid id PK
+    }
+
+    children {
+        uuid id PK
+    }
+
+    post_activity_results {
+        uuid id PK
+        uuid session_id FK "UK. 세션당 1건"
+        varchar card_order_seed "카드 셔플 고정. 채점 재현용"
+        text_array submitted_order
+        boolean is_order_correct "서버가 판정"
+        smallint attempt_count
+        text retelling_text
+        timestamptz completed_at
+    }
+
+    reports {
+        uuid id PK
+        uuid session_id FK "UK. 세션당 1건"
+        text summary
+        jsonb strengths "잘 보여준 말하기 요소"
+        jsonb next_focus "다음에 연습할 요소"
+    }
+
+    wordbook {
+        uuid id PK
+        uuid child_id FK
+        varchar word UK "child_id와 복합"
+        text meaning "없으면 서버가 LLM으로 생성"
+        text example_sentence
+        varchar entry_type "UNKNOWN, FAVORITE"
+        uuid source_scene_id FK "nullable"
+    }
+</pre>
+    </div>
+    <div class="notes">
+      <h3>구현 시 걸리는 제약</h3>
+      <ul>
+        <li>
+          <code>card_order_seed</code>가 not null이다. 카드 순서를 시드로 고정해야 재진입과 재시도에도
+          같은 화면이 나오고 채점이 재현된다. <code>/start</code>에서 시드를 만들어 저장한다.
+        </li>
+        <li>
+          <code>is_order_correct</code>는 서버가 판정한다.
+          <code>stories.post_activity_config</code>의 <code>correct_order</code>와 비교하며
+          클라이언트 판정을 받지 않는다.
+        </li>
+        <li>
+          <code>wordbook</code>의 <code>unique (child_id, word)</code>가 중복 저장을 막는다.
+          위반 시 409 <code>DUPLICATE_WORD</code>다.
+        </li>
+        <li>
+          <code>post_activity_results</code>와 <code>reports</code> 모두 <code>session_id</code>가
+          유니크라 세션당 1건이다. 재호출은 생성이 아니라 조회 또는 409가 된다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="reward">
+    <div class="sec-head">
+      <h2>보상</h2>
+      <span class="tag">learning.reward / 7 tables</span>
+    </div>
+    <p class="lede">
+      별가루를 벌어 아이템을 사고 행성에 배치한다. 테이블이 7개로 가장 많다.
+    </p>
+    <div class="sheet">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e7f0f1","primaryBorderColor":"#0c6b74","primaryTextColor":"#16232b","lineColor":"#728b96","attributeBackgroundColorOdd":"#ffffff","attributeBackgroundColorEven":"#f1f5f6"}} }%%
+erDiagram
+    children ||--|| stardust_wallets : "지갑"
+    children ||--|| planets : "행성"
+    children ||--o{ child_items : "보유"
+    children ||--o{ child_story_play_counts : "완주 횟수"
+    stories ||--o{ child_story_play_counts : "완주 횟수"
+    stories |o--o{ items : "완주 해금"
+    stardust_wallets ||--o{ stardust_transactions : "이력"
+    story_sessions |o--o{ stardust_transactions : "지급 근거"
+    story_scenes |o--o{ stardust_transactions : "보너스 장면"
+    items ||--o{ child_items : "구매"
+    items |o--o{ stardust_transactions : "구매 대상"
+    planets ||--o{ planet_items : "배치"
+    child_items ||--o| planet_items : "놓임"
+
+    children {
+        uuid id PK
+    }
+
+    stardust_wallets {
+        uuid id PK
+        uuid child_id FK "UK. 아이당 1개"
+        integer balance "쓰면 줄어든다"
+        integer total_earned "누적 해금 기준. 줄지 않는다"
+    }
+
+    stardust_transactions {
+        uuid id PK
+        uuid wallet_id FK
+        integer amount "지급 +, 사용 -"
+        varchar reason "STORY_COMPLETED, SCENE_BONUS, ITEM_PURCHASE, ADMIN_ADJUST"
+        uuid session_id FK "지급 근거. 구매는 null"
+        uuid scene_id FK "장면 보너스만"
+        uuid item_id FK "구매만"
+        boolean acknowledged "false면 연출 대상"
+    }
+
+    child_story_play_counts {
+        uuid child_id PK "FK"
+        uuid story_id PK "FK"
+        smallint play_count "2회차 절반, 3회차부터 없음"
+    }
+
+    items {
+        uuid id PK
+        varchar name
+        varchar category "TERRAIN_PROP, PLANT, STRUCTURE, ANIMAL"
+        integer price
+        varchar unlock_type "ALWAYS, STORY_COMPLETE, STARDUST_CUMULATIVE"
+        uuid unlock_story_id FK "STORY_COMPLETE일 때 필수"
+        integer unlock_stardust_total "STARDUST_CUMULATIVE일 때 필수"
+        varchar status "ACTIVE, HIDDEN"
+    }
+
+    child_items {
+        uuid id PK
+        uuid child_id FK
+        uuid item_id FK
+        timestamptz acquired_at
+    }
+
+    planets {
+        uuid id PK
+        uuid child_id FK "UK. 아이당 1개"
+        varchar name "기본값 내 행성"
+        boolean tutorial_completed
+    }
+
+    planet_items {
+        uuid id PK
+        uuid planet_id FK
+        uuid child_item_id FK "UK. 하나는 한 곳에만"
+        smallint placed_q UK "planet_id와 복합"
+        smallint placed_r UK "planet_id와 복합"
+    }
+</pre>
+    </div>
+    <div class="notes">
+      <h3>구현 시 걸리는 제약</h3>
+      <ul>
+        <li>
+          지갑과 행성은 아이 생성 시 자동으로 만들어진다. <code>RewardProvisioningListener</code>가
+          <code>ChildCreatedEvent</code>를 받아 같은 트랜잭션에서 각 1건씩 만든다.
+          보상 API는 조회와 변경만 한다.
+        </li>
+        <li>
+          <code>total_earned</code>는 줄지 않는다. 별가루를 써도 <code>balance</code>만 줄고 이 값은
+          유지된다. <code>STARDUST_CUMULATIVE</code> 해금 판정 기준이기 때문이다.
+        </li>
+        <li>
+          지급 멱등을 부분 유니크 인덱스가 보장한다. 완주 보상은 <code>(session_id, reason)</code>,
+          장면 보너스는 <code>(session_id, scene_id, reason)</code>로 나눠 건다. 하나로 묶으면
+          장면 보너스 2건째가 유니크 위반으로 막힌다.
+        </li>
+        <li>
+          같은 아이템을 여러 개 살 수 있다. <code>child_items</code>에
+          <code>(child_id, item_id)</code> 유니크가 없다. 대신
+          <code>planet_items.child_item_id</code>가 유니크라 보유분 하나는 한 곳에만 놓인다.
+        </li>
+        <li>
+          치우기는 <code>planet_items</code> 행 삭제이고 <code>child_items</code>는 남는다.
+          이게 보관함 복귀다. 아이템 행 자체는 지워지지 않으므로 운영 중 내리기는
+          <code>items.status=HIDDEN</code>으로 한다.
+        </li>
+        <li>
+          한계 하나. 발판이 2x2인 아이템은 앵커 칸만 저장하므로 나머지 칸의 겹침을
+          <code>unique (planet_id, placed_q, placed_r)</code>가 막지 못한다. 클라이언트 카탈로그의
+          발판 정의로 서버가 점유 칸을 계산해 검증해야 한다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="cascade">
+    <div class="sec-head">
+      <h2>삭제 전파</h2>
+      <span class="tag">on delete cascade</span>
+    </div>
+    <p class="lede">
+      위쪽을 지우면 아래가 함께 지워진다.
+    </p>
+    <div class="tree">
+<pre>parents
++--- children
+|    +--- child_consents
+|    +--- story_sessions
+|    |    +--- messages
+|    |    |    +--- utterance_analyses
+|    |    +--- mission_results
+|    |    +--- post_activity_results
+|    |    +--- reports
+|    +--- wordbook
+|    +--- stardust_wallets
+|    |    +--- stardust_transactions
+|    +--- child_items
+|    |    +--- planet_items
+|    +--- child_story_play_counts
+|    +--- planets
+|    |    +--- planet_items
+|    +--- scene_audio (아이별 렌더분만)
++--- refresh_tokens
+
+stories
++--- story_topics
++--- characters
++--- story_scenes
+     +--- scene_audio
+     +--- messages (restrict. 세션이 있으면 못 지운다)</pre>
+    </div>
+    <div class="notes">
+      <h3>예외 두 가지</h3>
+      <ul>
+        <li>
+          <code>story_sessions.story_id</code>와 <code>child_items.item_id</code>,
+          <code>stardust_transactions.item_id</code>는 cascade가 아니다. 진행 기록이 있는 콘텐츠나
+          누가 산 아이템은 지울 수 없다.
+        </li>
+        <li>
+          <code>story_scenes.character_id</code>와 <code>stardust_transactions.session_id</code>,
+          <code>scene_id</code>는 <code>on delete set null</code>이다. 참조 대상이 사라져도 행은 남는다.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    원본 문서는 저장소의 <code>docs/ERD.md</code>다. 스키마를 바꾸면
+    (<code>V2</code>, <code>V3</code> 추가) 그 문서와 이 페이지를 함께 고친다.
+  </footer>
+
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  // 다이어그램마다 %%{init}%% 지시문으로 색을 지정하므로 여기서는 기본값만 켠다.
+  mermaid.initialize({ startOnLoad: true, flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>
