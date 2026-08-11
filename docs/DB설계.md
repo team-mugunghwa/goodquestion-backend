@@ -586,6 +586,8 @@ UNIQUE(`planet_id`, `placed_q`, `placed_r`) - 한 칸에 하나. 위반은 409(`
 
 ## 7. 관계도
 
+컬럼까지 담은 그림은 [ERD.md](ERD.md)에 있다. 여기 것은 한눈에 훑는 축약본이다.
+
 ```
 parents -1:N- refresh_tokens
 parents -1:N- children -1:N- child_consents
