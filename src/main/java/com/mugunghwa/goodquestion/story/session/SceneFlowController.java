@@ -19,16 +19,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SceneFlowController {
 
+    private final SessionService sessionService;
+
     /** 고정 첫 대사를 재생한다. "ㅇㅇ"를 아이 이름으로 치환하며 멱등이다(캐릭터-14, 17). */
     @PostMapping("/opening")
     public SceneOpeningResponse playOpening(@CurrentParentId UUID parentId,
                                             @PathVariable UUID sessionId) {
-        throw new UnsupportedOperationException("미구현: 장면 첫 대사 재생");
+        return sessionService.playOpening(parentId, sessionId);
     }
 
     @GetMapping
     public CurrentSceneResponse getCurrentScene(@CurrentParentId UUID parentId,
                                                 @PathVariable UUID sessionId) {
-        throw new UnsupportedOperationException("미구현: 현재 장면 콘텐츠 조회");
+        return sessionService.getCurrentScene(parentId, sessionId);
     }
 }
