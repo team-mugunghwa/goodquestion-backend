@@ -52,145 +52,145 @@
 
 ### 2.1 인증 — `/api/auth` (인증 불필요)
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/signup` | `SignUpRequest` | 201 `AuthResponse` | ✅ |
-| POST | `/login` | `LoginRequest` | 200 `AuthResponse` | ✅ |
-| POST | `/social/{provider}` | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
-| POST | `/refresh` | `TokenRefreshRequest` | 200 `TokenResponse` | ⛔ |
-| POST | `/logout` | `LogoutRequest` | 204 (본문 없음) | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/signup` | 이메일과 비밀번호로 계정을 만들고 토큰까지 바로 발급한다 | `SignUpRequest` | 201 `AuthResponse` | ✅ |
+| POST | `/login` | 이메일과 비밀번호를 확인하고 토큰을 발급한다 | `LoginRequest` | 200 `AuthResponse` | ✅ |
+| POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
+| POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ⛔ |
+| POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ⛔ |
 
 ### 2.2 보호자 — `/api/parents`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/me` | — | `ParentResponse` | ✅ |
-| PATCH | `/me` | `ParentUpdateRequest` | `ParentResponse` | ⚠️ 이름만. `newPassword`를 보내면 501 |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/me` | 로그인한 보호자의 프로필을 조회한다 | — | `ParentResponse` | ✅ |
+| PATCH | `/me` | 보호자 이름과 비밀번호를 수정한다 | `ParentUpdateRequest` | `ParentResponse` | ⚠️ 이름만. `newPassword`를 보내면 501 |
 
 ### 2.3 아이 — `/api/children`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `` | `ChildCreateRequest` | 201 `ChildResponse` | ✅ |
-| GET | `` | — | `List<ChildResponse>` | ✅ |
-| GET | `/{childId}` | — | `ChildResponse` | ✅ |
-| PATCH | `/{childId}` | `ChildUpdateRequest` | `ChildResponse` | ✅ |
-| DELETE | `/{childId}` | — | 204 | ✅ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `` | 아이를 등록한다. 행성과 지갑이 함께 생긴다 | `ChildCreateRequest` | 201 `ChildResponse` | ✅ |
+| GET | `` | 내가 등록한 아이 목록을 조회한다 | — | `List<ChildResponse>` | ✅ |
+| GET | `/{childId}` | 아이 한 명을 조회한다 | — | `ChildResponse` | ✅ |
+| PATCH | `/{childId}` | 아이 이름과 출생연도를 수정한다 | `ChildUpdateRequest` | `ChildResponse` | ✅ |
+| DELETE | `/{childId}` | 아이를 삭제한다 | — | 204 | ✅ |
 
 아이를 만들면 행성·별가루 지갑이 같은 트랜잭션에서 함께 생긴다(응답에는 담지 않는다).
 
 ### 2.4 아동 동의 — `/api/children/{childId}/consents`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `` | `ConsentCreateRequest` | 201 `ConsentResponse` | ✅ |
-| GET | `` | — | `ConsentStatusResponse` | ✅ |
-| POST | `/withdraw` | — | `ConsentResponse` | ✅ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `` | 법정대리인 동의를 등록한다. 세션 시작의 전제 조건이다 | `ConsentCreateRequest` | 201 `ConsentResponse` | ✅ |
+| GET | `` | 현재 동의 상태를 조회한다 | — | `ConsentStatusResponse` | ✅ |
+| POST | `/withdraw` | 유효한 동의를 철회한다 | — | `ConsentResponse` | ✅ |
 
 ### 2.5 홈
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/children/{childId}/home` | — | `HomeResponse` | ✅ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/home` | 이어하기 카드와 추천 이야기, 행성 위젯을 한 화면 분량으로 조립해 내려준다 | — | `HomeResponse` | ✅ |
 
 ### 2.6 콘텐츠
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/stories` | `?topic=` (선택) | `StoryListResponse` | ✅ |
-| GET | `/api/stories/{storyId}` | — | `StoryDetailResponse` | ✅ |
-| GET | `/api/stories/{storyId}/scenes` | — | `List<SceneContentResponse>` | ✅ |
-| GET | `/api/topics` | — | `List<TopicResponse>` | ✅ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/stories` | 이야기 목록을 조회한다 | `?topic=` (선택) | `StoryListResponse` | ✅ |
+| GET | `/api/stories/{storyId}` | 이야기 한 편의 상세 정보를 조회한다 | — | `StoryDetailResponse` | ✅ |
+| GET | `/api/stories/{storyId}/scenes` | 이야기의 장면 전체를 순서대로 조회한다 | — | `List<SceneContentResponse>` | ✅ |
+| GET | `/api/topics` | 이야기를 거르는 데 쓰는 주제 목록을 조회한다 | — | `List<TopicResponse>` | ✅ |
 
 ### 2.7 세션
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/api/children/{childId}/sessions` | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}` | — | `SessionResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}/resume` | — | `SessionResumeResponse` | ⚠️ `exposedMission`은 항상 null |
-| GET | `/api/sessions/{sessionId}/messages` | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
-| POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | — | `SceneAdvanceResponse` | ✅ |
-| POST | `/api/sessions/{sessionId}/stop` | — | 200 (본문 없음) | ✅ |
-| POST | `/api/sessions/{sessionId}/scenes/current/opening` | — | `SceneOpeningResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}/scenes/current` | — | `CurrentSceneResponse` | ✅ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/api/children/{childId}/sessions` | 이야기를 골라 세션을 시작한다. 첫 장면을 함께 돌려준다 | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}` | 세션 상태와 진행 상황을 조회한다 | — | `SessionResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}/resume` | 이어하기. 장면과 대화 내역, 마지막 대사를 한 번에 돌려준다 | — | `SessionResumeResponse` | ⚠️ `exposedMission`은 항상 null |
+| GET | `/api/sessions/{sessionId}/messages` | 대화 내역을 조회한다 | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
+| POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | STORY 장면 재생이 끝났음을 알리고 다음 장면으로 넘긴다 | — | `SceneAdvanceResponse` | ✅ |
+| POST | `/api/sessions/{sessionId}/stop` | 진행 중인 세션을 중단한다 | — | 200 (본문 없음) | ✅ |
+| POST | `/api/sessions/{sessionId}/scenes/current/opening` | 현재 장면의 고정 첫 대사를 재생한다 | — | `SceneOpeningResponse` | ✅ |
+| GET | `/api/sessions/{sessionId}/scenes/current` | 현재 장면을 다시 조회한다. 새로고침 복구용 | — | `CurrentSceneResponse` | ✅ |
 
 첫 대사 재생은 멱등이다. 세션 시작과 장면 전환이 이미 저장해 뒀으면 그 메시지를 그대로 돌려주고 `alreadyOpened=true`로 알린다.
 
 ### 2.8 대화(턴) — `/api/sessions/{sessionId}`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/utterances` | `UtteranceRequest` | `UtteranceResponse` | ⛔ 하위 파이프라인 미구현 |
-| GET | `/turn-state` | — | `TurnStateResponse` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⛔ 하위 파이프라인 미구현 |
+| GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ⛔ |
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/current` | — | `CurrentMissionResponse` | ⛔ |
-| POST | `/{missionId}/result` | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ⛔ |
+| POST | `/{missionId}/result` | 미션 수행 결과를 제출한다 | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
 
 ### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/start` | — | `PostActivityStartResponse` | ⛔ |
-| GET | `` | — | `PostActivityStatusResponse` | ⛔ |
-| POST | `/order` | `CardSubmitRequest` | `CardSubmitResponse` | ⛔ |
-| POST | `/retelling` | `RetellingRequest` | `RetellingResponse` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/start` | 카드 순서 맞추기를 시작한다. 카드를 무작위 순서로 받는다 | — | `PostActivityStartResponse` | ⛔ |
+| GET | `` | 후속 활동 진행 상태를 조회한다. 새로고침 복구용 | — | `PostActivityStatusResponse` | ⛔ |
+| POST | `/order` | 카드 순서를 제출한다. 정답 판정은 서버가 한다 | `CardSubmitRequest` | `CardSubmitResponse` | ⛔ |
+| POST | `/retelling` | 다시 이야기하기를 제출한다. 세션 완료와 별가루 지급이 함께 일어난다 | `RetellingRequest` | `RetellingResponse` | ⛔ |
 
 ### 2.11 리포트
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/children/{childId}/reports` | — | `List<ReportListResponse>` | ⛔ |
-| GET | `/api/sessions/{sessionId}/report` | — | `ReportDetailResponse` | ⛔ |
-| POST | `/api/sessions/{sessionId}/report` | — | 201 `ReportDetailResponse` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/reports` | 아이의 리포트 목록을 조회한다 | — | `List<ReportListResponse>` | ⛔ |
+| GET | `/api/sessions/{sessionId}/report` | 세션 한 건의 리포트를 조회한다. 아직 생성 전이면 409 | — | `ReportDetailResponse` | ⛔ |
+| POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ⛔ |
 
 ### 2.12 단어장
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/api/children/{childId}/words` | `WordCreateRequest` | 201 `WordResponse` | ⛔ |
-| GET | `/api/children/{childId}/words` | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
-| PATCH | `/api/children/{childId}/words/{wordId}/favorite` | — | `WordResponse` | ✅ |
-| DELETE | `/api/words/{wordId}` | — | 204 | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⛔ |
+| GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
+| PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
+| DELETE | `/api/words/{wordId}` | 저장한 단어를 삭제한다 | — | 204 | ⛔ |
 
 ### 2.13 보상 — 상점·보관함
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/children/{childId}/shop/items` | — | `List<ShopItemResponse>` | ⛔ |
-| POST | `/api/children/{childId}/items` | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ⛔ |
-| GET | `/api/children/{childId}/items` | `?placed=` (선택) | `List<ChildItemResponse>` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/shop/items` | 상점 목록을 조회한다. 해금과 구매 가능 여부를 서버가 계산해 함께 준다 | — | `List<ShopItemResponse>` | ⛔ |
+| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ⛔ |
+| GET | `/api/children/{childId}/items` | 보유 아이템(보관함)을 조회한다 | `?placed=` (선택) | `List<ChildItemResponse>` | ⛔ |
 
 ### 2.14 보상 — 별가루
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/children/{childId}/stardust` | — | `StardustWalletResponse` | ⛔ |
-| POST | `/api/children/{childId}/stardust/acknowledge` | — | `StardustAcknowledgeResponse` | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/stardust` | 별가루 잔액과 아직 연출하지 않은 획득 내역을 조회한다 | — | `StardustWalletResponse` | ⛔ |
+| POST | `/api/children/{childId}/stardust/acknowledge` | 획득 연출을 재생했다고 표시한다 | — | `StardustAcknowledgeResponse` | ⛔ |
 
 ### 2.15 보상 — 행성·배치
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| GET | `/api/children/{childId}/planet` | — | `PlanetResponse` | ⛔ |
-| PATCH | `/api/children/{childId}/planet` | `PlanetRenameRequest` | `PlanetRenameResponse` | ⛔ |
-| POST | `/api/children/{childId}/planet/tutorial-complete` | — | `TutorialCompleteResponse` | ⛔ |
-| POST | `/api/children/{childId}/planet/placements` | `PlacementCreateRequest` | 201 `PlacementResponse` | ⛔ |
-| PATCH | `/api/planet/placements/{placementId}` | `PlacementMoveRequest` | `PlacementResponse` | ⛔ |
-| DELETE | `/api/planet/placements/{placementId}` | — | 204 | ⛔ |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/planet` | 내 행성과 놓인 아이템, 다음 해금 목표를 조회한다 | — | `PlanetResponse` | ⛔ |
+| PATCH | `/api/children/{childId}/planet` | 행성 이름을 바꾼다 | `PlanetRenameRequest` | `PlanetRenameResponse` | ⛔ |
+| POST | `/api/children/{childId}/planet/tutorial-complete` | 행성 튜토리얼을 마쳤다고 표시한다 | — | `TutorialCompleteResponse` | ⛔ |
+| POST | `/api/children/{childId}/planet/placements` | 아이템을 행성 격자에 놓는다 | `PlacementCreateRequest` | 201 `PlacementResponse` | ⛔ |
+| PATCH | `/api/planet/placements/{placementId}` | 놓인 아이템을 다른 칸으로 옮긴다 | `PlacementMoveRequest` | `PlacementResponse` | ⛔ |
+| DELETE | `/api/planet/placements/{placementId}` | 놓인 아이템을 치운다 | — | 204 | ⛔ |
 
 배치 3종은 **행 단위 조작**이다. 스냅샷 통짜 저장이 아니라 놓기·옮기기·치우기를 각각 호출한다. 되돌리기 전용 API는 없고 클라이언트가 직전 조작의 역조작을 부른다.
 
 ### 2.16 음성
 
-| 메서드 | 경로 | 요청 | 응답 | 상태 |
-|---|---|---|---|---|
-| POST | `/api/stt` | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
-| POST | `/api/tts` | `SynthesisRequest` | `SynthesisResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| POST | `/api/stt` | 아이 음성을 텍스트로 변환한다. 원본 음성은 저장하지 않는다 | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+| POST | `/api/tts` | 대사 텍스트를 캐릭터 음성으로 합성한다 | `SynthesisRequest` | `SynthesisResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
 
 두 건은 컨트롤러와 `SpeechService`까지 구현돼 있고 `DefaultSttClient`, `DefaultTtsClient`가 비어 있어 호출하면 501이 온다. 벤더를 정해 클라이언트만 채우면 그대로 동작한다.
 
