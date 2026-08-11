@@ -29,6 +29,17 @@ spring:
     properties:
       hibernate.default_batch_fetch_size: 100
 
+# 브라우저의 preflight(OPTIONS)를 통과시킬 오리진 목록. 콤마로 구분한다.
+#
+# Vercel 프리뷰 배포는 커밋마다 주소가 바뀌므로 패턴으로 적는다.
+# 팀 슬러그(team-mugunghwa)까지 넣는 이유: goodquestion-frontend-* 까지만 적으면
+# 같은 이름으로 프로젝트를 만든 남의 Vercel 계정 주소도 걸린다.
+#
+# 슬러그나 도메인이 바뀌면 코드를 고치지 말고 Railway 환경변수만 바꾼다.
+# 운영에서 로컬 오리진을 빼고 싶을 때도 마찬가지다.
+cors:
+  allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://goodquestion-frontend.vercel.app,https://goodquestion-frontend-*-team-mugunghwa.vercel.app}
+
 jwt:
   secret: ${JWT_SECRET}                      # 자체 발급 Access 토큰 서명 키 (HS256, 32바이트 이상 권장)
   expiration-ms: ${JWT_EXPIRATION_MS:604800000}   # 기본 7일 - Access 토큰 단일 전략(MVP), Refresh 없음
