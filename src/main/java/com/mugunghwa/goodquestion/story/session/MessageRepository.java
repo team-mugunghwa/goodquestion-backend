@@ -14,7 +14,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     Optional<Message> findFirstBySessionIdOrderByTurnOrderDesc(UUID sessionId);
 
-    /** 직전 캐릭터 발화 — 분석 LLM 입력(previousCharacterMessage)용 */
-    Optional<Message> findFirstBySessionIdAndSpeakerTypeOrderByTurnOrderDesc(
-            UUID sessionId, SpeakerType speakerType);
+    /** 장면 첫 대사 멱등 판정 — 이 장면에 이미 캐릭터 발화가 있는지 */
+    Optional<Message> findFirstBySessionIdAndSceneIdAndSpeakerTypeOrderByTurnOrderAsc(
+            UUID sessionId, UUID sceneId, SpeakerType speakerType);
 }
