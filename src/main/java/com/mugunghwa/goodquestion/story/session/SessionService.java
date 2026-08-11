@@ -4,14 +4,7 @@ import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
 import com.mugunghwa.goodquestion.story.content.dto.SceneContentResponse;
-import com.mugunghwa.goodquestion.story.session.dto.CharacterMessageResponse;
-import com.mugunghwa.goodquestion.story.session.dto.CurrentSceneResponse;
-import com.mugunghwa.goodquestion.story.session.dto.ProgressResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SceneOpeningResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
+import com.mugunghwa.goodquestion.story.session.dto.*;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.content.Story;
@@ -202,5 +195,29 @@ public class SessionService {
     /** audioUrl은 TTS 미구현이라 null — 클라이언트가 /api/tts로 합성한다. */
     private CharacterMessageResponse toCharacterMessage(Message message) {
         return new CharacterMessageResponse(message.getId(), message.getText(), null);
+    }
+
+    /**
+     * 이어하기 복원(홈-01~02). 화면을 다시 그리는 데 필요한 것을 한 번에 돌려준다.
+     *
+     * <p>여러 번 호출로 나누면 그 사이에 턴이 진행돼 장면과 대화 내역이 어긋날 수 있다.
+     */
+    public SessionResumeResponse resume(UUID parentId, UUID sessionId) {
+        StorySession session = getOwnedSession(parentId, sessionId);
+        StoryScene scene = session.getCurrentScene();
+
+        CharacterMessageResponse lastCharacterMessage = messageRepository
+                .findFirstBySessionIdAndSpeakerTypeOrderByTurnOrderDesc(
+                        sessionId, SpeakerType.CHARACTER)
+                .map(this::toCharacterMessage)
+                .orElse(null);
+
+        // 노출 중이던 미션은 story.mission의 판단 결과라 여기서 채우지 않는다.
+        return new SessionResumeResponse(
+                getSession(parentId, sessionId),
+                scene == null ? null : SceneContentResponse.from(scene),
+                messageService.getMessages(sessionId, null),
+                lastCharacterMessage,
+                null);
     }
 }
