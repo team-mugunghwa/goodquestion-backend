@@ -6,6 +6,7 @@ import com.mugunghwa.goodquestion.global.security.RestAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,6 +31,14 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
+                // CorsConfig 의 빈을 체인에 건다. 시큐리티 7 은 UrlBasedCorsConfigurationSource
+                // 타입 빈이 있으면 이 줄이 없어도 자동으로 걸어주지만
+                // (HttpSecurityConfiguration.applyCorsIfAvailable), 빈 타입이 그 클래스가
+                // 아니게 되는 순간 조용히 꺼진다. 명시해서 그 규칙에 기대지 않는다.
+                //
+                // CorsFilter 가 preflight 를 인가 단계 전에 처리하고 체인을 끊으므로
+                // OPTIONS 를 permitAll 로 열어줄 필요는 없다.
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll()
