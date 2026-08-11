@@ -37,7 +37,7 @@ public class SessionController {
     /** 이어하기 — 장면·대화 내역·마지막 대사·노출 미션을 한 번에 복원한다(홈-01~02). */
     @GetMapping("/api/sessions/{sessionId}/resume")
     public SessionResumeResponse resume(@CurrentParentId UUID parentId, @PathVariable UUID sessionId) {
-        throw new UnsupportedOperationException("미구현: 이어하기 복원");
+        return sessionService.resume(parentId, sessionId);
     }
 
     @GetMapping("/api/sessions/{sessionId}/messages")

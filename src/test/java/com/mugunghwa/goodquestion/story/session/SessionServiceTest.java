@@ -2,6 +2,8 @@ package com.mugunghwa.goodquestion.story.session;
 
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SceneOpeningResponse;
+import com.mugunghwa.goodquestion.story.session.dto.SessionResumeResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 class SessionServiceTest {
 
     /**
-     * Flyway가 적용하는 R__2_seed_demo_data.sql의 데모 계정을 전제한다 - 빈 DB로 시작해도 자동으로 들어간다.
+     * Flyway가 적용하는 R__2_seed_demo_data.sql의 데모 계정을 전제한다 — 빈 DB로 시작해도 자동으로 들어간다.
      * 보호자 "김보호" / 아이 "지우"(유효 동의) / 이야기 "방귀 뀌는 며느리"(PUBLISHED).
      */
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
@@ -48,7 +50,6 @@ class SessionServiceTest {
         SessionStartResponse response = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
-        // 고정 첫 대사는 DIALOGUE 장면에서만 messages에 남는다(캐릭터-14)
         assertThat(messageService.getMessages(response.sessionId(), null)).isEmpty();
     }
 
@@ -57,12 +58,10 @@ class SessionServiceTest {
         SessionStartResponse started = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
-        SceneAdvanceResponse response =
-                sessionService.completeStoryScene(PARENT_ID, started.sessionId());
+        SceneAdvanceResponse response = sessionService.completeStoryScene(PARENT_ID, started.sessionId());
 
-        assertThat(response.phase()).isEqualTo(PlayPhase.STORY);
         assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 2);
-        assertThat(response.openingMessage()).isNull();   // 2번도 STORY 장면
+        assertThat(response.openingMessage()).isNull();   // 2번도 STORY
     }
 
     @Test
@@ -70,12 +69,10 @@ class SessionServiceTest {
         SessionStartResponse started = sessionService.start(
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
-        // 1번(STORY) -> 2번(STORY) -> 3번(DIALOGUE)
-        sessionService.completeStoryScene(PARENT_ID, started.sessionId());
+        sessionService.completeStoryScene(PARENT_ID, started.sessionId());   // 1 -> 2 (STORY)
         SceneAdvanceResponse response =
-                sessionService.completeStoryScene(PARENT_ID, started.sessionId());
+                sessionService.completeStoryScene(PARENT_ID, started.sessionId());   // 2 -> 3 (DIALOGUE)
 
-        assertThat(response.phase()).isEqualTo(PlayPhase.DIALOGUE);
         assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 3);
         assertThat(response.openingMessage()).isNotNull();
         assertThat(response.openingMessage().text()).isNotBlank();
@@ -87,10 +84,59 @@ class SessionServiceTest {
                 PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
 
         sessionService.completeStoryScene(PARENT_ID, started.sessionId());
-        sessionService.completeStoryScene(PARENT_ID, started.sessionId());   // 3번 DIALOGUE 도착
+        sessionService.completeStoryScene(PARENT_ID, started.sessionId());   // 3번(DIALOGUE) 도착
 
-        assertThatThrownBy(() ->
-                sessionService.completeStoryScene(PARENT_ID, started.sessionId()))
+        assertThatThrownBy(() -> sessionService.completeStoryScene(PARENT_ID, started.sessionId()))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 고정_첫_대사의_이름_자리표시자가_아이_이름으로_치환된다() {
+        UUID sessionId = 대화_장면까지_진행한다();
+
+        SceneOpeningResponse response = sessionService.playOpening(PARENT_ID, sessionId);
+
+        assertThat(response.message().text()).doesNotContain("ㅇㅇ");
+    }
+
+    @Test
+    void 첫_대사를_다시_요청해도_새로_저장하지_않는다() {
+        UUID sessionId = 대화_장면까지_진행한다();   // 장면 전환에서 이미 저장됨
+
+        SceneOpeningResponse response = sessionService.playOpening(PARENT_ID, sessionId);
+
+        assertThat(response.alreadyOpened()).isTrue();
+        assertThat(messageService.getMessages(sessionId, null)).hasSize(1);
+    }
+
+    @Test
+    void STORY_장면에서는_첫_대사를_재생할_수_없다() {
+        SessionStartResponse started = sessionService.start(
+                PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));   // 1번(STORY)
+
+        assertThatThrownBy(() -> sessionService.playOpening(PARENT_ID, started.sessionId()))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 이어하기는_현재_장면과_대화_내역을_함께_돌려준다() {
+        UUID sessionId = 대화_장면까지_진행한다();
+
+        SessionResumeResponse response = sessionService.resume(PARENT_ID, sessionId);
+
+        assertThat(response.session().sessionId()).isEqualTo(sessionId);
+        assertThat(response.currentScene().sceneOrder()).isEqualTo((short) 3);
+        assertThat(response.messages()).isNotEmpty();
+        assertThat(response.lastCharacterMessage()).isNotNull();
+        assertThat(response.exposedMission()).isNull();   // story.mission 미구현
+    }
+
+    /** 시드 기준 1번(STORY) → 2번(STORY) → 3번(DIALOGUE)까지 진행한다. */
+    private UUID 대화_장면까지_진행한다() {
+        SessionStartResponse started = sessionService.start(
+                PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID));
+        sessionService.completeStoryScene(PARENT_ID, started.sessionId());
+        sessionService.completeStoryScene(PARENT_ID, started.sessionId());
+        return started.sessionId();
     }
 }

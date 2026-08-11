@@ -4,12 +4,7 @@ import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
 import com.mugunghwa.goodquestion.story.content.dto.SceneContentResponse;
-import com.mugunghwa.goodquestion.story.session.dto.CharacterMessageResponse;
-import com.mugunghwa.goodquestion.story.session.dto.ProgressResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
-import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
+import com.mugunghwa.goodquestion.story.session.dto.*;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.content.Story;
@@ -30,12 +25,16 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class SessionService {
 
+    /** 고정 대사의 아이 이름 자리표시자(캐릭터-17). */
+    private static final String CHILD_NAME_PLACEHOLDER = "ㅇㅇ";
+
     private final StorySessionRepository sessionRepository;
     private final ChildService childService;
     private final ConsentService consentService;
     private final StoryRepository storyRepository;
     private final SceneService sceneService;
     private final MessageService messageService;
+    private final MessageRepository messageRepository;
 
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
@@ -59,9 +58,9 @@ public class SessionService {
 
         // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다(캐릭터-14).
         // STORY 장면은 내레이션이라 대화 기록에 남기지 않는다.
+        // 첫 대사는 SessionStartResponse에 담지 않는다 — 클라이언트가 /scenes/current/opening으로 가져간다.
         if (firstScene.isDialogue()) {
-            messageService.append(session, firstScene, SpeakerType.CHARACTER,
-                    firstScene.getCharacterOpening(), null, null);
+            appendOpening(session, firstScene);
         }
 
         return new SessionStartResponse(
@@ -81,6 +80,38 @@ public class SessionService {
                 session.getId(), session.getChild().getId(), session.getStory().getId(),
                 session.getStatus(), sceneRef, session.resolvePhase(),
                 toProgress(session, scene), session.isSceneGoalMet(), session.getLastActivityAt());
+    }
+
+    /** 새로고침·화면 전환 시 현재 장면을 다시 그리기 위한 조회. */
+    public CurrentSceneResponse getCurrentScene(UUID parentId, UUID sessionId) {
+        StorySession session = getOwnedSession(parentId, sessionId);
+        StoryScene scene = session.getCurrentScene();
+
+        return new CurrentSceneResponse(
+                scene == null ? null : SceneContentResponse.from(scene),
+                session.resolvePhase());
+    }
+
+    /**
+     * 고정 첫 대사 재생(캐릭터-14). 멱등이다.
+     *
+     * <p>세션 시작·장면 전환에서 이미 저장했으면 그 메시지를 그대로 돌려준다.
+     * 재호출로 같은 대사가 두 번 쌓이면 대화 기록과 turn_order가 어긋난다.
+     */
+    @Transactional
+    public SceneOpeningResponse playOpening(UUID parentId, UUID sessionId) {
+        StorySession session = getOwnedSession(parentId, sessionId);
+        StoryScene scene = session.getCurrentScene();
+        if (scene == null || !scene.isDialogue()) {
+            throw new BusinessException(ErrorCode.SCENE_NOT_DIALOGUE);
+        }
+
+        return messageRepository
+                .findFirstBySessionIdAndSceneIdAndSpeakerTypeOrderByTurnOrderAsc(
+                        session.getId(), scene.getId(), SpeakerType.CHARACTER)
+                .map(existing -> new SceneOpeningResponse(toCharacterMessage(existing), true))
+                .orElseGet(() -> new SceneOpeningResponse(
+                        toCharacterMessage(appendOpening(session, scene)), false));
     }
 
     /** 부족 요소는 저장하지 않고 (장면 목표 요소 − 누적 요소)로 매번 계산한다(진행-04). */
@@ -128,10 +159,7 @@ public class SessionService {
         // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다(캐릭터-14).
         CharacterMessageResponse openingMessage = null;
         if (nextScene.isDialogue()) {
-            Message opening = messageService.append(
-                    session, nextScene, SpeakerType.CHARACTER,
-                    nextScene.getCharacterOpening(), null, null);
-            openingMessage = new CharacterMessageResponse(opening.getId(), opening.getText(), null);
+            openingMessage = toCharacterMessage(appendOpening(session, nextScene));
         }
 
         return new SceneAdvanceResponse(
@@ -151,5 +179,45 @@ public class SessionService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         return session;
+    }
+
+    /**
+     * 고정 첫 대사 저장. 세션 시작·장면 전환·첫 대사 재생이 모두 이 경로를 탄다.
+     *
+     * <p>진입 경로마다 치환을 따로 하면 같은 대사가 경로에 따라 다르게 저장된다.
+     */
+    private Message appendOpening(StorySession session, StoryScene scene) {
+        String text = scene.getCharacterOpening()
+                .replace(CHILD_NAME_PLACEHOLDER, session.getChild().getName());
+        return messageService.append(session, scene, SpeakerType.CHARACTER, text, null, null);
+    }
+
+    /** audioUrl은 TTS 미구현이라 null — 클라이언트가 /api/tts로 합성한다. */
+    private CharacterMessageResponse toCharacterMessage(Message message) {
+        return new CharacterMessageResponse(message.getId(), message.getText(), null);
+    }
+
+    /**
+     * 이어하기 복원(홈-01~02). 화면을 다시 그리는 데 필요한 것을 한 번에 돌려준다.
+     *
+     * <p>여러 번 호출로 나누면 그 사이에 턴이 진행돼 장면과 대화 내역이 어긋날 수 있다.
+     */
+    public SessionResumeResponse resume(UUID parentId, UUID sessionId) {
+        StorySession session = getOwnedSession(parentId, sessionId);
+        StoryScene scene = session.getCurrentScene();
+
+        CharacterMessageResponse lastCharacterMessage = messageRepository
+                .findFirstBySessionIdAndSpeakerTypeOrderByTurnOrderDesc(
+                        sessionId, SpeakerType.CHARACTER)
+                .map(this::toCharacterMessage)
+                .orElse(null);
+
+        // 노출 중이던 미션은 story.mission의 판단 결과라 여기서 채우지 않는다.
+        return new SessionResumeResponse(
+                getSession(parentId, sessionId),
+                scene == null ? null : SceneContentResponse.from(scene),
+                messageService.getMessages(sessionId, null),
+                lastCharacterMessage,
+                null);
     }
 }
