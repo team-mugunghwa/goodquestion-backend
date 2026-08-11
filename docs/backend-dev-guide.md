@@ -16,6 +16,7 @@
 | --- | --- |
 | 엔드포인트 경로, 요청/응답 필드, 오류 코드, 구현 상태 | [API-DTO.md](API-DTO.md) |
 | 테이블, 컬럼, 제약, 인덱스, 트랜잭션 규칙 | [DB설계.md](DB설계.md) |
+| 테이블 관계를 그림으로 훑기 | [ERD.md](ERD.md) |
 | 서버 배포, 환경변수, Railway 설정 | [deploy-railway.md](deploy-railway.md) |
 | 로컬 셋업, 패키지 구조, 개발 절차 | 이 문서 |
 
