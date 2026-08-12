@@ -6,6 +6,8 @@ import com.mugunghwa.goodquestion.global.security.JwtProvider;
 import com.mugunghwa.goodquestion.user.auth.dto.*;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoClient;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoProfile;
+import com.mugunghwa.goodquestion.user.auth.google.GoogleClient;
+import com.mugunghwa.goodquestion.user.auth.google.GoogleProfile;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final KakaoClient kakaoClient;
     private final RefreshTokenService refreshTokenService;
+    private final GoogleClient googleClient;
+    private final LoginAttemptStore loginAttemptStore;
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request) {
@@ -36,12 +40,19 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        loginAttemptStore.assertLoginAllowed(request.email());
         Parent parent = parentRepository.findByEmail(request.email())
                 .filter(Parent::isLocal)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
-        if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
+                .orElse(null);
+        if (parent == null) {
+            loginAttemptStore.recordFailure(request.email());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
+            loginAttemptStore.recordFailure(request.email());
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        loginAttemptStore.reset(request.email());
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
@@ -87,5 +98,22 @@ public class AuthService {
                 jwtProvider.issue(parent.getId()),
                 refreshTokenService.issue(parent),
                 jwtProvider.getExpiresInSeconds());
+    }
+
+    @Transactional
+    public SocialAuthResponse loginWithGoogle(SocialLoginRequest request) {
+        String googleAccessToken =
+                googleClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
+        GoogleProfile profile = googleClient.getProfile(googleAccessToken);
+
+        Parent existing = parentRepository
+                .findByProviderAndProviderId(AuthProvider.GOOGLE, profile.providerId())
+                .orElse(null);
+        boolean isNewUser = existing == null;
+        Parent parent = isNewUser
+                ? parentRepository.save(Parent.ofGoogle(profile.providerId(), profile.email(), profile.name()))
+                : existing;
+
+        return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 }

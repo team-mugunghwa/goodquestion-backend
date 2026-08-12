@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * 보호자 계정. Supabase Auth를 사용하지 않아 서버가 직접 발급·관리한다.
- * provider=LOCAL은 email+passwordHash로, provider=KAKAO는 providerId(카카오 회원번호)로 식별한다.
+ * provider=LOCAL은 email+passwordHash로, 소셜 계정은 provider+providerId로 식별한다.
  */
 @Entity
 @Table(name = "parents")
@@ -62,8 +62,20 @@ public class Parent {
                 .providerId(providerId).email(email).provider(AuthProvider.KAKAO).name(name).build();
     }
 
+    public static Parent ofGoogle(String providerId, String email, String name) {
+        return Parent.builder()
+                .providerId(providerId).email(email).provider(AuthProvider.GOOGLE).name(name).build();
+    }
+
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updatePassword(String passwordHash) {
+        if (!isLocal()) {
+            throw new IllegalStateException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
+        }
+        this.passwordHash = passwordHash;
     }
 
     public boolean isLocal() {
