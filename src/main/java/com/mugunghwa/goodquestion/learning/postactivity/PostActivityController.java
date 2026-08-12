@@ -21,11 +21,11 @@ public class PostActivityController {
         return activityService.start(parentId, sessionId);
     }
 
-    /** 새로고침 복구용 상태 조회(활동-08). TODO: PostActivityService 조회 메서드 구현. */
+    /** 새로고침 복구용 상태 조회(활동-08). */
     @GetMapping
     public PostActivityStatusResponse getStatus(@CurrentParentId UUID parentId,
                                                 @PathVariable UUID sessionId) {
-        throw new UnsupportedOperationException("미구현: 후속 활동 상태 조회");
+        return activityService.getStatus(parentId, sessionId);
     }
 
     @PostMapping("/order")
