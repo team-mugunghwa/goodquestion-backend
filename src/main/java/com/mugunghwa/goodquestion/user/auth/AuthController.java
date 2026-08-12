@@ -4,6 +4,8 @@ import com.mugunghwa.goodquestion.global.security.ClientIpResolver;
 import com.mugunghwa.goodquestion.user.auth.dto.AuthResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.FindEmailRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.FindEmailResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LogoutRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.PasswordResetConfirmRequest;
@@ -24,6 +26,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final FindEmailService findEmailService;
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
@@ -50,6 +53,12 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
         passwordResetService.confirm(request.token(), request.newPassword());
+    }
+
+    /** 이메일(ID) 찾기(계정-07). 매치가 없어도 200과 빈 리스트 — 존재 여부를 에러로 구분하지 않는다. */
+    @PostMapping("/find-email")
+    public FindEmailResponse findEmail(@Valid @RequestBody FindEmailRequest request) {
+        return findEmailService.find(request);
     }
 
     /**
