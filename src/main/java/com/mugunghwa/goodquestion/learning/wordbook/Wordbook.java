@@ -3,6 +3,8 @@ package com.mugunghwa.goodquestion.learning.wordbook;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.user.child.Child;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,6 +48,7 @@ public class Wordbook {
     @JoinColumn(name = "source_scene_id")
     private StoryScene sourceScene;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 

@@ -9,7 +9,6 @@ import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.content.StorySceneRepository;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +25,6 @@ public class WordbookService {
     private final WordMeaningLlmClient wordMeaningLlmClient;
     private final ChildService childService;
     private final StorySceneRepository sceneRepository;
-    private final EntityManager entityManager;
 
     @Transactional
     public WordResponse create(UUID parentId, UUID childId, WordCreateRequest request) {
@@ -47,8 +45,6 @@ public class WordbookService {
                 .sourceScene(sourceScene)
                 .build());
 
-        // created_at은 DB 기본값이라 저장 직후 엔티티에는 비어 있다. 응답이 그 값을 담으므로 되읽는다.
-        entityManager.refresh(saved);
         return WordResponse.from(saved);
     }
 

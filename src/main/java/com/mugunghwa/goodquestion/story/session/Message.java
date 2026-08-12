@@ -3,6 +3,8 @@ package com.mugunghwa.goodquestion.story.session;
 import com.mugunghwa.goodquestion.global.vocab.CharacterEmotion;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -69,6 +71,7 @@ public class Message {
     @Column(name = "character_emotion", length = 20)
     private CharacterEmotion characterEmotion;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 

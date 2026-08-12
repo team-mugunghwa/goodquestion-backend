@@ -2,6 +2,8 @@ package com.mugunghwa.goodquestion.user.child;
 
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,6 +34,7 @@ public class Child {
     @Column(name = "birth_year", nullable = false)
     private short birthYear;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 

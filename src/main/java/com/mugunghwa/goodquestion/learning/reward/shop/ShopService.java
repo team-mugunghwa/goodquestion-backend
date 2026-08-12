@@ -12,7 +12,6 @@ import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,6 @@ public class ShopService {
     private final StardustService stardustService;
     private final ItemUnlockPolicy unlockPolicy;
     private final ChildService childService;
-    private final EntityManager entityManager;
 
     public List<ShopItemResponse> getShopItems(UUID parentId, UUID childId) {
         childService.getOwnedChild(parentId, childId);
@@ -71,8 +69,6 @@ public class ShopService {
         ChildItem acquired = childItemRepository.saveAndFlush(
                 ChildItem.builder().child(child).item(item).build());
 
-        // acquired_at은 DB 기본값이라 저장 직후 엔티티에는 비어 있다. 응답이 그 값을 담으므로 되읽는다.
-        entityManager.refresh(acquired);
         return new ItemPurchaseResponse(toChildItem(acquired, false), charged.getBalance());
     }
 

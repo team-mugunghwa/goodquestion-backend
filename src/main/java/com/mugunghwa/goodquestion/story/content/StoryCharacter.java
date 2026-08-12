@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.story.content;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -76,6 +78,7 @@ public class StoryCharacter {
     @Column(name = "expression_keys", nullable = false, columnDefinition = "text[]")
     private List<String> expressionKeys = new ArrayList<>();
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 

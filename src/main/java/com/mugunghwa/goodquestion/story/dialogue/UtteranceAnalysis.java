@@ -4,6 +4,8 @@ import com.mugunghwa.goodquestion.global.vocab.ChildIntent;
 import com.mugunghwa.goodquestion.global.vocab.UtteranceValidity;
 import com.mugunghwa.goodquestion.story.session.Message;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -65,6 +67,7 @@ public class UtteranceAnalysis {
     @Column(name = "dropped_evidence", nullable = false, columnDefinition = "jsonb")
     private List<DetectedElement> droppedEvidence = new ArrayList<>();
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
