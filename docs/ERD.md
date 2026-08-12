@@ -2,7 +2,7 @@
 
 > **원본은 [`V1__init_schema.sql`](../src/main/resources/db/migration/V1__init_schema.sql)이다.**
 > 이 문서는 그 스키마를 관계 중심으로 다시 그린 것이다. 컬럼 하나하나의 제약과
-> 그렇게 정한 근거는 [DB설계.md](DB설계.md)를 본다.
+> 그렇게 정한 근거는 [데이터베이스_설계.md](데이터베이스_설계.md)를 본다.
 >
 > 스키마를 바꾸면(`V2`, `V3` 추가) 이 문서와 [erd-view.html](erd-view.html)을 함께 고친다.
 >
@@ -176,7 +176,7 @@ erDiagram
 ```
 
 `refresh_tokens`는 테이블만 있고 **어떤 서비스도 참조하지 않는다.** 현재는 Access
-토큰 단일 전략이다. 근거는 [API-DTO.md 8절](API-DTO.md)에 있다.
+토큰 단일 전략이다. 근거는 [API_및_DTO_명세.md 8절](API_및_DTO_명세.md)에 있다.
 
 동의는 행을 지우지 않고 `withdrawn_at`을 채워 철회한다. 이력이 남아야 하기 때문이다.
 

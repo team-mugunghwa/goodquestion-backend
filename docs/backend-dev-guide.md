@@ -4,7 +4,7 @@
 > 자기 담당 API 개발에 착수할 수 있게 한다.
 >
 > **세부 명세는 이 문서에 담지 않는다.** 엔드포인트와 DTO 필드는
-> [API-DTO.md](API-DTO.md), 테이블과 컬럼은 [DB설계.md](DB설계.md)가 원본이다.
+> [API_및_DTO_명세.md](API_및_DTO_명세.md), 테이블과 컬럼은 [데이터베이스_설계.md](데이터베이스_설계.md)가 원본이다.
 
 ---
 
@@ -14,17 +14,18 @@
 
 | 알고 싶은 것 | 볼 문서 |
 | --- | --- |
-| 엔드포인트 경로, 요청/응답 필드, 오류 코드, 구현 상태 | [API-DTO.md](API-DTO.md) |
-| 테이블, 컬럼, 제약, 인덱스, 트랜잭션 규칙 | [DB설계.md](DB설계.md) |
+| 엔드포인트 경로, 요청/응답 필드, 오류 코드, 구현 상태 | [API_및_DTO_명세.md](API_및_DTO_명세.md) |
+| 테이블, 컬럼, 제약, 인덱스, 트랜잭션 규칙 | [데이터베이스_설계.md](데이터베이스_설계.md) |
 | 테이블 관계를 그림으로 훑기 | [ERD.md](ERD.md), 브라우저로 열려면 [erd-view.html](erd-view.html) |
 | 서버 배포, 환경변수, Railway 설정 | [deploy-railway.md](deploy-railway.md) |
+| 타임아웃, 캐시, 보안, 관측 등 기능 바깥에서 챙길 것 | [안정적인 서비스 만들기](안정적인_서비스_만들기.md) |
 | 로컬 셋업, 패키지 구조, 개발 절차 | 이 문서 |
 
 **충돌하면 무엇이 맞는가**
 
 1. 코드가 최우선이다. DTO record와 엔티티가 실제 계약이다.
-2. 스키마는 [`V1__init_schema.sql`](../src/main/resources/db/migration/V1__init_schema.sql)이 원본이고 DB설계.md는 그 근거 설명이다.
-3. 문서끼리 다르면 API-DTO.md와 DB설계.md가 이 문서보다 최신이다.
+2. 스키마는 [`V1__init_schema.sql`](../src/main/resources/db/migration/V1__init_schema.sql)이 원본이고 데이터베이스_설계.md는 그 근거 설명이다.
+3. 문서끼리 다르면 API_및_DTO_명세.md와 데이터베이스_설계.md가 이 문서보다 최신이다.
 
 ---
 
@@ -212,7 +213,7 @@ Flyway가 `resources/db/migration`의 파일을 기동 시 자동 적용하고 �
 4. 시드에 새 컬럼 값이 필요하면 `R__1_seed_content.sql`도 수정한다
 5. 커밋
 
-컬럼 상세와 제약 근거는 [DB설계.md](DB설계.md)를 본다.
+컬럼 상세와 제약 근거는 [데이터베이스_설계.md](데이터베이스_설계.md)를 본다.
 
 ### 데이터 변경 (콘텐츠 편집, 데모 추가)
 
@@ -281,10 +282,10 @@ ArchUnit 규칙으로 박혀 있다. 경계를 넘는 import를 추가하면 테
 
 ## 5. 도메인별 진입점
 
-세부 엔드포인트와 필드는 [API-DTO.md](API-DTO.md)에 있다. 여기서는 어느 클래스부터
+세부 엔드포인트와 필드는 [API_및_DTO_명세.md](API_및_DTO_명세.md)에 있다. 여기서는 어느 클래스부터
 읽으면 되는지만 짚는다.
 
-| 패키지 | 진입점 | 맡는 것 | API-DTO 참고 절 |
+| 패키지 | 진입점 | 맡는 것 | API 명세 참고 절 |
 | --- | --- | --- | --- |
 | `global.security` | `JwtAuthFilter`, `JwtProvider`, `@CurrentParentId` | 토큰 검증과 보호자 주입 | 1.1 인증 |
 | `global.error` | `ErrorCode`, `GlobalExceptionHandler` | 오류 코드 24종과 응답 변환 | 1.2 오류 응답 |
@@ -328,17 +329,17 @@ POST /api/sessions/{sessionId}/utterances
 
 ## 6. 새 API를 추가할 때
 
-1. [API-DTO.md](API-DTO.md)에 요청/응답 계약이 있는지 먼저 본다. 있으면 그대로 따른다
+1. [API_및_DTO_명세.md](API_및_DTO_명세.md)에 요청/응답 계약이 있는지 먼저 본다. 있으면 그대로 따른다
 2. DTO는 `record`로 만들고 해당 도메인의 `dto` 하위 패키지에 둔다
 3. 컨트롤러는 보호자 식별자를 파라미터로 받지 않는다. `@CurrentParentId UUID parentId`로 주입받는다
 4. 아이나 세션 리소스는 진입 시 소유권을 검증한다. 남의 것이면 403
 5. 새 오류 상황이면 `ErrorCode`에 등록하고 `BusinessException`으로 던진다
 6. 미구현 상태로 두려면 `UnsupportedOperationException`을 던진다. `GlobalExceptionHandler`가 501로 바꿔 프론트가 구현 여부를 오해하지 않는다
-7. 계약이 바뀌면 [API-DTO.md](API-DTO.md)를 함께 고친다
+7. 계약이 바뀌면 [API_및_DTO_명세.md](API_및_DTO_명세.md)를 함께 고친다
 
 **응답 설계 원칙 6가지**(판정은 서버가, 파생값은 저장하지 않고 계산, 서버 내부 설정은
 내리지 않음, 분기는 null로, 정답은 내리지 않음, 발화 원문은 안전 응답에 담지 않음)는
-[API-DTO.md 5절](API-DTO.md)에 근거와 함께 정리돼 있다.
+[API_및_DTO_명세.md 5절](API_및_DTO_명세.md)에 근거와 함께 정리돼 있다.
 
 ---
 
@@ -346,7 +347,7 @@ POST /api/sessions/{sessionId}/utterances
 
 엔드포인트 56개 중 42개가 동작하고, 4개는 일부 경로만 동작하며, 10개가 501 스텁이다
 (2026-08-12 기준). 스텁도 **DTO 계약은 확정**돼 있어 프론트는 미리 붙여 둘 수 있다.
-영역별 집계와 개별 상태는 [API-DTO.md 7절](API-DTO.md)에 있다.
+영역별 집계와 개별 상태는 [API_및_DTO_명세.md 7절](API_및_DTO_명세.md)에 있다.
 
 대략적인 그림은 이렇다.
 
@@ -386,8 +387,8 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 
 ## 9. 팀 확정 필요 사항
 
-각 문서의 미해결 항목을 합친 것이다. 근거는 [API-DTO.md 6절](API-DTO.md),
-[DB설계.md 11절](DB설계.md)에 있다.
+각 문서의 미해결 항목을 합친 것이다. 근거는 [API_및_DTO_명세.md 6절](API_및_DTO_명세.md),
+[데이터베이스_설계.md 11절](데이터베이스_설계.md)에 있다.
 
 | 항목 | 현재 | 결정 필요 |
 | --- | --- | --- |
