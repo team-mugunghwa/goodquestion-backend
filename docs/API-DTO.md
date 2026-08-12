@@ -144,18 +144,31 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/api/children/{childId}/reports` | 아이의 리포트 목록을 조회한다 | — | `List<ReportListResponse>` | ⛔ |
-| GET | `/api/sessions/{sessionId}/report` | 세션 한 건의 리포트를 조회한다. 아직 생성 전이면 409 | — | `ReportDetailResponse` | ⛔ |
+| GET | `/api/children/{childId}/reports` | 아이의 리포트 목록을 조회한다 | — | `List<ReportListResponse>` | ✅ |
+| GET | `/api/sessions/{sessionId}/report` | 세션 한 건의 리포트를 조회한다. 아직 생성 전이면 409 | — | `ReportDetailResponse` | ✅ |
 | POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ⛔ |
+
+조회 2건은 저장된 리포트를 읽는다. 생성은 LLM이 필요해 아직 열리지 않았고, 지금은 시드 데모
+데이터의 리포트만 조회된다.
+
+**대표 발화는 조회할 때마다 만든다.** `utterance_analyses`의 근거에서 구성하며 요소당 가장
+이른 턴 하나만 남긴다. `sttLowConfidence=true`인 발화는 후보에서 빠진다 - 저장된 원문이 아이가
+실제로 한 말과 다를 수 있는데, 리포트는 보호자에게 "아이가 이렇게 말했다"고 보여주는 자리다.
 
 ### 2.12 단어장
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⛔ |
+| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⚠️ `meaning`을 함께 보내면 동작. 생략하면 501 |
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
 | DELETE | `/api/words/{wordId}` | 저장한 단어를 삭제한다 | — | 204 | ⛔ |
+
+아이가 이야기를 듣다 모르는 단어를 누르는 경로에서는 뜻이 올 수 없어 LLM을 타므로, 벤더 선정
+전까지 그 경로만 501이다. 클라이언트가 뜻을 담아 보내면 지금도 저장된다.
+
+즐겨찾기와 삭제는 단어가 그 아이의 것인지까지 확인한다. 아이가 둘인 보호자가 `childId`에 다른
+아이를 넣어 형제의 단어를 건드리지 못하게 하기 위해서이고, 없는 자원과 같이 404로 알린다.
 
 ### 2.13 보상 — 상점·보관함
 
@@ -724,6 +737,8 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 **대표 발화는 저장값이 아니다.** 조회 시 `messages` + `utterance_analyses`의 근거에서 구성하고, `sttLowConfidence=true`인 발화는 후보에서 제외한다.
 
+**요소당 한 건만 담는다.** 같은 요소가 여러 턴에서 확인되면 가장 이른 턴을 쓴다. 전부 담으면 비슷한 문장이 반복돼 무엇을 잘했는지가 오히려 흐려진다. 근거 문구가 비어 있으면 발화 전체로 대신한다.
+
 ---
 
 ### 3.11 단어장
@@ -914,7 +929,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 3 | **STT 신뢰도 기준값** | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 후 서버 판정 |
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
-| 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추거나 조회로 역추적 |
+| 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매. `WordbookService.delete`는 소유 검증까지 구현돼 있고 컨트롤러만 501이다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추면 컨트롤러만 바꾸면 된다 |
 | 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
 
 ---
@@ -931,13 +946,24 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 세션·장면 | 8 | 7 | 1 | 0 |
 | 대화·미션 | 4 | 0 | 0 | 4 |
 | 후속 활동 | 4 | 0 | 0 | 4 |
-| 리포트 | 3 | 0 | 0 | 3 |
-| 단어장 | 4 | 2 | 0 | 2 |
+| 리포트 | 3 | 2 | 0 | 1 |
+| 단어장 | 4 | 2 | 1 | 1 |
 | 보상 | 11 | 0 | 0 | 11 |
 | 음성 | 2 | 0 | 0 | 2 |
-| **합계** | **56** | **25** | **3** | **28** |
+| **합계** | **56** | **27** | **4** | **25** |
 
-⛔ 28건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 25건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+**2026-08-12 갱신분** (직전 집계는 25/3/28이었다)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `GET /api/children/{childId}/reports` | ⛔ | ✅ | 구현됨 |
+| `GET /api/sessions/{sessionId}/report` | ⛔ | ✅ | 구현됨. 리포트가 없으면 409 |
+| `POST /api/children/{childId}/words` | ⛔ | ⚠️ | `meaning`을 함께 보내면 동작. 생략하면 LLM이 필요해 501 |
+
+리포트는 조회만 열렸다. 생성이 LLM에 걸려 있어 지금 조회되는 것은 시드 데모 데이터뿐이고,
+대화 턴 파이프라인이 붙어야 실데이터가 쌓인다.
 
 **2026-08-11 갱신분** (직전 집계는 25/2/29였다)
 
