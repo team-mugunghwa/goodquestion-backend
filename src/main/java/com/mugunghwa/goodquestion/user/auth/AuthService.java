@@ -24,6 +24,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final KakaoClient kakaoClient;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request, String clientIp) {
@@ -46,7 +47,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
         }
         if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
-            parent.recordLoginFailure();
+            loginAttemptService.recordFailure(parent.getId());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
         parent.recordLoginSuccess(clientIp);
