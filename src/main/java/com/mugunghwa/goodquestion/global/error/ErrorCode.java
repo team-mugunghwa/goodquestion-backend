@@ -19,6 +19,7 @@ public enum ErrorCode {
     STT_EMPTY_TEXT(HttpStatus.UNPROCESSABLE_ENTITY, "음성에서 텍스트를 인식하지 못했습니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
+    ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 시도가 많아 계정이 일시적으로 잠겼습니다."),
     KAKAO_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "카카오 인증에 실패했습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
 
