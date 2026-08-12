@@ -6,6 +6,8 @@ import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.LogoutRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.PasswordResetConfirmRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.PasswordResetRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenRefreshRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenResponse;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
@@ -33,6 +36,20 @@ public class AuthController {
     public AuthResponse login(@Valid @RequestBody LoginRequest request,
                               HttpServletRequest servletRequest) {
         return authService.login(request, ClientIpResolver.resolve(servletRequest));
+    }
+
+    /** 비밀번호 재설정 메일 발송(계정-06). 계정 존재 여부를 노출하지 않으려고 항상 202를 돌려준다. */
+    @PostMapping("/password-reset/request")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetService.request(request.email());
+    }
+
+    /** 비밀번호 재설정 확정(계정-06). 토큰은 1회용이다. */
+    @PostMapping("/password-reset/confirm")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        passwordResetService.confirm(request.token(), request.newPassword());
     }
 
     /**

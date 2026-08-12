@@ -9,6 +9,17 @@ spring:
   application:
     name: goodquestion-backend
 
+  # 비밀번호 재설정 메일 발송(계정-06). 기본값 없이 필수로 둔다 — 값이 비면 배포 시점에
+  # 조용히 안 되는 대신 기동부터 막는 쪽이 안전하다.
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS}
+
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
@@ -70,6 +81,13 @@ external:
     api-key: ${LLM_API_KEY}
     analysis-model: ${ANALYSIS_MODEL:}
     character-model: ${CHARACTER_MODEL:}
+
+app:
+  # 비밀번호 재설정 메일의 링크가 가리킬 프론트엔드 주소
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:7357}
+  mail-from: ${SMTP_FROM}
+  auth:
+    password-reset-token-ttl: ${PASSWORD_RESET_TOKEN_TTL:30m}
 
 # Railway의 헬스체크가 /actuator/health를 호출한다. 인증 없이 응답하도록 노출한다.
 management:
