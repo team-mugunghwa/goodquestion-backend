@@ -159,6 +159,21 @@ public class StoryScene {
         return requiredElements.stream().map(ThinkingElement::valueOf).toList();
     }
 
+    /**
+     * 아직 확인되지 않은 필수 요소. 저장하지 않고 (필수 - 누적)으로 매번 계산한다(진행-04).
+     *
+     * <p>선언 순서를 그대로 유지한다 - 이 순서가 곧 장면의 기본 유도 우선순위다.
+     * 진행 판단, 유도 대상 선택, 진행 상태 응답이 모두 이 한 곳을 쓴다.
+     *
+     * @param accumulatedElements 세션에 누적된 요소 이름(ThinkingElement.name())
+     */
+    public List<ThinkingElement> missingElements(List<String> accumulatedElements) {
+        List<String> accumulated = accumulatedElements != null ? accumulatedElements : List.of();
+        return getRequiredElementTypes().stream()
+                .filter(element -> !accumulated.contains(element.name()))
+                .toList();
+    }
+
     /** 유도 대상 요소에 대응하는 캐릭터의 남은 걱정 */
     public String getRemainingWorry(ThinkingElement element) {
         return remainingWorries.get(element.name());

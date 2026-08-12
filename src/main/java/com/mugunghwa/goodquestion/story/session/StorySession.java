@@ -28,6 +28,9 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StorySession {
 
+    /** 고정 대사의 아이 이름 자리표시자(캐릭터-17). */
+    private static final String CHILD_NAME_PLACEHOLDER = "ㅇㅇ";
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -145,13 +148,14 @@ public class StorySession {
      *
      * <p>진행 판단이 참조하는 누적 상태를 여기서만 갱신한다(진행-02).
      * 누적 요소는 검증을 통과한 요소 이름만 담고, 부족 요소는 저장하지 않는다(진행-03·04).
+     *
+     * <p>모드는 여기서 받지 않는다. 진행 판단은 이 턴이 반영된 뒤의 누적 상태를 보고
+     * 모드를 정하므로, 갱신과 기록이 한 메서드에 있으면 순서가 성립하지 않는다 -
+     * 판단 결과는 {@link #recordDecision}으로 따로 남긴다.
      */
-    public void applyTurn(List<String> newElements, boolean lowInformation,
-                          ResponseMode mode, ThinkingElement guidanceTarget) {
+    public void applyTurn(List<String> newElements, boolean lowInformation) {
         this.currentChildTurnCount++;
         this.lastDetectedElements = newElements != null ? new ArrayList<>(newElements) : new ArrayList<>();
-        this.lastResponseMode = mode;
-        this.lastGuidanceTarget = guidanceTarget;
 
         // 이번 턴에 처음 확인된 요소가 있는지 — 이미 누적된 요소만 다시 나왔으면 진전이 없는 것으로 본다.
         boolean hasNewElement = false;
@@ -169,6 +173,17 @@ public class StorySession {
         // 저정보는 SHORT·UNCLEAR·OFF_TOPIC만 센다. PLAYFUL은 제외한다(진행-15).
         this.consecutiveLowInformationTurns = lowInformation
                 ? (short) (this.consecutiveLowInformationTurns + 1) : 0;
+
+        touch();
+    }
+
+    /**
+     * 진행 판단 결과 기록. 다음 턴의 강한 유도 제한(직전 턴이 GUIDED면 금지)과
+     * 장면 보너스 자격이 이 값을 본다.
+     */
+    public void recordDecision(ResponseMode mode, ThinkingElement guidanceTarget) {
+        this.lastResponseMode = mode;
+        this.lastGuidanceTarget = guidanceTarget;
 
         if (mode == ResponseMode.GUIDED) {
             this.guidedUsedInScene = true;
@@ -230,6 +245,14 @@ public class StorySession {
     }
 
     public void touch() { this.lastActivityAt = OffsetDateTime.now(); }
+
+    /**
+     * 고정 대사의 자리표시자를 아이 이름으로 바꾼다(캐릭터-17).
+     * 첫 대사와 마지막 대사가 같은 규칙을 써야 해서 세션이 들고 있는다.
+     */
+    public String personalize(String text) {
+        return text == null ? null : text.replace(CHILD_NAME_PLACEHOLDER, child.getName());
+    }
 
     public boolean isInProgress() { return status == SessionStatus.IN_PROGRESS; }
 
