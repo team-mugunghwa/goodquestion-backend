@@ -8,6 +8,15 @@ import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStartRes
 import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStatusResponse;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingRequest;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingResponse;
+import com.mugunghwa.goodquestion.learning.reward.shop.Item;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemRepository;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemStatus;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemUnlockPolicy;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustService;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransaction;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransactionRepository;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
 import com.mugunghwa.goodquestion.story.content.Story;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.SessionStatus;
@@ -21,7 +30,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 말하기 후 활동 — 카드 순서 맞추기와 다시 이야기하기 (활동-01~10).
@@ -41,6 +52,11 @@ public class PostActivityService {
 
     private final PostActivityResultRepository resultRepository;
     private final SessionService sessionService;
+    private final StardustService stardustService;
+    private final StardustWalletRepository walletRepository;
+    private final StardustTransactionRepository transactionRepository;
+    private final ItemRepository itemRepository;
+    private final ItemUnlockPolicy unlockPolicy;
 
     /**
      * 카드 순서 맞추기 시작. 카드를 무작위 순서로 준다(활동-02).
@@ -102,11 +118,53 @@ public class PostActivityService {
     /**
      * 다시 이야기하기 제출 = 세션 완료 + 별가루 지급(활동-09~10, 보상-04).
      *
-     * <p>완료 처리와 지급 연동은 다음 단계에서 붙인다.
+     * <p>지급 결과를 응답에 담아야 하므로 완료 처리를 같은 트랜잭션에서 동기로 끝낸다.
+     * 카드 순서를 맞히기 전에는 받지 않는다 — 이야기 흐름을 짚은 뒤에 말하게 하는 활동이다.
      */
     @Transactional
     public RetellingResponse submitRetelling(UUID parentId, UUID sessionId, RetellingRequest request) {
-        throw new UnsupportedOperationException("미구현: 재구성 발화 제출");
+        StorySession session = getPostActivitySession(parentId, sessionId);
+        PostActivityResult result = resultRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RETELLING_BEFORE_ORDER));
+        if (!Boolean.TRUE.equals(result.getIsOrderCorrect())) {
+            throw new BusinessException(ErrorCode.RETELLING_BEFORE_ORDER);
+        }
+
+        result.completeRetelling(request.text());
+        session.complete();
+
+        // 지급 전후로 해금이 달라질 수 있어(완주 횟수·누적 획득량) 먼저 지금 열린 것을 적어 둔다.
+        Set<UUID> unlockedBefore = unlockedItemIds(session.getChild().getId());
+        stardustService.awardStoryCompleted(session);
+        List<Item> newlyUnlocked = itemRepository
+                .findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+                .filter(item -> !unlockedBefore.contains(item.getId()))
+                .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedOf(session)))
+                .toList();
+
+        // TODO: 리포트 생성 트리거 - ReportService.generate가 LLM 벤더 미정으로 비어 있어 아직 걸지 않는다.
+
+        return new RetellingResponse(
+                session.getStatus().name(),
+                result.getCompletedAt(),
+                sessionStardust(session),
+                newlyUnlocked.stream()
+                        .map(item -> new RetellingResponse.UnlockedItem(
+                                item.getId(), item.getName(), item.getThumbnailUrl()))
+                        .toList());
+    }
+
+    /** 완주 화면은 이번 세션에서 받은 별가루를 모두 보여 준다 — 장면 보너스는 놀이 중에 쌓였다. */
+    private RetellingResponse.Stardust sessionStardust(StorySession session) {
+        List<StardustTransaction> earned = transactionRepository
+                .findAllBySessionIdOrderByCreatedAtAsc(session.getId()).stream()
+                .filter(transaction -> transaction.getAmount() > 0)
+                .toList();
+
+        return new RetellingResponse.Stardust(
+                earned.stream().mapToInt(StardustTransaction::getAmount).sum(),
+                earned.stream().map(StardustService::toResponse).toList(),
+                totalBalanceOf(session));
     }
 
     private String statusOf(PostActivityResult result) {
@@ -114,6 +172,25 @@ public class PostActivityService {
             return STATUS_COMPLETED;
         }
         return Boolean.TRUE.equals(result.getIsOrderCorrect()) ? STATUS_ORDER_CORRECT : STATUS_ORDER_PENDING;
+    }
+
+    private Set<UUID> unlockedItemIds(UUID childId) {
+        int totalEarned = walletRepository.findByChildId(childId)
+                .map(StardustWallet::getTotalEarned).orElse(0);
+        return itemRepository.findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+                .filter(item -> unlockPolicy.isUnlocked(item, childId, totalEarned))
+                .map(Item::getId)
+                .collect(Collectors.toSet());
+    }
+
+    private int totalEarnedOf(StorySession session) {
+        return walletRepository.findByChildId(session.getChild().getId())
+                .map(StardustWallet::getTotalEarned).orElse(0);
+    }
+
+    private int totalBalanceOf(StorySession session) {
+        return walletRepository.findByChildId(session.getChild().getId())
+                .map(StardustWallet::getBalance).orElse(0);
     }
 
     /** 시드가 같으면 언제 불러도 같은 순서가 나온다. */
