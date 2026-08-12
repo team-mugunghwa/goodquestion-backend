@@ -25,3 +25,21 @@ jobs:
       # Docker는 ubuntu-latest에 기본 설치·실행 상태라 Testcontainers(PostgreSQL)가
       # 별도 설정 없이 동작한다. 시크릿도 필요 없다 - application-test.yml이 고정 플레이스홀더를 쓴다.
       - run: ./gradlew test
+
+      # 실패해도(if: always()) 리포트를 남긴다 - 콘솔 요약은 예외 메시지를 생략해서
+      # 원인 파악에 전문이 필요할 때가 있다.
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+          retention-days: 7
+
+      - name: Upload test results (XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xml
+          path: build/test-results/test/*.xml
+          retention-days: 7
