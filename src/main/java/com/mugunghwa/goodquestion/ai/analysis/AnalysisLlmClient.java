@@ -19,9 +19,13 @@ public class AnalysisLlmClient {
                                    String childUtterance, java.util.List<String> targetElements,
                                    java.util.Map<String, String> elementCriteria) {}
 
+    /**
+     * modelId는 어댑터가 채운다. analysisVersion만으로는 같은 프롬프트를 모델만 바꿔 돌린
+     * 경우를 구분할 수 없고, 소급해서 알아낼 방법도 없다.
+     */
     public record AnalysisLlmResult(String childIntent, String mainPoint,
                                     java.util.List<DetectedElementDto> detectedElements,
-                                    String utteranceValidity) {
+                                    String utteranceValidity, String modelId) {
         public record DetectedElementDto(String type, String evidence) {}
     }
 }

@@ -108,7 +108,7 @@
 |---|---|---|---|---|---|
 | POST | `/api/children/{childId}/sessions` | 이야기를 골라 세션을 시작한다. 첫 장면을 함께 돌려준다 | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
 | GET | `/api/sessions/{sessionId}` | 세션 상태와 진행 상황을 조회한다 | — | `SessionResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}/resume` | 이어하기. 장면과 대화 내역, 마지막 대사를 한 번에 돌려준다 | — | `SessionResumeResponse` | ⚠️ `exposedMission`은 항상 null |
+| GET | `/api/sessions/{sessionId}/resume` | 이어하기. 장면과 대화 내역, 마지막 대사를 한 번에 돌려준다 | — | `SessionResumeResponse` | ✅ |
 | GET | `/api/sessions/{sessionId}/messages` | 대화 내역을 조회한다 | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
 | POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | STORY 장면 재생이 끝났음을 알리고 다음 장면으로 넘긴다 | — | `SceneAdvanceResponse` | ✅ |
 | POST | `/api/sessions/{sessionId}/stop` | 진행 중인 세션을 중단한다 | — | 200 (본문 없음) | ✅ |
@@ -121,14 +121,24 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⛔ 하위 파이프라인 미구현 |
-| GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ⛔ |
+| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⚠️ 파이프라인 구현. 분석·캐릭터 LLM 클라이언트가 비어 있어 호출하면 501 |
+| GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ✅ |
+
+**턴 처리 중 발생하는 충돌**
+
+| 상황 | 코드 | 의미 |
+|---|---|---|
+| 현재 장면이 대화 장면이 아니다 | 409 `SCENE_NOT_DIALOGUE` | STORY 장면에서는 발화를 받지 않는다 |
+| 이미 최대 턴에 닿은 장면이다 | 409 `MAX_TURNS_EXCEEDED` | 정상 흐름에서는 나오지 않는다. 앞선 응답을 놓친 클라이언트의 재전송 |
+| 같은 세션에 턴이 겹쳤다 | 409 `CONCURRENT_TURN` | 아이가 연타했다. 앞선 요청이 끝난 뒤 다시 보낸다 |
+
+한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 낙관적 락에 걸려 409로 돌아온다.
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ⛔ |
+| GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ✅ |
 | POST | `/{missionId}/result` | 미션 수행 결과를 제출한다 | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
 
 ### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
@@ -992,6 +1002,22 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `POST /api/stt`, `POST /api/tts` | ✅ | ⛔ | 표기 오류 정정. 벤더 클라이언트가 비어 있어 호출하면 501이다 |
 
 세션·장면 8건이 모두 열리면서 **이야기 시작부터 장면 전환, 새로고침 복구까지 대화 턴을 제외한 재생 흐름 전체가 동작한다.** 남은 구멍은 `POST /utterances` 하나이고, 그 안의 누적 상태 갱신(`StorySession.applyTurn`)은 이미 구현돼 단위 테스트까지 있다.
+
+**2026-08-12 갱신분** (턴 처리 파이프라인)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/utterances` | ⛔ | ⚠️ | 파이프라인 구현. 분석·캐릭터 LLM 클라이언트만 비어 있어 호출하면 501 |
+| `GET /api/sessions/{sessionId}/turn-state` | ⛔ | ✅ | 구현됨 |
+| `GET /api/sessions/{sessionId}/missions/current` | ⛔ | ✅ | 노출 판정은 턴 처리가 하고 여기서는 읽기만 한다 |
+| `GET /api/sessions/{sessionId}/resume` | ⚠️ | ✅ | `exposedMission`이 채워졌다 |
+
+**남은 것은 LLM 어댑터 두 개뿐이다.** 저장, 후처리, 진행 판단, 미션 노출, 장면 종료와 이동,
+장면 보너스 지급까지 전 구간이 붙어 있고 `TurnOrchestratorTest`가 LLM만 대역으로 바꿔
+처음부터 끝까지 검증한다. `AnalysisLlmClient`·`CharacterLlmClient`를 채우면 그대로 동작한다.
+
+**위험 신호 감지(`UtteranceResponse.safety`)는 아직 항상 null이다.** 계약만 잡혀 있고
+감지 자체가 AI 파이프라인에 딸려 있다.
 
 ---
 
