@@ -1,10 +1,13 @@
 package com.mugunghwa.goodquestion.story.dialogue;
 
+import com.mugunghwa.goodquestion.global.error.BusinessException;
+import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
 import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceRequest;
 import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -67,8 +70,30 @@ public class TurnOrchestrator {
             return new UtteranceResponse(
                     record.childMessage(), record.analysis(), record.progress(),
                     closure.message(), record.mission(), closure.transition(), null);
+        } catch (DataIntegrityViolationException e) {
+            throw concurrentTurn(sessionId, e);
         } finally {
             log.info("턴 처리 sessionId={} {}", sessionId, timer.summary());
         }
+    }
+
+    /**
+     * 턴 처리 중의 무결성 충돌은 같은 세션에 두 턴이 겹쳤다는 뜻이다.
+     *
+     * <p>messages의 {@code unique (session_id, turn_order)}가 걸린다. turn_order를 마지막 값
+     * 더하기 1로 계산하므로, 앞선 턴이 커밋되기 전에 다음 턴이 값을 읽으면 둘이 같은 번호를
+     * 잡는다. 트랜잭션을 쪼개면서 이 경로가 늘었다 - 전에는 턴 전체가 한 트랜잭션이라 낙관적
+     * 락이 먼저 잡았지만, 지금은 발화 저장이 먼저 커밋되기 때문이다.
+     *
+     * <p>변환을 전역 핸들러가 아니라 여기서 하는 이유는 의미가 여기서만 성립하기 때문이다.
+     * 가입 이메일 중복이나 배치 칸 중복도 같은 예외로 올라오는데, 그것까지 "앞선 발화를 처리하는
+     * 중"이라고 답하면 클라이언트를 잘못 안내하게 된다.
+     *
+     * <p>원래 예외는 로그로 남긴다. 무결성 충돌이 동시 발화가 아닌 다른 이유로 났다면 그것은
+     * 결함이고, 409로 덮어쓰기만 하면 드러날 자리가 없어진다.
+     */
+    private BusinessException concurrentTurn(UUID sessionId, DataIntegrityViolationException e) {
+        log.warn("턴 처리 중 무결성 충돌 sessionId={}", sessionId, e);
+        return new BusinessException(ErrorCode.CONCURRENT_TURN);
     }
 }
