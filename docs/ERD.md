@@ -176,7 +176,7 @@ erDiagram
 ```
 
 `refresh_tokens`는 테이블만 있고 **어떤 서비스도 참조하지 않는다.** 현재는 Access
-토큰 단일 전략이다. 근거는 [API와_DTO_명세.md 8절](API와_DTO_명세.md)에 있다.
+토큰 단일 전략이다. 근거는 [API_및_DTO_명세.md 8절](API_및_DTO_명세.md)에 있다.
 
 동의는 행을 지우지 않고 `withdrawn_at`을 채워 철회한다. 이력이 남아야 하기 때문이다.
 
