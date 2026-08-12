@@ -8,6 +8,8 @@ import com.mugunghwa.goodquestion.user.auth.dto.LogoutRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenRefreshRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenResponse;
+import com.mugunghwa.goodquestion.user.auth.dto.PasswordResetConfirmRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.PasswordResetRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
@@ -31,19 +34,33 @@ public class AuthController {
         return authService.login(request);
     }
 
+    @PostMapping("/password-reset/request")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetService.request(request.email());
+    }
+
+    @PostMapping("/password-reset/confirm")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        passwordResetService.confirm(request.token(), request.newPassword());
+    }
+
     /**
-     * 소셜 로그인. 현재 지원 공급자는 kakao 뿐이며 나머지는 501을 반환한다(미결-02).
+     * 소셜 로그인. 카카오와 구글을 지원한다.
      *
      * <p>서버가 인가 코드를 제공자 토큰으로 교환한 뒤 프로필을 조회한다(계정-04).
-     * 교환에 카카오 REST API 키가 필요하므로 {@code KAKAO_CLIENT_ID}를 설정해야 한다.
+     * 공급자별 client ID와 웹 클라이언트 secret을 환경 변수로 설정해야 한다.
      */
     @PostMapping("/social/{provider}")
     public SocialAuthResponse loginWithSocial(@PathVariable String provider,
                                               @Valid @RequestBody SocialLoginRequest request) {
-        if (!"kakao".equalsIgnoreCase(provider)) {
-            throw new UnsupportedOperationException("지원하지 않는 소셜 로그인 공급자입니다: " + provider);
-        }
-        return authService.loginWithKakao(request);
+        return switch (provider.toLowerCase()) {
+            case "kakao" -> authService.loginWithKakao(request);
+            case "google" -> authService.loginWithGoogle(request);
+            default -> throw new UnsupportedOperationException(
+                    "지원하지 않는 소셜 로그인 공급자입니다: " + provider);
+        };
     }
 
     /** 리프레시 토큰 회전 재발급(계정-05). */
