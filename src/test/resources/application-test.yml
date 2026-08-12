@@ -12,6 +12,21 @@ spring:
     username: unused
     password: unused
 
+  # main의 application.yml은 SMTP_* 환경변수를 기본값 없이 요구한다.
+  # 테스트는 실제 메일을 보내지 않고(PasswordResetServiceTest에서 JavaMailSender를
+  # @MockitoBean으로 대체) 컨텍스트 부팅만 되면 되므로 자리 채우기 값을 둔다.
+  mail:
+    host: localhost
+    port: 3025
+    username: test-smtp-username
+    password: test-smtp-password
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+app:
+  mail-from: no-reply@test.goodquestion.local
+
 jwt:
   # 테스트 고정 키. HS256이라 32바이트 이상이어야 한다. 운영 키와 무관하다.
   secret: goodquestion-test-only-secret-key-32bytes-or-longer
