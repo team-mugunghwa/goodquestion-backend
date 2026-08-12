@@ -1,10 +1,22 @@
 server:
   # Railway 같은 PaaS는 PORT 환경변수로 리스닝 포트를 지정한다. 로컬은 8080.
   port: ${PORT:8080}
+  # push마다 재배포되는 구조라, 처리 중이던 요청을 끊지 않고 끝낼 시간을 준다.
+  # 그 시간이 지나도 안 끝나면 강제 종료한다.
+  shutdown: graceful
 
 spring:
   application:
     name: goodquestion-backend
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  threads:
+    virtual:
+      # 요청 시간의 대부분이 STT/LLM/TTS 대기다. 가상 스레드면 대기 중에도 플랫폼 스레드를
+      # 쥐고 있지 않아 같은 서버로 더 많은 동시 요청을 받는다. JDK 25라 synchronized 고정 문제도 없다.
+      enabled: true
 
   datasource:
     url: ${DB_URL}          # JDBC URL. Railway에서는 Postgres 서비스 참조로 조립한다.
