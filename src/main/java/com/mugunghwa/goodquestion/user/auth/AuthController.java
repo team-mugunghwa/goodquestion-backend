@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.user.auth;
 
+import com.mugunghwa.goodquestion.global.security.ClientIpResolver;
 import com.mugunghwa.goodquestion.user.auth.dto.AuthResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
 import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
@@ -8,6 +9,7 @@ import com.mugunghwa.goodquestion.user.auth.dto.LogoutRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenRefreshRequest;
 import com.mugunghwa.goodquestion.user.auth.dto.TokenResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,13 +24,15 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse signUp(@Valid @RequestBody SignUpRequest request) {
-        return authService.signUp(request);
+    public AuthResponse signUp(@Valid @RequestBody SignUpRequest request,
+                               HttpServletRequest servletRequest) {
+        return authService.signUp(request, ClientIpResolver.resolve(servletRequest));
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public AuthResponse login(@Valid @RequestBody LoginRequest request,
+                              HttpServletRequest servletRequest) {
+        return authService.login(request, ClientIpResolver.resolve(servletRequest));
     }
 
     /**
@@ -39,11 +43,12 @@ public class AuthController {
      */
     @PostMapping("/social/{provider}")
     public SocialAuthResponse loginWithSocial(@PathVariable String provider,
-                                              @Valid @RequestBody SocialLoginRequest request) {
+                                              @Valid @RequestBody SocialLoginRequest request,
+                                              HttpServletRequest servletRequest) {
         if (!"kakao".equalsIgnoreCase(provider)) {
             throw new UnsupportedOperationException("지원하지 않는 소셜 로그인 공급자입니다: " + provider);
         }
-        return authService.loginWithKakao(request);
+        return authService.loginWithKakao(request, ClientIpResolver.resolve(servletRequest));
     }
 
     /** 리프레시 토큰 회전 재발급(계정-05). */

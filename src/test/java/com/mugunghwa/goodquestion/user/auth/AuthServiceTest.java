@@ -12,16 +12,24 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 리프레시 토큰 회전·무효화 (계정-05). */
+/**
+ * 리프레시 토큰 회전·무효화 (계정-05).
+ *
+ * <p>로그인 잠금은 실패 기록이 별도 트랜잭션으로 커밋돼 여기서는 검증할 수 없다.
+ * {@link LoginLockTest}에서 다룬다.
+ */
 @IntegrationTest
 @Transactional
 class AuthServiceTest {
+
+    private static final String PASSWORD = "password123";
+    private static final String IP = "127.0.0.1";
 
     @Autowired
     private AuthService authService;
 
     private AuthResponse 가입한다(String email) {
-        return authService.signUp(new SignUpRequest(email, "password123", "김보호"));
+        return authService.signUp(new SignUpRequest(email, PASSWORD, "김보호"), IP);
     }
 
     @Test

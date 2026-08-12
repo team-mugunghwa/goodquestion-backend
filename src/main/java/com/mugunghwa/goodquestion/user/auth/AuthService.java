@@ -24,24 +24,33 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final KakaoClient kakaoClient;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
 
     @Transactional
-    public AuthResponse signUp(SignUpRequest request) {
+    public AuthResponse signUp(SignUpRequest request, String clientIp) {
         if (parentRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
         Parent parent = parentRepository.save(
                 Parent.ofLocal(request.email(), passwordEncoder.encode(request.password()), request.name()));
+        parent.recordLoginSuccess(clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    @Transactional
+    public AuthResponse login(LoginRequest request, String clientIp) {
         Parent parent = parentRepository.findByEmail(request.email())
                 .filter(Parent::isLocal)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        // 잠긴 계정은 비밀번호가 맞아도 통과시키지 않는다.
+        if (parent.isLocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
         if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
+            loginAttemptService.recordFailure(parent.getId());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        parent.recordLoginSuccess(clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
@@ -50,7 +59,7 @@ public class AuthService {
      * 최초 로그인이면 가입까지 함께 처리한다(find-or-create).
      */
     @Transactional
-    public SocialAuthResponse loginWithKakao(SocialLoginRequest request) {
+    public SocialAuthResponse loginWithKakao(SocialLoginRequest request, String clientIp) {
         String kakaoAccessToken =
                 kakaoClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
         KakaoProfile profile = kakaoClient.getProfile(kakaoAccessToken);
@@ -62,7 +71,7 @@ public class AuthService {
         Parent parent = isNewUser
                 ? parentRepository.save(Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname()))
                 : existing;
-
+        parent.recordLoginSuccess(clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 
