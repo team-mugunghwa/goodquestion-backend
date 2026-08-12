@@ -20,4 +20,9 @@ public record TokenResponse(String accessToken, String refreshToken, long access
     public static TokenResponse accessOnly(String accessToken, long expiresInSeconds) {
         return new TokenResponse(accessToken, null, expiresInSeconds);
     }
+
+    //refreshtoken 있는 버전
+    public static TokenResponse of(String accessToken, String refreshToken, long expiresInSeconds) {
+        return new TokenResponse(accessToken, refreshToken, expiresInSeconds);
+    }
 }
