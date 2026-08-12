@@ -23,6 +23,7 @@ import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
 import com.mugunghwa.goodquestion.story.session.dto.ProgressResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SceneTransitionResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,7 @@ import java.util.UUID;
  * 장면이 바뀌기 전에 떠 놓아야 끝난 장면 기준으로 나간다.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TurnOrchestrator {
 
@@ -52,8 +54,22 @@ public class TurnOrchestrator {
     private final CharacterResponseService characterResponseService;
     private final SceneClosingHandler sceneClosingHandler;
 
+    /**
+     * 구간별 소요 시간을 한 줄로 남긴다. 실패해도 남겨야 한다 - 외부 호출이 타임아웃으로
+     * 끊겼을 때가 이 숫자를 가장 보고 싶은 순간이다.
+     */
     @Transactional
     public UtteranceResponse processUtterance(UUID parentId, UUID sessionId, UtteranceRequest request) {
+        TurnTimer timer = TurnTimer.start();
+        try {
+            return runPipeline(parentId, sessionId, request, timer);
+        } finally {
+            log.info("턴 처리 sessionId={} {}", sessionId, timer.summary());
+        }
+    }
+
+    private UtteranceResponse runPipeline(UUID parentId, UUID sessionId, UtteranceRequest request,
+                                          TurnTimer timer) {
         StorySession session = sessionService.getOwnedSession(parentId, sessionId);
         StoryScene scene = requireOpenDialogueScene(session);
 
@@ -61,10 +77,12 @@ public class TurnOrchestrator {
         Message childMessage = messageService.appendChild(session, scene, request.text(),
                 request.sttRawText(), request.sttConfidence(), request.retryCountOrZero());
         completeMissionIfSubmitted(session, scene, request.missionId());
+        timer.mark("저장");
 
         // ② 발화 분석. 직전 캐릭터 대사를 함께 넘겨야 무엇에 대한 대답인지 판단할 수 있다.
         UtteranceAnalysis analysis = analysisService.analyze(
                 childMessage, scene, messageService.lastCharacterText(sessionId));
+        timer.mark("분석");
 
         // ③ 누적 상태 갱신. 직전 모드는 여기서 덮이므로 미리 떠 둔다.
         ResponseMode previousMode = session.getLastResponseMode();
@@ -81,6 +99,7 @@ public class TurnOrchestrator {
 
         // ⑥ 진행 상태는 장면이 바뀌기 전에 떠 놓는다. 장면을 옮기면 누적 요소가 초기화된다.
         ProgressResponse progress = sessionService.toProgress(session, scene);
+        timer.mark("판단");
 
         // ⑦ 캐릭터 대사. CLOSING이면 마무리 대사와 장면 이동까지 한 번에 처리된다.
         CharacterMessageResponse characterMessage;
@@ -93,6 +112,7 @@ public class TurnOrchestrator {
         } else {
             characterMessage = appendCharacterReply(session, scene, analysis, decision);
         }
+        timer.mark("대사");
 
         // safety는 위험 신호 감지가 붙기 전까지 항상 null이다 (SafetyResponse의 TODO).
         return new UtteranceResponse(
