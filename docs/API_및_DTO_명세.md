@@ -32,7 +32,7 @@
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN`
 
 **501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
 
@@ -132,7 +132,9 @@
 | 이미 최대 턴에 닿은 장면이다 | 409 `MAX_TURNS_EXCEEDED` | 정상 흐름에서는 나오지 않는다. 앞선 응답을 놓친 클라이언트의 재전송 |
 | 같은 세션에 턴이 겹쳤다 | 409 `CONCURRENT_TURN` | 아이가 연타했다. 앞선 요청이 끝난 뒤 다시 보낸다 |
 
-한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 낙관적 락에 걸려 409로 돌아온다.
+한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 409로 돌아온다.
+
+`CONCURRENT_TURN`은 **다시 보내도 되는 실패**다. 겹친 요청 중 진 쪽이 아이 발화만 남기고 끝날 수 있으므로, 재전송 전에 `GET /turn-state`나 이어하기로 현재 상태를 다시 읽는 것이 안전하다.
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
@@ -954,16 +956,39 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
 | 콘텐츠 | 4 | 4 | 0 | 0 |
-| 세션·장면 | 8 | 7 | 1 | 0 |
-| 대화·미션 | 4 | 0 | 0 | 4 |
+| 세션·장면 | 8 | 8 | 0 | 0 |
+| 대화·미션 | 4 | 2 | 1 | 1 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
 | 리포트 | 3 | 2 | 0 | 1 |
 | 단어장 | 4 | 2 | 1 | 1 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 0 | 0 | 2 |
-| **합계** | **56** | **42** | **4** | **10** |
+| **합계** | **56** | **45** | **4** | **7** |
 
-⛔ 10건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 7건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+⚠️ 4건의 내용은 이렇다. 소셜 로그인은 카카오만, 내 정보 수정은 이름만, 발화 제출은 파이프라인은 붙었으나 LLM 어댑터가 비어 호출하면 501, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-13 갱신분** (직전 집계는 42/4/10이었다)
+
+턴 처리 파이프라인이 붙었다.
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/utterances` | ⛔ | ⚠️ | 파이프라인 구현. 분석·캐릭터 LLM 클라이언트만 비어 있어 호출하면 501 |
+| `GET /api/sessions/{sessionId}/turn-state` | ⛔ | ✅ | 구현됨 |
+| `GET /api/sessions/{sessionId}/missions/current` | ⛔ | ✅ | 노출 판정은 턴 처리가 하고 여기서는 읽기만 한다 |
+| `GET /api/sessions/{sessionId}/resume` | ⚠️ | ✅ | `exposedMission`이 채워졌다 |
+
+**남은 것은 LLM 어댑터 두 개뿐이다.** 저장, 후처리, 진행 판단, 미션 노출, 장면 종료와 이동,
+장면 보너스 지급까지 전 구간이 붙어 있고 `TurnOrchestratorTest`가 LLM만 대역으로 바꿔
+처음부터 끝까지 검증한다. `AnalysisLlmClient`·`CharacterLlmClient`를 채우면 그대로 동작한다.
+
+**위험 신호 감지(`UtteranceResponse.safety`)는 아직 항상 null이다.** 계약만 잡혀 있고
+감지 자체가 AI 파이프라인에 딸려 있다.
+
+턴 처리 중 외부 호출을 트랜잭션 밖으로 뺐다. 응답 계약은 그대로지만 겹친 발화의 실패 방식이
+달라졌다 — 자세한 내용은 [트러블슈팅_턴_처리_커넥션_점유.md](트러블슈팅_턴_처리_커넥션_점유.md)에 있다.
 
 **2026-08-12 갱신분 3** (직전 집계는 38/4/14였다)
 
@@ -1002,22 +1027,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `POST /api/stt`, `POST /api/tts` | ✅ | ⛔ | 표기 오류 정정. 벤더 클라이언트가 비어 있어 호출하면 501이다 |
 
 세션·장면 8건이 모두 열리면서 **이야기 시작부터 장면 전환, 새로고침 복구까지 대화 턴을 제외한 재생 흐름 전체가 동작한다.** 남은 구멍은 `POST /utterances` 하나이고, 그 안의 누적 상태 갱신(`StorySession.applyTurn`)은 이미 구현돼 단위 테스트까지 있다.
-
-**2026-08-12 갱신분** (턴 처리 파이프라인)
-
-| 엔드포인트 | 이전 | 현재 | 근거 |
-|---|---|---|---|
-| `POST /api/sessions/{sessionId}/utterances` | ⛔ | ⚠️ | 파이프라인 구현. 분석·캐릭터 LLM 클라이언트만 비어 있어 호출하면 501 |
-| `GET /api/sessions/{sessionId}/turn-state` | ⛔ | ✅ | 구현됨 |
-| `GET /api/sessions/{sessionId}/missions/current` | ⛔ | ✅ | 노출 판정은 턴 처리가 하고 여기서는 읽기만 한다 |
-| `GET /api/sessions/{sessionId}/resume` | ⚠️ | ✅ | `exposedMission`이 채워졌다 |
-
-**남은 것은 LLM 어댑터 두 개뿐이다.** 저장, 후처리, 진행 판단, 미션 노출, 장면 종료와 이동,
-장면 보너스 지급까지 전 구간이 붙어 있고 `TurnOrchestratorTest`가 LLM만 대역으로 바꿔
-처음부터 끝까지 검증한다. `AnalysisLlmClient`·`CharacterLlmClient`를 채우면 그대로 동작한다.
-
-**위험 신호 감지(`UtteranceResponse.safety`)는 아직 항상 null이다.** 계약만 잡혀 있고
-감지 자체가 AI 파이프라인에 딸려 있다.
 
 ---
 
