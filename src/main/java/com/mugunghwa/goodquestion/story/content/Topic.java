@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.story.content;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +28,7 @@ public class Topic {
     @Column(name = "display_order", nullable = false)
     private short displayOrder;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 

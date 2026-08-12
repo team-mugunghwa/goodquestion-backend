@@ -2,6 +2,8 @@ package com.mugunghwa.goodquestion.learning.reward.shop;
 
 import com.mugunghwa.goodquestion.user.child.Child;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +35,7 @@ public class ChildItem {
     @JoinColumn(name = "item_id", nullable = false)
     private Item item;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "acquired_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime acquiredAt;
 

@@ -2,6 +2,8 @@ package com.mugunghwa.goodquestion.learning.reward.planet;
 
 import com.mugunghwa.goodquestion.learning.reward.shop.ChildItem;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -48,6 +50,7 @@ public class PlanetItem {
     @Column(name = "placed_r", nullable = false)
     private short placedR;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "placed_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime placedAt;
 
