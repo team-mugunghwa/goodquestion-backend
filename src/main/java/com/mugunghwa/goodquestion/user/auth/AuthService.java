@@ -3,11 +3,7 @@ package com.mugunghwa.goodquestion.user.auth;
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.security.JwtProvider;
-import com.mugunghwa.goodquestion.user.auth.dto.AuthResponse;
-import com.mugunghwa.goodquestion.user.auth.dto.SocialAuthResponse;
-import com.mugunghwa.goodquestion.user.auth.dto.SocialLoginRequest;
-import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
-import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
+import com.mugunghwa.goodquestion.user.auth.dto.*;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoClient;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoProfile;
 import com.mugunghwa.goodquestion.user.parent.Parent;
@@ -27,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final KakaoClient kakaoClient;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request) {
@@ -35,7 +32,7 @@ public class AuthService {
         }
         Parent parent = parentRepository.save(
                 Parent.ofLocal(request.email(), passwordEncoder.encode(request.password()), request.name()));
-        return AuthResponse.of(jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent);
+        return AuthResponse.of(issueTokens(parent), parent);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -45,7 +42,7 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
-        return AuthResponse.of(jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent);
+        return AuthResponse.of(issueTokens(parent), parent);
     }
 
     /**
@@ -66,7 +63,29 @@ public class AuthService {
                 ? parentRepository.save(Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname()))
                 : existing;
 
-        return SocialAuthResponse.of(
-                jwtProvider.issue(parent.getId()), jwtProvider.getExpiresInSeconds(), parent, isNewUser);
+        return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
+    }
+
+    /** 리프레시 토큰 회전 재발급(계정-05). 쓴 토큰은 폐기되고 매번 새 값이 나간다. */
+    @Transactional
+    public TokenResponse refresh(String refreshToken) {
+        RefreshTokenService.RotationResult rotated = refreshTokenService.rotate(refreshToken);
+        return TokenResponse.of(
+                jwtProvider.issue(rotated.parent().getId()),
+                rotated.refreshToken(),
+                jwtProvider.getExpiresInSeconds());
+    }
+
+    /** 로그아웃 — 리프레시 토큰을 무효화한다. Access 토큰은 만료까지 유효하므로 짧게 유지한다. */
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
+    }
+
+    private TokenResponse issueTokens(Parent parent) {
+        return TokenResponse.of(
+                jwtProvider.issue(parent.getId()),
+                refreshTokenService.issue(parent),
+                jwtProvider.getExpiresInSeconds());
     }
 }

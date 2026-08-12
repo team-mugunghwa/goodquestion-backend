@@ -42,7 +42,8 @@ cors:
 
 jwt:
   secret: ${JWT_SECRET}                      # 자체 발급 Access 토큰 서명 키 (HS256, 32바이트 이상 권장)
-  expiration-ms: ${JWT_EXPIRATION_MS:604800000}   # 기본 7일 - Access 토큰 단일 전략(MVP), Refresh 없음
+  expiration-ms: ${JWT_EXPIRATION_MS:1800000} # Access는 짧게 두고 만료 시 리프레시로 재발급한다. 탈취돼도 노출 창이 30분으로 줄어든다.
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:1209600000}   # 14일
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID:}          # 카카오 REST API 키 - 인가 코드 교환에 필요

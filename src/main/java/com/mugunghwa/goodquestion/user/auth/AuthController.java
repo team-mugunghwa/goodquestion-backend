@@ -46,16 +46,16 @@ public class AuthController {
         return authService.loginWithKakao(request);
     }
 
-    /** 리프레시 토큰 회전 재발급(계정-05). TODO: 회전 정책 구현 — 저장소는 이미 있다. */
+    /** 리프레시 토큰 회전 재발급(계정-05). */
     @PostMapping("/refresh")
     public TokenResponse refresh(@Valid @RequestBody TokenRefreshRequest request) {
-        throw new UnsupportedOperationException("미구현: 토큰 재발급");
+        return authService.refresh(request.refreshToken());
     }
 
-    /** 리프레시 토큰 무효화(계정-05). TODO: 무효화 처리 — 저장소는 이미 있다. */
+    /** 리프레시 토큰 무효화(계정-05). */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody LogoutRequest request) {
-        throw new UnsupportedOperationException("미구현: 로그아웃");
+        authService.logout(request.refreshToken());
     }
 }
