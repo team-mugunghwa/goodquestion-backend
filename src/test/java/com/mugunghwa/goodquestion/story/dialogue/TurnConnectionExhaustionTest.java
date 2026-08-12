@@ -10,7 +10,6 @@ import com.mugunghwa.goodquestion.user.auth.AuthService;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -36,8 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 반납하지 않는다. 커넥션 풀은 앱 전체가 공유하므로 대화가 몰리면 로그인처럼 대화와 아무
  * 상관 없는 요청까지 함께 막힌다. 이 테스트는 그 연쇄를 눈에 보이게 만든다.
  *
- * <p><b>현재 이 테스트는 실패한다. 의도된 것이다.</b> 고쳐야 할 동작을 먼저 적어 두고
- * 트랜잭션 경계를 분리한 뒤 통과시키려는 것이다. 문서의 "전" 근거도 이 실패 출력에서 나온다.
+ * <p>이 테스트는 트랜잭션 경계를 분리하기 전까지 실패했다. 고쳐야 할 동작을 먼저 적어 두고
+ * 분리한 뒤 통과시킨 것이라, 다시 한 트랜잭션으로 묶는 변경이 들어오면 여기서 걸린다.
  *
  * <p>풀 크기를 2로 줄여 재현한다. 운영 기본값 10에서도 같은 일이 벌어지지만 아이 열 명이
  * 동시에 말하는 상황을 테스트로 만들 필요는 없다 - 고갈에 필요한 수가 유한하다는 것이 문제지
@@ -102,9 +101,6 @@ class TurnConnectionExhaustionTest {
     }
 
     @Test
-    @Disabled("""
-            트랜잭션 경계를 분리하기 전까지 실패한다. 고쳐야 할 동작을 먼저 적어 둔 것이라
-            분리 작업이 끝나면 이 애노테이션을 떼고 통과를 확인한다.""")
     void 대화_턴이_처리되는_동안에도_로그인은_응답해야_한다() throws Exception {
         // 발화 두 건을 동시에 던져 풀을 채운다.
         CountDownLatch turnsInFlight = new CountDownLatch(CONCURRENT_TURNS);

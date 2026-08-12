@@ -4,7 +4,6 @@ import com.mugunghwa.goodquestion.ai.analysis.AnalysisLlmClient;
 import com.mugunghwa.goodquestion.global.vocab.ChildIntent;
 import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
 import com.mugunghwa.goodquestion.global.vocab.UtteranceValidity;
-import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.engine.AnalysisPostProcessor;
 import com.mugunghwa.goodquestion.story.session.Message;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
+/**
+ * 발화 분석 - LLM 호출과 후처리, 그리고 저장.
+ *
+ * <p>둘을 한 메서드에 두지 않는다. LLM 호출은 수 초가 걸리고 저장은 수 밀리초인데, 묶어 두면
+ * 저장 트랜잭션이 LLM 대기 시간만큼 DB 커넥션을 쥐게 된다.
+ * 자세한 배경은 docs/트러블슈팅_턴_처리_커넥션_점유.md에 있다.
+ */
 @Service
 @RequiredArgsConstructor
 public class UtteranceAnalysisService {
@@ -24,44 +29,39 @@ public class UtteranceAnalysisService {
     private final UtteranceAnalysisRepository analysisRepository;
 
     /**
-     * 분석 LLM 호출 → 서버 후처리 → 통과본 저장.
-     * LLM 입력 (발화 분석 문서 4장):
-     *  sceneContext = scene.sceneDescription + conflict
-     *  goal = scene.sceneGoal
-     *  targetElements = scene.requiredElements
-     *  elementCriteria = scene.elementCriteria   (장면별 인정 기준)
+     * 분석 LLM 호출과 서버 후처리. <b>트랜잭션 밖에서 부른다 - DB를 만지지 않는다.</b>
+     *
+     * <p>LLM 입력 (발화 분석 문서 4장): sceneContext, goal, previousCharacterMessage,
+     * childUtterance, targetElements, elementCriteria
      */
-    @Transactional
-    public UtteranceAnalysis analyze(Message childMessage, StoryScene scene,
-                                     String previousCharacterMessage) {
+    public AnalysisOutcome analyze(String childUtterance, SceneAnalysisContext scene,
+                                   String previousCharacterMessage) {
         AnalysisLlmClient.AnalysisLlmResult raw = analysisLlmClient.analyze(
                 new AnalysisLlmClient.AnalysisLlmInput(
-                        sceneContext(scene),
-                        scene.getSceneGoal(),
-                        previousCharacterMessage,
-                        childMessage.getText(),
-                        scene.getRequiredElements(),
-                        scene.getElementCriteria()));
+                        scene.sceneContext(), scene.goal(), previousCharacterMessage,
+                        childUtterance, scene.targetElements(), scene.elementCriteria()));
 
         AnalysisPostProcessor.Result processed =
-                postProcessor.process(toDetectedElements(raw), childMessage.getText());
+                postProcessor.process(toDetectedElements(raw), childUtterance);
 
-        return analysisRepository.save(UtteranceAnalysis.builder()
-                .message(childMessage)
-                .childIntent(toIntent(raw.childIntent()))
-                .mainPoint(raw.mainPoint())
-                .detectedElements(processed.accepted())
-                .utteranceValidity(toValidity(raw.utteranceValidity()))
-                .modelId(raw.modelId())
-                .droppedEvidence(processed.dropped())
-                .build());
+        return new AnalysisOutcome(
+                toIntent(raw.childIntent()), raw.mainPoint(),
+                processed.accepted(), processed.dropped(),
+                toValidity(raw.utteranceValidity()), raw.modelId());
     }
 
-    private String sceneContext(StoryScene scene) {
-        return Stream.of(scene.getSceneDescription(), scene.getConflict())
-                .filter(part -> part != null && !part.isBlank())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("");
+    /** 후처리를 통과한 분석 저장. 아이 메시지가 먼저 저장돼 있어야 한다(1:1). */
+    @Transactional
+    public UtteranceAnalysis save(Message childMessage, AnalysisOutcome outcome) {
+        return analysisRepository.save(UtteranceAnalysis.builder()
+                .message(childMessage)
+                .childIntent(outcome.childIntent())
+                .mainPoint(outcome.mainPoint())
+                .detectedElements(outcome.detectedElements())
+                .utteranceValidity(outcome.utteranceValidity())
+                .modelId(outcome.modelId())
+                .droppedEvidence(outcome.droppedEvidence())
+                .build());
     }
 
     /**
