@@ -140,6 +140,20 @@ class PostActivityServiceTest {
     }
 
     @Test
+    void 지급_내역에_시각이_담긴다() {
+        UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
+        맞히기까지_진행한다(sessionId);
+
+        RetellingResponse response = activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("며느리 이야기예요", null));
+
+        // 방금 만든 거래라 되읽지 않으면 이 한 건만 시각이 비어 나간다
+        assertThat(response.stardust().breakdown())
+                .isNotEmpty()
+                .allSatisfy(transaction -> assertThat(transaction.createdAt()).isNotNull());
+    }
+
+    @Test
     void 완주로_열린_아이템을_알려준다() {
         UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
         맞히기까지_진행한다(sessionId);
