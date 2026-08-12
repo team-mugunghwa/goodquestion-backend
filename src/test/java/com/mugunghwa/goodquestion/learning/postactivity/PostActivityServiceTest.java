@@ -114,6 +114,83 @@ class PostActivityServiceTest {
     }
 
     @Test
+    void 카드를_맞히기_전에는_다시_이야기하기를_받지_않는다() {
+        UUID sessionId = postActivitySession(IN_PROGRESS_SESSION_ID);
+        activityService.start(PARENT_ID, sessionId);
+
+        assertThatThrownBy(() -> activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("옛날에 며느리가 살았어요", null)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RETELLING_BEFORE_ORDER);
+    }
+
+    @Test
+    void 다시_이야기하기를_내면_세션이_완료되고_별가루가_들어온다() {
+        UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
+        맞히기까지_진행한다(sessionId);
+
+        RetellingResponse response = activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("며느리가 방귀로 배를 떨어뜨렸어요", null));
+
+        assertThat(response.sessionStatus()).isEqualTo(SessionStatus.COMPLETED.name());
+        assertThat(response.completedAt()).isNotNull();
+        assertThat(response.stardust().earned()).isEqualTo(3);
+        assertThat(response.stardust().balance()).isEqualTo(3);
+        assertThat(response.stardust().breakdown()).hasSize(1);
+    }
+
+    @Test
+    void 완주로_열린_아이템을_알려준다() {
+        UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
+        맞히기까지_진행한다(sessionId);
+
+        RetellingResponse response = activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("며느리 이야기예요", null));
+
+        // 하준은 이 완주로 강아지(방귀 이야기 완주 해금)가 열린다
+        assertThat(response.unlockedItems()).extracting(RetellingResponse.UnlockedItem::itemId)
+                .contains(DOG_ITEM_ID);
+    }
+
+    @Test
+    void 두_번째_완주는_절반만_들어온다() {
+        UUID sessionId = postActivitySession(IN_PROGRESS_SESSION_ID);   // 지우는 이미 1회 완주
+        맞히기까지_진행한다(sessionId);
+
+        RetellingResponse response = activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("며느리 이야기예요", null));
+
+        assertThat(response.stardust().earned()).isEqualTo(1);
+        assertThat(response.unlockedItems()).isEmpty();
+    }
+
+    @Test
+    void 완료_후_상태_조회로_결과를_다시_그린다() {
+        UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
+        맞히기까지_진행한다(sessionId);
+        activityService.submitRetelling(PARENT_ID, sessionId, new RetellingRequest("며느리 이야기", null));
+
+        PostActivityStatusResponse status = activityService.getStatus(PARENT_ID, sessionId);
+
+        assertThat(status.status()).isEqualTo("COMPLETED");
+        assertThat(status.retellingText()).isEqualTo("며느리 이야기");
+        assertThat(status.completedAt()).isNotNull();
+        assertThat(status.retellingKeywords()).isNotEmpty();
+    }
+
+    @Test
+    void 완료한_세션에는_다시_제출할_수_없다() {
+        UUID sessionId = postActivitySession(SIBLING_SESSION_ID);
+        맞히기까지_진행한다(sessionId);
+        activityService.submitRetelling(PARENT_ID, sessionId, new RetellingRequest("며느리 이야기", null));
+
+        assertThatThrownBy(() -> activityService.submitRetelling(
+                PARENT_ID, sessionId, new RetellingRequest("또 냅니다", null)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SESSION_NOT_IN_PROGRESS);
+    }
+
+    @Test
     void 대화_중인_세션에서는_시작할_수_없다() {
         assertThatThrownBy(() -> activityService.start(PARENT_ID, IN_PROGRESS_SESSION_ID))
                 .isInstanceOf(BusinessException.class)
