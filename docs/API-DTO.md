@@ -174,27 +174,27 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/api/children/{childId}/shop/items` | 상점 목록을 조회한다. 해금과 구매 가능 여부를 서버가 계산해 함께 준다 | — | `List<ShopItemResponse>` | ⛔ |
-| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ⛔ |
-| GET | `/api/children/{childId}/items` | 보유 아이템(보관함)을 조회한다 | `?placed=` (선택) | `List<ChildItemResponse>` | ⛔ |
+| GET | `/api/children/{childId}/shop/items` | 상점 목록을 조회한다. 해금과 구매 가능 여부를 서버가 계산해 함께 준다 | — | `List<ShopItemResponse>` | ✅ |
+| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ✅ |
+| GET | `/api/children/{childId}/items` | 보유 아이템(보관함)을 조회한다 | `?placed=` (선택) | `List<ChildItemResponse>` | ✅ |
 
 ### 2.14 보상 — 별가루
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/api/children/{childId}/stardust` | 별가루 잔액과 아직 연출하지 않은 획득 내역을 조회한다 | — | `StardustWalletResponse` | ⛔ |
-| POST | `/api/children/{childId}/stardust/acknowledge` | 획득 연출을 재생했다고 표시한다 | — | `StardustAcknowledgeResponse` | ⛔ |
+| GET | `/api/children/{childId}/stardust` | 별가루 잔액과 아직 연출하지 않은 획득 내역을 조회한다 | — | `StardustWalletResponse` | ✅ |
+| POST | `/api/children/{childId}/stardust/acknowledge` | 획득 연출을 재생했다고 표시한다 | — | `StardustAcknowledgeResponse` | ✅ |
 
 ### 2.15 보상 — 행성·배치
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/api/children/{childId}/planet` | 내 행성과 놓인 아이템, 다음 해금 목표를 조회한다 | — | `PlanetResponse` | ⛔ |
-| PATCH | `/api/children/{childId}/planet` | 행성 이름을 바꾼다 | `PlanetRenameRequest` | `PlanetRenameResponse` | ⛔ |
-| POST | `/api/children/{childId}/planet/tutorial-complete` | 행성 튜토리얼을 마쳤다고 표시한다 | — | `TutorialCompleteResponse` | ⛔ |
-| POST | `/api/children/{childId}/planet/placements` | 아이템을 행성 격자에 놓는다 | `PlacementCreateRequest` | 201 `PlacementResponse` | ⛔ |
-| PATCH | `/api/planet/placements/{placementId}` | 놓인 아이템을 다른 칸으로 옮긴다 | `PlacementMoveRequest` | `PlacementResponse` | ⛔ |
-| DELETE | `/api/planet/placements/{placementId}` | 놓인 아이템을 치운다 | — | 204 | ⛔ |
+| GET | `/api/children/{childId}/planet` | 내 행성과 놓인 아이템, 다음 해금 목표를 조회한다 | — | `PlanetResponse` | ✅ |
+| PATCH | `/api/children/{childId}/planet` | 행성 이름을 바꾼다 | `PlanetRenameRequest` | `PlanetRenameResponse` | ✅ |
+| POST | `/api/children/{childId}/planet/tutorial-complete` | 행성 튜토리얼을 마쳤다고 표시한다 | — | `TutorialCompleteResponse` | ✅ |
+| POST | `/api/children/{childId}/planet/placements` | 아이템을 행성 격자에 놓는다 | `PlacementCreateRequest` | 201 `PlacementResponse` | ✅ |
+| PATCH | `/api/planet/placements/{placementId}` | 놓인 아이템을 다른 칸으로 옮긴다 | `PlacementMoveRequest` | `PlacementResponse` | ✅ |
+| DELETE | `/api/planet/placements/{placementId}` | 놓인 아이템을 치운다 | — | 204 | ✅ |
 
 배치 3종은 **행 단위 조작**이다. 스냅샷 통짜 저장이 아니라 놓기·옮기기·치우기를 각각 호출한다. 되돌리기 전용 API는 없고 클라이언트가 직전 조작의 역조작을 부른다.
 
@@ -930,6 +930,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
 | 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매. `WordbookService.delete`는 소유 검증까지 구현돼 있고 컨트롤러만 501이다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추면 컨트롤러만 바꾸면 된다 |
+| 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
 | 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
 
 ---
@@ -948,11 +949,19 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 후속 활동 | 4 | 0 | 0 | 4 |
 | 리포트 | 3 | 2 | 0 | 1 |
 | 단어장 | 4 | 2 | 1 | 1 |
-| 보상 | 11 | 0 | 0 | 11 |
+| 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 0 | 0 | 2 |
-| **합계** | **56** | **27** | **4** | **25** |
+| **합계** | **56** | **38** | **4** | **14** |
 
-⛔ 25건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 14건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+**2026-08-12 갱신분 2** (직전 집계는 27/4/25였다)
+
+보상 11건을 구현했다. 해금과 구매 가능 여부는 저장하지 않고 아이 상태에서 매번 계산하며,
+기준은 잔액이 아니라 누적 획득량이다. 배치는 행 단위 조작이고 치우기는 보관함 복귀다.
+
+**별가루 적립은 API로 열지 않는다.** 세션 완료 처리 안에서 서버가 넣는다. 지금은 완주
+경로가 후속 활동에 있어 아직 이어지지 않았고, 장면 보너스는 대화 턴 파이프라인이 붙어야 한다.
 
 **2026-08-12 갱신분** (직전 집계는 25/3/28이었다)
 
