@@ -57,8 +57,8 @@
 | POST | `/signup` | 이메일과 비밀번호로 계정을 만들고 토큰까지 바로 발급한다 | `SignUpRequest` | 201 `AuthResponse` | ✅ |
 | POST | `/login` | 이메일과 비밀번호를 확인하고 토큰을 발급한다 | `LoginRequest` | 200 `AuthResponse` | ✅ |
 | POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
-| POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ⛔ |
-| POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ⛔ |
+| POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ✅ |
+| POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ✅ |
 
 ### 2.2 보호자 — `/api/parents`
 
@@ -277,7 +277,7 @@
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `accessToken` | String | 이후 요청의 `Authorization: Bearer` 헤더에 담는다 |
-| `refreshToken` | String | **현재 항상 null** — 회전 정책 미구현 |
+| `refreshToken` | String | 회전(rotate)된 새 리프레시 토큰. 기존 토큰은 이 값 발급과 동시에 무효화된다 |
 | `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 7일 |
 
 #### `AuthResponse` / `SocialAuthResponse`
