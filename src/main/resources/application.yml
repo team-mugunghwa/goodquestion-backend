@@ -50,6 +50,12 @@ kakao:
   client-secret: ${KAKAO_CLIENT_SECRET:}  # 카카오 콘솔에서 사용함으로 설정한 경우에만
 
 external:
+  # 외부 API 호출 상한. 벤더가 응답하지 않을 때 호출 스레드와 DB 커넥션이 함께 묶이는 것을 막는다.
+  # 응답 타임아웃은 LLM 두 번을 순차로 부르는 것을 감안해 정한다 - 이 값의 두 배가 턴 하나의
+  # 최악 소요 시간이 되고, 그보다 바깥쪽(프록시, 클라이언트) 타임아웃이 더 길어야 한다.
+  http:
+    connect-timeout-ms: ${HTTP_CONNECT_TIMEOUT_MS:3000}
+    response-timeout-ms: ${HTTP_RESPONSE_TIMEOUT_MS:10000}
   stt:
     api-key: ${STT_API_KEY}
   tts:
