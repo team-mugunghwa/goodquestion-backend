@@ -79,8 +79,19 @@ external:
     api-key: ${TTS_API_KEY}
   llm:
     api-key: ${LLM_API_KEY}
-    analysis-model: ${ANALYSIS_MODEL:}
-    character-model: ${CHARACTER_MODEL:}
+    base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
+    # 분석·캐릭터·리포트·단어 전부 같은 모델을 쓴다. 용도별로 갈라야 할 근거가 생기면 나눈다.
+    model: ${LLM_MODEL:gpt-5-mini}
+    # gpt-5 계열 추론 강도. 발화 한 건에 LLM을 두 번 부르는 구조라 지연이 품질보다 비싸다.
+    # 판정 품질이 부족하면 low, medium 순으로 올려서 재본다.
+    reasoning-effort: ${LLM_REASONING_EFFORT:minimal}
+
+# 진행 판단 임계값 (진행-17: 운영 설정으로 조정). 기본 2/2/2는 DB 문서의 MVP 기본값.
+progression:
+  guidance:
+    stalled-turns: ${GUIDANCE_STALLED_TURNS:2}
+    low-information-turns: ${GUIDANCE_LOW_INFO_TURNS:2}
+    remaining-turns: ${GUIDANCE_REMAINING_TURNS:2}
 
 # Railway의 헬스체크가 /actuator/health를 호출한다. 인증 없이 응답하도록 노출한다.
 management:

@@ -144,7 +144,7 @@ class TurnConcurrencyTest {
         @Bean
         @Primary
         CharacterLlmClient stubCharacterLlmClient() {
-            return new CharacterLlmClient() {
+            return new CharacterLlmClient(null, null) {
                 @Override
                 public CharacterLlmResult reply(CharacterLlmInput input) {
                     return new CharacterLlmResult("그렇구나, 조금 더 듣고 싶어.", "WORRIED");
@@ -160,6 +160,10 @@ class TurnConcurrencyTest {
      * 같은 turn_order를 잡을 가능성이 생긴다.
      */
     static class BarrierAnalysisLlmClient extends AnalysisLlmClient {
+
+        BarrierAnalysisLlmClient() {
+            super(null, null);
+        }
 
         private volatile CyclicBarrier barrier = new CyclicBarrier(1);
 
