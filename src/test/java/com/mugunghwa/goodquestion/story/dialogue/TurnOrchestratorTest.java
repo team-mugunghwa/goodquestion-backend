@@ -55,7 +55,7 @@ class TurnOrchestratorTest {
 
     private UUID sessionId;
 
-    /** 장면 3(대화1)까지 진행해 둔다. 필수 요소 PERSPECTIVE·EMOTION·SOLUTION, 최소 2턴, 최대 4턴. */
+    /** 장면 3(대화1)까지 진행해 둔다. 필수 요소 PERSPECTIVE, EMOTION, REASON, SOLUTION / 최소 2턴, 최대 4턴. */
     @BeforeEach
     void 대화_장면까지_진행한다() {
         analysisLlmClient.reset();
@@ -80,7 +80,8 @@ class TurnOrchestratorTest {
         assertThat(response.progress().turnCount()).isEqualTo(1);
         assertThat(response.progress().accumulatedElements()).containsExactly(ThinkingElement.EMOTION);
         assertThat(response.progress().missingElements())
-                .containsExactly(ThinkingElement.PERSPECTIVE, ThinkingElement.SOLUTION);
+                .containsExactly(ThinkingElement.PERSPECTIVE, ThinkingElement.REASON,
+                        ThinkingElement.SOLUTION);
         assertThat(response.characterMessage().text()).isNotBlank();
         assertThat(response.sceneTransition()).isNull();
         assertThat(response.mission()).isNull();
@@ -92,8 +93,8 @@ class TurnOrchestratorTest {
         submit("며느리가 많이 힘들 것 같아요");
 
         analysisLlmClient.willDetect(UtteranceValidity.VALID,
-                ThinkingElement.PERSPECTIVE, ThinkingElement.SOLUTION);
-        UtteranceResponse response = submit("가족들도 이해해 줄 테니 솔직하게 말해 보세요");
+                ThinkingElement.PERSPECTIVE, ThinkingElement.REASON, ThinkingElement.SOLUTION);
+        UtteranceResponse response = submit("가족들도 이해해 줄 테니, 계속 참으면 아프니까 솔직하게 말해 보세요");
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.progress().missingElements()).isEmpty();
