@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/** 보호자 리포트 (세션당 1건). 대표 발화는 저장하지 않고 조회 시 messages에서 구성. */
+/** 보호자 리포트 (세션당 1건).  */
 @Entity
 @Table(name = "reports")
 @Getter
@@ -39,15 +39,23 @@ public class Report {
     @Column(name = "next_focus", nullable = false, columnDefinition = "jsonb")
     private List<ReportItem> nextFocus;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private ReportAnalysis analysis;
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
     @Builder
     public Report(StorySession session, String summary,
-                  List<ReportItem> strengths, List<ReportItem> nextFocus) {
+                  List<ReportItem> strengths, List<ReportItem> nextFocus,
+                  ReportAnalysis analysis) {
         this.session = session;
         this.summary = summary;
         this.strengths = strengths;
         this.nextFocus = nextFocus;
+        // 요건이 일부 영역만 구성해도 성립한다고 열어 두었고, 생성이 부분 실패해도
+        // 리포트 전체가 안 열리는 것보다 낫다. 시드 데모 리포트에도 이 값이 없다.
+        this.analysis = analysis != null ? analysis : ReportAnalysis.empty();
     }
 }
