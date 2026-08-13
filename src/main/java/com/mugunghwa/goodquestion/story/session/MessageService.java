@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.story.session;
 
+import com.mugunghwa.goodquestion.ai.stt.SttConfidencePolicy;
 import com.mugunghwa.goodquestion.global.vocab.CharacterEmotion;
 import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class MessageService {
 
     private final MessageRepository messageRepository;
+    private final SttConfidencePolicy sttConfidencePolicy;
 
     public List<MessageResponse> getMessages(UUID sessionId, UUID sceneId) {
         List<Message> messages = (sceneId == null)
@@ -38,8 +40,8 @@ public class MessageService {
     /**
      * 아이 발화 저장. STT 부가 정보까지 함께 남긴다.
      *
-     * <p>sttLowConfidence 판정은 서버 몫이지만 기준값이 아직 미정이라 지금은 항상 false다 -
-     * 원값(sttConfidence)만 남겨 두면 기준이 정해진 뒤 소급해서 채울 수 있다.
+     * <p>sttLowConfidence 판정은 저장 시점에 서버가 한다(기준값 0.5, 설정으로 조정).
+     * 원값(sttConfidence)도 함께 남겨 기준값이 바뀌면 소급 판정할 수 있다.
      */
     @Transactional
     public Message appendChild(StorySession session, StoryScene scene, String text,
@@ -47,7 +49,9 @@ public class MessageService {
         return messageRepository.save(Message.builder()
                 .session(session).scene(scene).speakerType(SpeakerType.CHILD)
                 .turnOrder(nextTurnOrder(session)).text(text).sttRawText(sttRawText)
-                .sttConfidence(sttConfidence).sttLowConfidence(false).sttRetryCount(sttRetryCount)
+                .sttConfidence(sttConfidence)
+                .sttLowConfidence(sttConfidencePolicy.isLow(sttConfidence))
+                .sttRetryCount(sttRetryCount)
                 .build());
     }
 

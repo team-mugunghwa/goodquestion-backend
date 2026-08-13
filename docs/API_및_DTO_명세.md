@@ -581,7 +581,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `sttRetryCount` | Short | `@PositiveOrZero` | 선택, 기본 0 |
 | `missionId` | String | | 이 발화가 미션 수행 결과일 때 |
 
-**`sttLowConfidence`는 요청에 없다.** 기준값 판정은 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. (기준값 자체는 아직 미정이라 지금은 저장만 한다.)
+**`sttLowConfidence`는 요청에 없다.** 기준값(0.5, 2026-08 확정) 판정은 저장 시 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. `sttConfidence`는 `/api/stt` 응답의 `confidence`를 그대로 되올린다.
 
 #### `UtteranceResponse` — 단일 스키마, null 여부로 분기
 
@@ -882,7 +882,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 > **사용처** — `POST /api/stt` 응답
 
-`text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`.
+- `text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`
+- `confidence`(BigDecimal, 0~1, nullable) — exp(토큰 logprob 평균). 클라이언트는 이 값을
+  발화 제출의 `sttConfidence`에 그대로 되올린다. 벤더가 logprob을 못 주면 null
+- `lowConfidence`(boolean) — 기준값(0.5) 미만 여부. 판정은 서버가 한다. true면 제출 전에
+  "잘 못 알아들었을 수 있어요" 다시 말하기 안내를 띄운다 (비차단 - 아이가 그대로 제출해도 된다)
 
 #### `SynthesisRequest` / `SynthesisResponse`
 
@@ -938,7 +942,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 |---|---|---|---|
 | 1 | **`TokenResponse.refreshToken`이 항상 null** | 저장소(`refresh_tokens` 테이블·`RefreshToken` 엔티티)는 준비됐고 발급·회전·무효화 로직만 없다 | 그때까지 **Access 토큰 단일 전략으로 완결 동작한다**(→ §8). 도입해도 응답 스키마는 그대로라 클라이언트 변경이 없다 |
 | 2 | **멀티파트 1MB 한도** | `application.yml`에 `spring.servlet.multipart` 설정 없음 → Boot 기본 1MB | 30초 WAV ≈ 960KB라 아슬아슬하다. 10MB로 올린다 |
-| 3 | **STT 신뢰도 기준값** | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 후 서버 판정 |
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
 | 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매. `WordbookService.delete`는 소유 검증까지 구현돼 있고 컨트롤러만 501이다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추면 컨트롤러만 바꾸면 된다 |
