@@ -949,8 +949,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | # | 항목 | 현재 | 조치 |
 |---|---|---|---|
-| 1 | **`TokenResponse.refreshToken`이 항상 null** | 저장소(`refresh_tokens` 테이블·`RefreshToken` 엔티티)는 준비됐고 발급·회전·무효화 로직만 없다 | 그때까지 **Access 토큰 단일 전략으로 완결 동작한다**(→ §8). 도입해도 응답 스키마는 그대로라 클라이언트 변경이 없다 |
-| 2 | **멀티파트 1MB 한도** | `application.yml`에 `spring.servlet.multipart` 설정 없음 → Boot 기본 1MB | 30초 WAV ≈ 960KB라 아슬아슬하다. 10MB로 올린다 |
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
 | 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
@@ -962,7 +960,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 영역 | 엔드포인트 | ✅ | ⚠️ | ⛔ |
 |---|---|---|---|---|
-| 인증 | 5 | 2 | 1 | 2 |
+| 인증 | 5 | 4 | 1 | 0 |
 | 보호자 | 2 | 1 | 1 | 0 |
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
