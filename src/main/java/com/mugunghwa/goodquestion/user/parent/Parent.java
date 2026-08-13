@@ -78,6 +78,14 @@ public class Parent {
         this.name = name;
     }
 
+    /** 비밀번호 재설정(계정-06)에서 쓴다. 소셜 계정은 애초에 비밀번호가 없어 바꿀 대상이 없다. */
+    public void updatePassword(String passwordHash) {
+        if (!isLocal()) {
+            throw new IllegalStateException("소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.");
+        }
+        this.passwordHash = passwordHash;
+    }
+
     public boolean isLocal() {
         return provider == AuthProvider.LOCAL;
     }
