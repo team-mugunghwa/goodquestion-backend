@@ -19,12 +19,12 @@ public enum ErrorCode {
     STT_EMPTY_TEXT(HttpStatus.UNPROCESSABLE_ENTITY, "음성에서 텍스트를 인식하지 못했습니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
-    ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 실패 횟수를 초과해 계정이 24시간 잠겼습니다."),
-    INVALID_PASSWORD_RESET_TOKEN(HttpStatus.BAD_REQUEST, "비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다."),
-    EMAIL_DELIVERY_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "이메일을 발송할 수 없습니다. 잠시 후 다시 시도해 주세요."),
+    ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 시도가 많아 계정이 일시적으로 잠겼습니다."),
     KAKAO_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "카카오 인증에 실패했습니다."),
     GOOGLE_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "구글 인증에 실패했습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
+    INVALID_PASSWORD_RESET_TOKEN(HttpStatus.BAD_REQUEST, "비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다."),
+    EMAIL_DELIVERY_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "이메일을 발송할 수 없습니다. 잠시 후 다시 시도해 주세요."),
 
     // ---- 보상(행성 꾸미기) — 엔티티 구현 후 사용 ----
     CELL_OCCUPIED(HttpStatus.CONFLICT, "이미 다른 아이템이 놓인 칸입니다."),
@@ -34,6 +34,7 @@ public enum ErrorCode {
     GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),
 
     // ---- 진행 단계 충돌 ----
+    CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
     MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
     MISSION_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 미션입니다."),

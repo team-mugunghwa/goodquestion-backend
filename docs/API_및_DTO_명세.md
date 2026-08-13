@@ -32,7 +32,7 @@
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN`
 
 **501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
 
@@ -57,8 +57,8 @@
 | POST | `/signup` | 이메일과 비밀번호로 계정을 만들고 토큰까지 바로 발급한다 | `SignUpRequest` | 201 `AuthResponse` | ✅ |
 | POST | `/login` | 이메일과 비밀번호를 확인하고 토큰을 발급한다 | `LoginRequest` | 200 `AuthResponse` | ✅ |
 | POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
-| POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ⛔ |
-| POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ⛔ |
+| POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ✅ |
+| POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ✅ |
 
 ### 2.2 보호자 — `/api/parents`
 
@@ -108,7 +108,7 @@
 |---|---|---|---|---|---|
 | POST | `/api/children/{childId}/sessions` | 이야기를 골라 세션을 시작한다. 첫 장면을 함께 돌려준다 | `SessionStartRequest` | 201 `SessionStartResponse` | ✅ |
 | GET | `/api/sessions/{sessionId}` | 세션 상태와 진행 상황을 조회한다 | — | `SessionResponse` | ✅ |
-| GET | `/api/sessions/{sessionId}/resume` | 이어하기. 장면과 대화 내역, 마지막 대사를 한 번에 돌려준다 | — | `SessionResumeResponse` | ⚠️ `exposedMission`은 항상 null |
+| GET | `/api/sessions/{sessionId}/resume` | 이어하기. 장면과 대화 내역, 마지막 대사를 한 번에 돌려준다 | — | `SessionResumeResponse` | ✅ |
 | GET | `/api/sessions/{sessionId}/messages` | 대화 내역을 조회한다 | `?sceneId=` (선택) | `List<MessageResponse>` | ✅ |
 | POST | `/api/sessions/{sessionId}/scenes/current/story-complete` | STORY 장면 재생이 끝났음을 알리고 다음 장면으로 넘긴다 | — | `SceneAdvanceResponse` | ✅ |
 | POST | `/api/sessions/{sessionId}/stop` | 진행 중인 세션을 중단한다 | — | 200 (본문 없음) | ✅ |
@@ -121,14 +121,26 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⛔ 하위 파이프라인 미구현 |
-| GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ⛔ |
+| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⚠️ 파이프라인 구현. 분석·캐릭터 LLM 클라이언트가 비어 있어 호출하면 501 |
+| GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ✅ |
+
+**턴 처리 중 발생하는 충돌**
+
+| 상황 | 코드 | 의미 |
+|---|---|---|
+| 현재 장면이 대화 장면이 아니다 | 409 `SCENE_NOT_DIALOGUE` | STORY 장면에서는 발화를 받지 않는다 |
+| 이미 최대 턴에 닿은 장면이다 | 409 `MAX_TURNS_EXCEEDED` | 정상 흐름에서는 나오지 않는다. 앞선 응답을 놓친 클라이언트의 재전송 |
+| 같은 세션에 턴이 겹쳤다 | 409 `CONCURRENT_TURN` | 아이가 연타했다. 앞선 요청이 끝난 뒤 다시 보낸다 |
+
+한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 409로 돌아온다.
+
+`CONCURRENT_TURN`은 **다시 보내도 되는 실패**다. 겹친 요청 중 진 쪽이 아이 발화만 남기고 끝날 수 있으므로, 재전송 전에 `GET /turn-state`나 이어하기로 현재 상태를 다시 읽는 것이 안전하다.
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ⛔ |
+| GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ✅ |
 | POST | `/{missionId}/result` | 미션 수행 결과를 제출한다 | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
 
 ### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
@@ -202,12 +214,12 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/api/stt` | 아이 음성을 텍스트로 변환한다. 원본 음성은 저장하지 않는다 | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
-| POST | `/api/tts` | 대사 텍스트를 캐릭터 음성으로 합성한다 | `SynthesisRequest` | `SynthesisResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+| POST | `/api/stt` | 아이 음성을 텍스트로 변환한다. 원본 음성은 저장하지 않는다 | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ✅ |
+| POST | `/api/tts` | 대사 텍스트를 캐릭터 음성으로 합성한다 | `SynthesisRequest` | `SynthesisResponse` | ✅ |
 
-두 건은 컨트롤러와 `SpeechService`까지 구현돼 있고 `DefaultSttClient`, `DefaultTtsClient`가 비어 있어 호출하면 501이 온다. 벤더를 정해 클라이언트만 채우면 그대로 동작한다.
+두 건 모두 OpenAI 실측 구성으로 동작한다(벤더 비교용, 미결-01). `audioUrl`은 스토리지 선정 전까지 data URL(base64 mp3)로 내려간다. 자세한 내용은 7절 갱신분 참고.
 
-> **멀티파트 한도 주의** — 30초 16kHz mono WAV가 약 960KB인데 Spring Boot 기본 `max-file-size`가 1MB다. 아슬아슬하게 걸리므로 설정을 올려야 한다. (→ §6)
+> **멀티파트 한도** — 30초 16kHz mono WAV가 약 960KB로 Spring Boot 기본 1MB에 아슬아슬하게 걸려, `max-file-size`를 10MB로 올려 두었다.
 
 ---
 
@@ -277,7 +289,7 @@
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `accessToken` | String | 이후 요청의 `Authorization: Bearer` 헤더에 담는다 |
-| `refreshToken` | String | **현재 항상 null** — 회전 정책 미구현 |
+| `refreshToken` | String | 회전(rotate)된 새 리프레시 토큰. 기존 토큰은 이 값 발급과 동시에 무효화된다 |
 | `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 7일 |
 
 #### `AuthResponse` / `SocialAuthResponse`
@@ -944,16 +956,91 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
 | 콘텐츠 | 4 | 4 | 0 | 0 |
-| 세션·장면 | 8 | 7 | 1 | 0 |
-| 대화·미션 | 4 | 0 | 0 | 4 |
+| 세션·장면 | 8 | 8 | 0 | 0 |
+| 대화·미션 | 4 | 3 | 0 | 1 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
 | 리포트 | 3 | 2 | 0 | 1 |
 | 단어장 | 4 | 2 | 1 | 1 |
 | 보상 | 11 | 11 | 0 | 0 |
-| 음성 | 2 | 0 | 0 | 2 |
-| **합계** | **56** | **42** | **4** | **10** |
+| 음성 | 2 | 2 | 0 | 0 |
+| **합계** | **56** | **48** | **3** | **5** |
 
-⛔ 10건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 5건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+
+⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-13 갱신분 4** (직전 집계는 46/3/7이었다)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/stt` | ⛔ | ✅ | OpenAI gpt-4o-mini-transcribe. 왕복 실측 STT 0.5~1.8초 |
+| `POST /api/tts` | ⛔ | ✅ | OpenAI gpt-4o-mini-tts. 실측 1.5~2.6초, 대사 한 문장 약 60KB |
+
+**벤더 확정이 아니라 비교용 실측 구성이다(미결-01).** SttClient/TtsClient 인터페이스
+뒤의 OpenAI 구현체이므로 다른 벤더로 확정되면 구현체만 갈면 된다.
+
+- TTS `audioUrl`은 data URL(base64 mp3)이다. 스토리지 선정 전까지의 방식이며 응답 계약
+  (`audioUrl`, `expiresAt`)은 그대로다. `expiresAt`은 null - data URL은 만료가 없다
+- 캐릭터 3인 보이스와 말투는 서버 설정으로 매핑한다(`external.tts.voices`). 요청의
+  `characterName`이 매핑에 없으면 내레이션 보이스로 합성한다
+- 멀티파트 한도를 10MB로 올렸다(팀 확정 대기였던 항목. STT 실측을 위해 적용)
+- 실측 관찰: 왕복(TTS 합성음을 STT로 되읽기)에서 희귀어 "방귀"가 "방비/반비"로
+  오인식되는 경우가 있었다. `external.stt.vocabulary-hint`(시드 proper_nouns 합집합)로
+  개선했지만 비결정적이다. **아동 실녹음 인식률 검증(미결-01)은 여전히 필요하다.**
+  장면별 proper_nouns를 요청에 실어 보내는 구조는 /api/stt 계약에 장면 정보가 없어
+  보류했다 - 계약 변경이 필요하면 함께 정한다
+
+**2026-08-13 갱신분 3** (직전 집계는 45/4/7이었다)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/utterances` | ⚠️ | ✅ | gpt-5-mini 실호출 검증 통과 |
+
+**발화 제출이 완전 동작한다.** 대화 턴 파이프라인의 마지막 구멍이었다. 실호출 측정값:
+분석 3.1초, 캐릭터 2.9초로 턴당 LLM 구간 약 6초(reasoning effort minimal). 남은 501은
+미션 결과 제출, 리포트 생성, 단어 삭제, 단어 뜻 생성(단어 저장의 meaning 생략 경로),
+토큰 재발급과 로그아웃, 음성 2건이다.
+
+**2026-08-13 갱신분 2**
+
+LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utterances`는 코드상 전
+구간이 이어졌고, 실호출 검증(LlmSmokeTest, .env에 LLM_API_KEY 필요)까지 통과했다.
+
+근거 문서 6종(통합 명세서, 발화 분석 연동 기준, 대화 작동 규칙, 콘텐츠, 캐릭터 성격,
+요구사항 목록)을 전수 대조하면서 규칙 세 가지를 문서 확정값에 맞췄다.
+
+- 유도 판단의 남은 턴 기준을 "미충족 요소 수"에서 문서 확정값 "남은 턴 <= 2"로 정정
+- 진행 임계값(2/2/2)을 운영 설정(`progression.guidance.*`)으로 분리 (진행-17)
+- 약한 유도(soft-cue) 구현 (진행-13/14). NORMAL이어도 신규 요소가 잡히고 필수 요소가
+  남았으면 캐릭터의 남은 걱정을 가볍게 얹는다. 장난/질문/불명확 반응이면 생략한다.
+  이때 `guidanceTarget`이 soft 대상으로 기록되므로 **turn-state의 guidanceTarget은
+  "강한 유도 대상"이 아니라 "직전 유도 또는 soft-cue 대상"이다**
+- 반응 원칙 키 7종(reactionKey)을 서버가 계산해 캐릭터 프롬프트에 전달 (대화 작동 규칙 3.1)
+
+**미결(팀 확정 필요)**: 콘텐츠 문서의 "최대 턴 도달 시 짧게 반응 후 마지막 대사" 흐름은
+캐릭터 메시지가 2건이 되는데 `UtteranceResponse.characterMessage`는 1건이다. 응답 계약
+변경이 필요해 미구현으로 두었다 (통합 명세서 D-1도 확정 필요로 분류).
+
+**2026-08-13 갱신분** (직전 집계는 42/4/10이었다)
+
+턴 처리 파이프라인이 붙었다.
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/utterances` | ⛔ | ⚠️ | 파이프라인 구현. 분석·캐릭터 LLM 클라이언트만 비어 있어 호출하면 501 |
+| `GET /api/sessions/{sessionId}/turn-state` | ⛔ | ✅ | 구현됨 |
+| `GET /api/sessions/{sessionId}/missions/current` | ⛔ | ✅ | 노출 판정은 턴 처리가 하고 여기서는 읽기만 한다 |
+| `GET /api/sessions/{sessionId}/resume` | ⚠️ | ✅ | `exposedMission`이 채워졌다 |
+
+**남은 것은 LLM 어댑터 두 개뿐이다.** 저장, 후처리, 진행 판단, 미션 노출, 장면 종료와 이동,
+장면 보너스 지급까지 전 구간이 붙어 있고 `TurnOrchestratorTest`가 LLM만 대역으로 바꿔
+처음부터 끝까지 검증한다. `AnalysisLlmClient`·`CharacterLlmClient`를 채우면 그대로 동작한다.
+
+**위험 신호 감지(`UtteranceResponse.safety`)는 아직 항상 null이다.** 계약만 잡혀 있고
+감지 자체가 AI 파이프라인에 딸려 있다.
+
+턴 처리 중 외부 호출을 트랜잭션 밖으로 뺐다. 응답 계약은 그대로지만 겹친 발화의 실패 방식이
+달라졌다 — 자세한 내용은 [트러블슈팅_턴_처리_커넥션_점유.md](트러블슈팅_턴_처리_커넥션_점유.md)에 있다.
 
 **2026-08-12 갱신분 3** (직전 집계는 38/4/14였다)
 

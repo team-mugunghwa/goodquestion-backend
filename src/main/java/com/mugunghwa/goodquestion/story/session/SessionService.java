@@ -10,6 +10,7 @@ import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.content.Story;
 import com.mugunghwa.goodquestion.story.content.StoryRepository;
 import com.mugunghwa.goodquestion.story.content.StoryStatus;
+import com.mugunghwa.goodquestion.story.mission.MissionService;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import com.mugunghwa.goodquestion.user.consent.ConsentService;
@@ -25,9 +26,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class SessionService {
 
-    /** 고정 대사의 아이 이름 자리표시자(캐릭터-17). */
-    private static final String CHILD_NAME_PLACEHOLDER = "ㅇㅇ";
-
     private final StorySessionRepository sessionRepository;
     private final ChildService childService;
     private final ConsentService consentService;
@@ -35,6 +33,7 @@ public class SessionService {
     private final SceneService sceneService;
     private final MessageService messageService;
     private final MessageRepository messageRepository;
+    private final MissionService missionService;
 
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
@@ -109,26 +108,30 @@ public class SessionService {
         return messageRepository
                 .findFirstBySessionIdAndSceneIdAndSpeakerTypeOrderByTurnOrderAsc(
                         session.getId(), scene.getId(), SpeakerType.CHARACTER)
-                .map(existing -> new SceneOpeningResponse(toCharacterMessage(existing), true))
+                .map(existing -> new SceneOpeningResponse(CharacterMessageResponse.from(existing), true))
                 .orElseGet(() -> new SceneOpeningResponse(
-                        toCharacterMessage(appendOpening(session, scene)), false));
+                        CharacterMessageResponse.from(appendOpening(session, scene)), false));
     }
 
     /** 부족 요소는 저장하지 않고 (장면 목표 요소 − 누적 요소)로 매번 계산한다(진행-04). */
     public ProgressResponse toProgress(StorySession session, StoryScene scene) {
         List<ThinkingElement> accumulated = session.getAccumulatedElements().stream()
                 .map(ThinkingElement::valueOf).toList();
-        List<ThinkingElement> required = (scene == null || scene.getRequiredElements() == null)
-                ? List.of()
-                : scene.getRequiredElements().stream().map(ThinkingElement::valueOf).toList();
-        List<ThinkingElement> missing = required.stream()
-                .filter(e -> !accumulated.contains(e)).toList();
+        List<ThinkingElement> missing = (scene == null)
+                ? List.of() : scene.missingElements(session.getAccumulatedElements());
 
         return new ProgressResponse(
                 session.getLastResponseMode(), accumulated, missing,
                 session.getCurrentChildTurnCount(),
                 (scene == null || scene.getMaxTurns() == null) ? 0 : scene.getMaxTurns(),
                 session.getLastGuidanceTarget());
+    }
+
+    /** 복구·디버그용 턴 상태 조회(진행-04, 진행-06). */
+    public TurnStateResponse getTurnState(UUID parentId, UUID sessionId) {
+        StorySession session = getOwnedSession(parentId, sessionId);
+        return new TurnStateResponse(
+                toProgress(session, session.getCurrentScene()), session.resolvePhase());
     }
 
     /**
@@ -154,16 +157,24 @@ public class SessionService {
             return new SceneAdvanceResponse(session.resolvePhase(), null, null);
         }
 
-        session.moveToScene(nextScene);
-
-        // DIALOGUE 장면은 캐릭터 첫 대사를 재생 시점에 messages로 남긴다(캐릭터-14).
-        CharacterMessageResponse openingMessage = null;
-        if (nextScene.isDialogue()) {
-            openingMessage = toCharacterMessage(appendOpening(session, nextScene));
-        }
+        CharacterMessageResponse openingMessage = advanceTo(session, nextScene);
 
         return new SceneAdvanceResponse(
                 session.resolvePhase(), SceneContentResponse.from(nextScene), openingMessage);
+    }
+
+    /**
+     * 다음 장면으로 이동하고, DIALOGUE면 고정 첫 대사를 저장해 돌려준다(캐릭터-14).
+     * STORY 장면은 내레이션이라 대화 기록에 남기지 않으므로 null이다.
+     *
+     * <p>스토리 재생 완료와 대화 장면 종료가 같은 경로를 타야 한다 - 진입 경로마다 따로
+     * 옮기면 한쪽만 첫 대사를 빠뜨리는 식으로 갈라진다.
+     */
+    @Transactional
+    public CharacterMessageResponse advanceTo(StorySession session, StoryScene nextScene) {
+        session.moveToScene(nextScene);
+        return nextScene.isDialogue()
+                ? CharacterMessageResponse.from(appendOpening(session, nextScene)) : null;
     }
 
     @Transactional
@@ -187,14 +198,8 @@ public class SessionService {
      * <p>진입 경로마다 치환을 따로 하면 같은 대사가 경로에 따라 다르게 저장된다.
      */
     private Message appendOpening(StorySession session, StoryScene scene) {
-        String text = scene.getCharacterOpening()
-                .replace(CHILD_NAME_PLACEHOLDER, session.getChild().getName());
+        String text = session.personalize(scene.getCharacterOpening());
         return messageService.append(session, scene, SpeakerType.CHARACTER, text, null, null);
-    }
-
-    /** audioUrl은 TTS 미구현이라 null — 클라이언트가 /api/tts로 합성한다. */
-    private CharacterMessageResponse toCharacterMessage(Message message) {
-        return new CharacterMessageResponse(message.getId(), message.getText(), null);
     }
 
     /**
@@ -209,15 +214,14 @@ public class SessionService {
         CharacterMessageResponse lastCharacterMessage = messageRepository
                 .findFirstBySessionIdAndSpeakerTypeOrderByTurnOrderDesc(
                         sessionId, SpeakerType.CHARACTER)
-                .map(this::toCharacterMessage)
+                .map(CharacterMessageResponse::from)
                 .orElse(null);
 
-        // 노출 중이던 미션은 story.mission의 판단 결과라 여기서 채우지 않는다.
         return new SessionResumeResponse(
                 getSession(parentId, sessionId),
                 scene == null ? null : SceneContentResponse.from(scene),
                 messageService.getMessages(sessionId, null),
                 lastCharacterMessage,
-                null);
+                missionService.exposedMissionOf(session));
     }
 }

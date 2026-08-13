@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 이메일/비밀번호 자체 인증 + 카카오 소셜 로그인. 토큰 전략은 Access 토큰 단일(MVP). */
+/** 이메일/비밀번호 자체 인증 + 카카오, 구글 소셜 로그인. 토큰 전략은 Access 토큰 단일(MVP). */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,32 +27,33 @@ public class AuthService {
     private final KakaoClient kakaoClient;
     private final RefreshTokenService refreshTokenService;
     private final GoogleClient googleClient;
-    private final LoginAttemptStore loginAttemptStore;
+    private final LoginAttemptService loginAttemptService;
 
     @Transactional
-    public AuthResponse signUp(SignUpRequest request) {
+    public AuthResponse signUp(SignUpRequest request, String clientIp) {
         if (parentRepository.existsByEmail(request.email())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
         Parent parent = parentRepository.save(
                 Parent.ofLocal(request.email(), passwordEncoder.encode(request.password()), request.name()));
+        parent.recordLoginSuccess(clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
-    public AuthResponse login(LoginRequest request) {
-        loginAttemptStore.assertLoginAllowed(request.email());
+    @Transactional
+    public AuthResponse login(LoginRequest request, String clientIp) {
         Parent parent = parentRepository.findByEmail(request.email())
                 .filter(Parent::isLocal)
-                .orElse(null);
-        if (parent == null) {
-            loginAttemptStore.recordFailure(request.email());
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        // 잠긴 계정은 비밀번호가 맞아도 통과시키지 않는다.
+        if (parent.isLocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
         }
         if (!passwordEncoder.matches(request.password(), parent.getPasswordHash())) {
-            loginAttemptStore.recordFailure(request.email());
+            loginAttemptService.recordFailure(parent.getId());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
-        loginAttemptStore.reset(request.email());
+        parent.recordLoginSuccess(clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
@@ -61,7 +62,7 @@ public class AuthService {
      * 최초 로그인이면 가입까지 함께 처리한다(find-or-create).
      */
     @Transactional
-    public SocialAuthResponse loginWithKakao(SocialLoginRequest request) {
+    public SocialAuthResponse loginWithKakao(SocialLoginRequest request, String clientIp) {
         String kakaoAccessToken =
                 kakaoClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
         KakaoProfile profile = kakaoClient.getProfile(kakaoAccessToken);
@@ -73,7 +74,7 @@ public class AuthService {
         Parent parent = isNewUser
                 ? parentRepository.save(Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname()))
                 : existing;
-
+        parent.recordLoginSuccess(clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 
@@ -101,7 +102,7 @@ public class AuthService {
     }
 
     @Transactional
-    public SocialAuthResponse loginWithGoogle(SocialLoginRequest request) {
+    public SocialAuthResponse loginWithGoogle(SocialLoginRequest request, String clientIp) {
         String googleAccessToken =
                 googleClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
         GoogleProfile profile = googleClient.getProfile(googleAccessToken);
@@ -113,7 +114,7 @@ public class AuthService {
         Parent parent = isNewUser
                 ? parentRepository.save(Parent.ofGoogle(profile.providerId(), profile.email(), profile.name()))
                 : existing;
-
+        parent.recordLoginSuccess(clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 }

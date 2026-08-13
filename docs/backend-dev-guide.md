@@ -306,24 +306,37 @@ ArchUnit 규칙으로 박혀 있다. 경계를 넘는 import를 추가하면 테
 
 ### 발화 턴 파이프라인
 
-이 서비스의 핵심이고 미구현 범위가 가장 넓다. `TurnOrchestrator`가 조율한다.
+이 서비스의 핵심이다. `TurnOrchestrator`가 조율하고, LLM 어댑터 두 개를 빼면 전 구간이 붙어 있다.
 
 ```
 POST /api/sessions/{sessionId}/utterances
- 1 세션 검증과 소유권 확인 (SessionService)
- 2 아이 메시지 저장
- 3 발화 분석 LLM 호출 (UtteranceAnalysisService, 트랜잭션 밖)
- 4 후처리 (AnalysisPostProcessor)          LLM 미사용
- 5 분석 저장, 세션 누적 상태 갱신
- 6 진행 모드 결정 (ProgressionEngine)       LLM 미사용
- 7 미션 노출 판단 (MissionPolicy)           LLM 미사용
- 8a NORMAL/GUIDED -> 캐릭터 대사 생성 (CharacterResponseService)
- 8b CLOSING       -> 마무리 대사와 장면 이동 (SceneClosingHandler)
- 9 캐릭터 메시지 저장 후 UtteranceResponse 조립
+
+ 1 소유권·상태 확인, 분석 입력 준비                     [트랜잭션]
+ 2 발화 분석 LLM 호출 + 후처리                          트랜잭션 밖
+     UtteranceAnalysisService.analyze -> AnalysisPostProcessor
+ 3 발화·분석 저장, 누적 갱신, 진행 판단, 미션 노출       [트랜잭션]
+     StorySession.applyTurn -> ProgressionEngine -> MissionPolicy
+ 4 캐릭터 대사 생성                                      트랜잭션 밖
+     CharacterResponseService (고정 마무리 대사면 LLM 생략)
+ 5 대사 저장, 장면 이동 또는 후속 활동 전환              [트랜잭션]
+     SceneClosingHandler
 ```
 
-4/6/7 단계는 LLM을 부르지 않는 순수 규칙이다. 이 분리 덕에 LLM 없이 단위 테스트할 수 있고,
-`ArchitectureTest`가 `story.dialogue.engine`의 `ai` 참조를 금지해 강제한다.
+**외부 호출은 트랜잭션 밖에 둔다.** 한 트랜잭션으로 묶으면 LLM 응답을 기다리는 내내 DB
+커넥션을 쥐게 되고, 커넥션 풀은 앱 전체가 공유하므로 대화와 무관한 요청까지 막힌다. 측정값과
+배경은 [트러블슈팅_턴_처리_커넥션_점유.md](트러블슈팅_턴_처리_커넥션_점유.md)에 있다.
+
+그래서 구간 사이는 엔티티가 아니라 값으로 건넌다. 트랜잭션이 끝나면 엔티티가 detached가 되고
+`open-in-view: false`라 LAZY 연관을 읽을 수 없다. 경계를 넘는 값에는 record로 이름을 붙였다
+(`SceneAnalysisContext`, `AnalysisOutcome`, `CharacterPrompt`, `ChildTurnRecord`, `TurnClosure`).
+트랜잭션 구간 자체는 `TurnTransactions`에 모여 있다 - 오케스트레이터의 private 메서드로 두면
+자기 호출이 프록시를 타지 않아 `@Transactional`이 걸리지 않는다.
+
+**분석을 저장보다 먼저 부르는 것은 의도한 순서다.** 첫 외부 호출 전까지 커밋된 것이 없어야
+"발화만 남고 분석은 없는" 상태가 생기지 않는다.
+
+후처리, 진행 판단, 미션 노출은 LLM을 부르지 않는 순수 규칙이다. 이 분리 덕에 LLM 없이 단위
+테스트할 수 있고, `ArchitectureTest`가 `story.dialogue.engine`의 `ai` 참조를 금지해 강제한다.
 
 ---
 
@@ -345,36 +358,40 @@ POST /api/sessions/{sessionId}/utterances
 
 ## 7. 구현 현황
 
-엔드포인트 56개 중 42개가 동작하고, 4개는 일부 경로만 동작하며, 10개가 501 스텁이다
-(2026-08-12 기준). 스텁도 **DTO 계약은 확정**돼 있어 프론트는 미리 붙여 둘 수 있다.
+엔드포인트 56개 중 45개가 동작하고, 4개는 일부 경로만 동작하며, 7개가 501 스텁이다
+(2026-08-13 기준). 스텁도 **DTO 계약은 확정**돼 있어 프론트는 미리 붙여 둘 수 있다.
 영역별 집계와 개별 상태는 [API_및_DTO_명세.md 7절](API_및_DTO_명세.md)에 있다.
 
 대략적인 그림은 이렇다.
 
-- **동작**: 인증(가입/로그인/카카오), 아이와 동의 전체, 콘텐츠 조회, 홈, 세션 8건 전체,
-  리포트 조회, 단어 목록과 즐겨찾기, 후속 활동 4건, 보상 11건 전체
+- **동작**: 인증(가입/로그인/카카오), 아이와 동의 전체, 콘텐츠 조회, 홈, 세션과 장면 8건 전체,
+  턴 상태 조회와 현재 미션 조회, 리포트 조회, 단어 목록과 즐겨찾기, 후속 활동 4건,
+  보상 11건 전체
 - **일부만 동작**: 소셜 로그인은 카카오만(다른 공급자는 501), 내 정보 수정은 이름만
-  (비밀번호 변경은 501), 이어하기는 `exposedMission`이 항상 null(미션 미구현),
+  (비밀번호 변경은 501), 발화 제출은 파이프라인이 붙었으나 LLM 어댑터가 비어 호출하면 501,
   단어 저장은 뜻을 함께 보내면 동작(생략하면 LLM이 필요해 501)
-- **501 스텁**: 대화 턴 4건(발화 제출, 턴 상태, 미션 2건), 리포트 생성, 단어 삭제,
-  토큰 재발급과 로그아웃, 음성 2건
+- **501 스텁**: 미션 결과 제출, 리포트 생성, 단어 삭제, 토큰 재발급과 로그아웃, 음성 2건
 
-남은 10건 중 **벤더 선정에 걸린 것이 4건**(발화 제출, 리포트 생성, STT, TTS)이다. 즉
-**대화 턴 파이프라인 하나가 남은 일의 대부분이다.**
+**남은 일의 중심은 LLM 어댑터 두 개다.** 대화 턴 파이프라인은 저장, 후처리, 진행 판단,
+미션 노출, 장면 종료와 이동, 장면 보너스 지급까지 전 구간이 붙어 있고 통합 테스트가 LLM만
+대역으로 바꿔 처음부터 끝까지 검증한다. `AnalysisLlmClient`와 `CharacterLlmClient`를 채우면
+그대로 동작한다.
 
-이야기 재생과 완주 이후 흐름은 양쪽 다 열렸다. 이야기를 골라 시작하고 장면을 넘긴 뒤
-후속 활동을 마치면 별가루가 들어오고, 그 별가루로 아이템을 사서 행성에 놓는 데까지 이어진다.
-가운데의 대화 턴만 비어 있다.
+이야기 재생과 완주 이후 흐름은 이미 열려 있다. 이야기를 골라 시작하고 장면을 넘긴 뒤 후속
+활동을 마치면 별가루가 들어오고, 그 별가루로 아이템을 사서 행성에 놓는 데까지 이어진다.
 
 ### 권장 개발 순서
 
 | 순서 | 대상 | 이유 |
 | --- | --- | --- |
-| 1 | `ProgressionEngine`, `MissionPolicy`, `AnalysisPostProcessor` | LLM 없는 순수 로직이라 단위 테스트부터 쓰기 좋다 |
-| 2 | `TurnOrchestrator` | 위가 준비되면 LLM을 mock으로 두고 통합 테스트가 가능하다 |
-| 3 | `ai` 클라이언트 구현체 | 벤더 연동과 프롬프트 빌더 완성 |
-| 4 | `report` 생성 | 후속 활동은 구현됐다. 리포트도 조회 2건이 열려 있어 생성만 채우면 된다 |
-| 5 | `story.mission` | 담당표에 없는 구간이다. 노출 판단이 턴 파이프라인 안에서 불린다 |
+| 1 | `ai.llm` 공통 계층 | analysis·character·report·word 네 어댑터가 공유한다. 여기서 호출 규약과 실패 처리를 정하면 나머지가 빨라진다 |
+| 2 | `AnalysisLlmClient`, `CharacterLlmClient` | 채우는 순간 대화가 처음으로 실제 동작한다. 실측 지연을 보고 타임아웃 값도 확인한다 |
+| 3 | `report` 생성 | 조회 2건이 열려 있어 생성만 채우면 된다. 1번을 그대로 재사용한다 |
+| 4 | `WordMeaningLlmClient` | 단어 저장에서 뜻을 생략할 수 있게 된다 |
+| 5 | 잔여 스텁 | 미션 결과 제출, 단어 삭제, 비밀번호 변경. 서로 독립이라 순서는 자유다 |
+
+**단어 삭제는 구현 전에 경로부터 정해야 한다.** `DELETE /api/words/{wordId}`에 `childId`가
+없어 소유권 검증이 애매하다(9절 참고).
 
 ---
 
@@ -398,4 +415,7 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 | `SafetyResponse` 감지 | 계약 자리만 있고 항상 null | AI 파이프라인 연동 시 구현 |
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
 | `DELETE /api/words/{wordId}` | 경로에 `childId`가 없어 소유권 검증이 애매하다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞출지 |
-| STT/TTS/LLM 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
+| STT/TTS 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
+| 발화 재전송 규약 | 턴 처리가 여러 트랜잭션으로 나뉘어 중간 실패 상태가 생길 수 있다 | 멱등키를 쓸지. 쓴다면 클라이언트가 키를 재시도 사이에 유지해야 한다 |
+
+LLM은 gpt-5-mini로 정했다. STT와 TTS는 아직 선정 전이고 클라이언트가 501을 받는다.
