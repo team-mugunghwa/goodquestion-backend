@@ -23,7 +23,7 @@
 
 | 상황 | 상태 | `code` |
 |---|---|---|
-| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유` |
+| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유`. `INVALID_IDEMPOTENCY_KEY`(키 64자 초과) |
 | 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED` |
 | 남의 리소스 | 403 | `FORBIDDEN` |
 | 없는 리소스 | 404 | `NOT_FOUND` |
@@ -32,7 +32,9 @@
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
+
+**멱등키(2026-08 확정)** — 발화 제출과 아이템 구매는 `Idempotency-Key` 헤더(선택, UUID 권장, 64자 이하)를 받는다. 클라이언트가 작업마다 새로 만들고 **재시도 사이에만 유지**한다. 같은 키의 재전송은 완료된 요청이면 저장된 응답을 그대로 재생하고, 처리 중이면 409 `REQUEST_IN_PROGRESS`를 돌려준다. 키가 없으면 기존 동작 그대로다. 기록은 24시간 보관 후 청소된다.
 
 **501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
 
@@ -121,7 +123,7 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⚠️ 파이프라인 구현. 분석·캐릭터 LLM 클라이언트가 비어 있어 호출하면 501 |
+| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API. `Idempotency-Key` 헤더(선택)로 재전송 중복 방지 | `UtteranceRequest` | `UtteranceResponse` | ✅ |
 | GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ✅ |
 
 **턴 처리 중 발생하는 충돌**
@@ -135,6 +137,8 @@
 한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 409로 돌아온다.
 
 `CONCURRENT_TURN`은 **다시 보내도 되는 실패**다. 겹친 요청 중 진 쪽이 아이 발화만 남기고 끝날 수 있으므로, 재전송 전에 `GET /turn-state`나 이어하기로 현재 상태를 다시 읽는 것이 안전하다.
+
+**타임아웃 후 재전송은 `Idempotency-Key`가 정석이다.** 같은 키로 다시 보내면 서버가 처리를 이미 마쳤어도 저장된 응답이 재생되어 중복 턴이 되지 않는다. 키를 쓰지 않는 클라이언트만 turn-state 판정이 필요하다.
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
@@ -187,7 +191,7 @@
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
 | GET | `/api/children/{childId}/shop/items` | 상점 목록을 조회한다. 해금과 구매 가능 여부를 서버가 계산해 함께 준다 | — | `List<ShopItemResponse>` | ✅ |
-| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ✅ |
+| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다. `Idempotency-Key` 헤더(선택)로 재전송 이중 차감 방지 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ✅ |
 | GET | `/api/children/{childId}/items` | 보유 아이템(보관함)을 조회한다 | `?placed=` (선택) | `List<ChildItemResponse>` | ✅ |
 
 ### 2.14 보상 — 별가루
@@ -580,6 +584,8 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `sttConfidence` | BigDecimal | `@DecimalMin(0.0) @DecimalMax(1.0)` | 선택 |
 | `sttRetryCount` | Short | `@PositiveOrZero` | 선택, 기본 0 |
 | `missionId` | String | | 이 발화가 미션 수행 결과일 때 |
+
+헤더 `Idempotency-Key`(선택) — 발화마다 새 UUID를 만들고 재시도 사이에만 유지한다(1장 멱등키 참고).
 
 **`sttLowConfidence`는 요청에 없다.** 기준값(0.5, 2026-08 확정) 판정은 저장 시 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. `sttConfidence`는 `/api/stt` 응답의 `confidence`를 그대로 되올린다.
 
