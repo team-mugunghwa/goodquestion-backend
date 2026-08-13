@@ -561,7 +561,9 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 > **사용처** — `UtteranceResponse`에 중첩 — 장면 종료 턴에만 → 최종 전달: `POST /api/sessions/{sessionId}/utterances`
 
-`next`(`SceneTransitionTarget`) · `nextSceneId` · `nextSceneOrder`(Integer) · `nextSceneType` · `closingReason`(`SceneEndReason`)
+`next`(`SceneTransitionTarget`) · `nextSceneId` · `nextSceneOrder`(Integer) · `nextSceneType` · `closingReason`(`SceneEndReason`) · `resultImageUrl`(String, nullable)
+
+`resultImageUrl`(2026-08 확정) — 끝난 장면의 결과 연출 이미지. 값이 있으면 마지막 대사 재생 뒤, 다음 장면을 그리기 전에 연출로 끼워 넣는다. 대화3의 "배가 떨어지는" 연출이 해당하며, 종료 사유나 미션 노출 여부와 무관하게 장면이 닫히면 항상 내려간다. 값의 원천은 `mission_config.result_image_url`이다.
 
 #### `CurrentSceneResponse` / `TurnStateResponse`
 
