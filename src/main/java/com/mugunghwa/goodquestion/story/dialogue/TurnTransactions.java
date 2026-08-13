@@ -132,7 +132,7 @@ public class TurnTransactions {
 
         Message message = messageService.append(session, scene, SpeakerType.CHARACTER,
                 session.personalize(reply.text()), null, reply.emotion());
-        return new TurnClosure(CharacterMessageResponse.from(message), null);
+        return new TurnClosure(CharacterMessageResponse.from(message), null, null);
     }
 
     /**

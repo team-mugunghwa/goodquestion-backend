@@ -46,6 +46,13 @@ public class SceneClosingHandler {
                 && (!scene.hasMission() || session.isMissionCompleted());
         session.closeScene(decision.closingReason(), goalMet);
 
+        // 최대 턴 종료의 짧은 반응. 마무리 대사보다 먼저 저장해 재생 순서가 기록 순서와 같다.
+        Message reactionMessage = reply.closingReaction() != null
+                ? messageService.append(session, scene, SpeakerType.CHARACTER,
+                        session.personalize(reply.closingReaction().text()), null,
+                        reply.closingReaction().emotion())
+                : null;
+
         Message closingMessage = messageService.append(session, scene, SpeakerType.CHARACTER,
                 session.personalize(reply.text()), null, reply.emotion());
 
@@ -53,8 +60,8 @@ public class SceneClosingHandler {
                 session.getId(), scene.getId(), session.isSceneBonusEligible()));
 
         return sceneService.getNextScene(scene)
-                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage))
-                .orElseGet(() -> finish(session, decision, closingMessage));
+                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage, reactionMessage))
+                .orElseGet(() -> finish(session, decision, closingMessage, reactionMessage));
     }
 
     /**
@@ -62,11 +69,13 @@ public class SceneClosingHandler {
      * 않는다 - 화면은 전환을 보고 첫 대사 재생 API(멱등)를 부른다.
      */
     private TurnClosure moveOn(StorySession session, StoryScene nextScene,
-                               ProgressionDecision decision, Message closingMessage) {
+                               ProgressionDecision decision, Message closingMessage,
+                               Message reactionMessage) {
         sessionService.advanceTo(session, nextScene);
 
         return new TurnClosure(
                 CharacterMessageResponse.from(closingMessage),
+                reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         SceneTransitionTarget.SCENE, nextScene.getId(),
                         (int) nextScene.getSceneOrder(), nextScene.getSceneType(),
@@ -75,11 +84,12 @@ public class SceneClosingHandler {
 
     /** 마지막 장면이 대화로 끝났다. 후속 활동으로 넘긴다. */
     private TurnClosure finish(StorySession session, ProgressionDecision decision,
-                               Message closingMessage) {
+                               Message closingMessage, Message reactionMessage) {
         session.toPostActivity();
 
         return new TurnClosure(
                 CharacterMessageResponse.from(closingMessage),
+                reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         SceneTransitionTarget.POST_ACTIVITY, null, null, null,
                         decision.closingReason()));

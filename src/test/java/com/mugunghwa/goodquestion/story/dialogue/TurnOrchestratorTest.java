@@ -100,6 +100,8 @@ public class TurnOrchestratorTest {
         assertThat(response.progress().missingElements()).isEmpty();
         // 마무리 대사는 콘텐츠의 고정 대사다. 어떻게 끝났든 이야기는 같은 자리로 돌아온다.
         assertThat(response.characterMessage().text()).isEqualTo("그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.");
+        // 목표 달성 종료에는 짧은 반응이 없다 - 마무리 대사가 자연스러운 연결이다.
+        assertThat(response.closingReaction()).isNull();
 
         assertThat(response.sceneTransition().next()).isEqualTo(SceneTransitionTarget.SCENE);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
@@ -136,6 +138,11 @@ public class TurnOrchestratorTest {
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.MAX_TURNS);
+        // 최대 턴 종료는 아이의 마지막 말에 대한 짧은 반응이 마무리 대사 앞에 붙는다
+        // (콘텐츠 문서 "짧게 반응 -> 마지막 대사", 2026-08 확정).
+        assertThat(response.closingReaction()).isNotNull();
+        assertThat(response.closingReaction().text()).isEqualTo("그렇구나, 조금 더 듣고 싶어.");
+        assertThat(response.characterMessage().text()).isEqualTo("그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.");
     }
 
     @Test

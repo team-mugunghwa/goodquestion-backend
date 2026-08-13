@@ -19,6 +19,11 @@ public record UtteranceResponse(
         ProgressResponse progress,
         /** 일반·유도는 생성 대사, 종료는 고정 마지막 대사(캐릭터-12) */
         CharacterMessageResponse characterMessage,
+        /**
+         * 최대 턴 종료 턴에만 값이 있다. 아이의 마지막 발화에 대한 짧은 반응으로,
+         * characterMessage(마무리 대사)보다 먼저 재생한다(2026-08 확정).
+         */
+        CharacterMessageResponse closingReaction,
         /** 값이 있으면 미션 오버레이를 노출한다 */
         MissionResponse mission,
         /** 장면이 끝날 때만 값이 있다 */

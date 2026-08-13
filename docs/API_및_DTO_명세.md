@@ -599,6 +599,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `analysis` | `AnalysisResponse` | 항상 |
 | `progress` | `ProgressResponse` | 항상 |
 | `characterMessage` | `CharacterMessageResponse` | 항상 (종료 시엔 고정 마지막 대사) |
+| `closingReaction` | `CharacterMessageResponse` | **최대 턴 종료 턴** - 아이의 마지막 발화에 대한 짧은 반응. `characterMessage`보다 먼저 재생한다 |
 | `mission` | `MissionResponse` | **미션 노출 턴** |
 | `sceneTransition` | `SceneTransitionResponse` | **장면 종료 턴** (`progress.mode=CLOSING`) |
 | `safety` | `SafetyResponse` | **위험 신호로 대사 생성이 중단된 턴** |
@@ -1032,9 +1033,10 @@ LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utte
   "강한 유도 대상"이 아니라 "직전 유도 또는 soft-cue 대상"이다**
 - 반응 원칙 키 7종(reactionKey)을 서버가 계산해 캐릭터 프롬프트에 전달 (대화 작동 규칙 3.1)
 
-**미결(팀 확정 필요)**: 콘텐츠 문서의 "최대 턴 도달 시 짧게 반응 후 마지막 대사" 흐름은
-캐릭터 메시지가 2건이 되는데 `UtteranceResponse.characterMessage`는 1건이다. 응답 계약
-변경이 필요해 미구현으로 두었다 (통합 명세서 D-1도 확정 필요로 분류).
+**확정(2026-08)**: 콘텐츠 문서의 "최대 턴 도달 시 짧게 반응 후 마지막 대사" 흐름을
+MAX_TURNS 종료에 한정해 구현했다. 응답의 `closingReaction`(별도 메시지)이 짧은 반응이고
+`characterMessage`(고정 마무리 대사)보다 먼저 재생한다. 목표 달성(GOAL_MET) 종료는 문서
+요구가 없고 마무리 대사가 자연스러운 연결이라 현행(마무리 대사만)을 유지한다.
 
 **2026-08-13 갱신분** (직전 집계는 42/4/10이었다)
 
