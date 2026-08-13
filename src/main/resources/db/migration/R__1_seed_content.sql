@@ -19,7 +19,9 @@
 --
 -- 원본 시드 문서의 확인 필요 값
 -- - 콘텐츠 문서 문자열 ID(s_banggui_..., sc_banggui_01~09)는 uuid로 치환 (주석에 원본 병기)
--- - preferred_turns는 문서에 없어 제안값 (max_turns - 2)
+-- - preferred_turns는 전 장면 2로 확정 (2026-08). 문서에 수치가 없고(임계값은 운영 정책
+--   위임) 역할이 "한 발화에 요소를 다 채워도 최소 두 번은 주고받게 하는 하한"뿐이라
+--   장면 분량을 정하는 요소/max_turns와 달리 장면별로 다를 이유가 없다
 -- - 대화1 요소는 콘텐츠 문서 3절 표의 배열(REASON 포함 4종)을 채택. 5절의 'EXPRESSION'은
 --   사고 요소 8종에 없는 미정의 값이라 제외했다 (2026-08 확정)
 -- ============================================================
@@ -208,7 +210,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
       "REASON": "어째서 그렇게 요란한 방귀를 뀌게 되었는지 까닭을 모르겠구나.",
       "REQUEST": "그래서 나더러 어쩌란 말인지 모르겠구나."
     }'::jsonb,
-    3, 5
+    2, 5
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -292,7 +294,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
         "캐릭터 질문만으로 해결 방법을 구체화하기 어려운 경우"
       ]
     }'::jsonb,
-    3, 5
+    2, 5
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
