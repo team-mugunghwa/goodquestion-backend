@@ -107,6 +107,8 @@ public class TurnOrchestratorTest {
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(4);
         assertThat(response.sceneTransition().nextSceneType()).isEqualTo(SceneType.STORY);
+        // 결과 연출은 대화3에만 있다. 대화1이 닫힐 때는 내려가지 않는다.
+        assertThat(response.sceneTransition().resultImageUrl()).isNull();
 
         // 세션은 이미 다음 장면에 있고 장면 단위 누적은 초기화됐다.
         assertThat(sessionService.getSession(PARENT_ID, sessionId).currentScene().sceneOrder())
