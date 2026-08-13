@@ -9,7 +9,7 @@
 
 ### 1.1 인증
 
-- `/api/auth/**` 와 `/actuator/health` 만 인증 없이 접근한다. 나머지는 전부 Bearer 토큰이 필요하다.
+- `/api/auth/**`, `/actuator/health`, 그리고 이야기 정적 에셋 `/stories/**`(장면/미션 이미지)만 인증 없이 접근한다. 나머지는 전부 Bearer 토큰이 필요하다.
 - **보호자 식별자는 요청에 담지 않는다.** `@CurrentParentId`가 JWT에서 꺼내 주입한다. 아래 표의 요청 필드에 `parentId`가 없는 이유다.
 - 아이·세션 리소스는 컨트롤러 진입 시 **소유권을 검증**한다. 남의 아이면 403.
 
@@ -23,12 +23,14 @@
 
 | 상황 | 상태 | `code` |
 |---|---|---|
-| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유`. `INVALID_IDEMPOTENCY_KEY`(키 64자 초과) |
-| 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED` |
+| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유`. `INVALID_IDEMPOTENCY_KEY`(키 64자 초과), `INVALID_PASSWORD_RESET_TOKEN`(재설정 링크 무효/만료) |
+| 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED`. 인증 시도 실패는 세분 코드: `INVALID_CREDENTIALS`(로그인), `INVALID_REFRESH_TOKEN`(재발급), `KAKAO_AUTH_FAILED`/`GOOGLE_AUTH_FAILED`(소셜) |
 | 남의 리소스 | 403 | `FORBIDDEN` |
 | 없는 리소스 | 404 | `NOT_FOUND` |
 | 상태 충돌 | 409 | 아래 목록 |
 | 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
+| 로그인 시도 초과 잠금 | 423 | `ACCOUNT_LOCKED` |
+| 메일 발송 실패 | 503 | `EMAIL_DELIVERY_FAILED` |
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
@@ -38,7 +40,7 @@
 
 **501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
 
-**401과 403은 반드시 갈라 처리한다.** 리프레시 토큰이 없어 만료 복구 경로가 재로그인 하나뿐이므로, 클라이언트는 **401을 받으면 로그인 화면으로** 보내야 하고 403은 그냥 오류로 표시하면 된다. 스프링 시큐리티 기본값은 둘 다 403 + 빈 본문이라 `RestAuthenticationEntryPoint`·`RestAccessDeniedHandler`로 갈라 두었고, 두 응답 모두 위의 `{code, message}` 형태를 지킨다.
+**401과 403은 반드시 갈라 처리한다.** 클라이언트는 **401을 받으면 `/refresh`로 재발급을 시도**하고, 리프레시까지 만료(`INVALID_REFRESH_TOKEN`)면 로그인 화면으로 보낸다. 403은 그냥 오류로 표시하면 된다. 스프링 시큐리티 기본값은 둘 다 403 + 빈 본문이라 `RestAuthenticationEntryPoint`·`RestAccessDeniedHandler`로 갈라 두었고, 두 응답 모두 위의 `{code, message}` 형태를 지킨다.
 
 ### 1.3 구현 상태 표기
 
@@ -61,6 +63,9 @@
 | POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`, `google`만. 그 외 501 |
 | POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ✅ |
 | POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ✅ |
+| POST | `/password-reset/request` | 비밀번호 재설정 메일을 보낸다. 계정 존재 여부와 무관하게 202 | `PasswordResetRequest` | 202 (본문 없음) | ✅ |
+| POST | `/password-reset/confirm` | 메일의 토큰으로 새 비밀번호를 확정한다. 토큰은 1회용 | `PasswordResetConfirmRequest` | 204 (본문 없음) | ✅ |
+| POST | `/find-email` | 이름/아이 정보 대조로 이메일을 찾는다. 매치가 없어도 200과 빈 배열 | `FindEmailRequest` | 200 `FindEmailResponse` | ✅ |
 
 ### 2.2 보호자 — `/api/parents`
 
@@ -294,7 +299,25 @@
 |---|---|---|
 | `accessToken` | String | 이후 요청의 `Authorization: Bearer` 헤더에 담는다 |
 | `refreshToken` | String | 회전(rotate)된 새 리프레시 토큰. 기존 토큰은 이 값 발급과 동시에 무효화된다 |
-| `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 7일 |
+| `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 30분(1800). 만료 시 리프레시 토큰(기본 14일, 1회 사용 회전)으로 재발급한다 |
+
+#### `PasswordResetRequest` / `PasswordResetConfirmRequest`
+
+> **사용처** — `POST /api/auth/password-reset/request` / `POST /api/auth/password-reset/confirm` 요청
+
+- `PasswordResetRequest`: `email`(`@NotBlank @Email`, 255자 이하)
+- `PasswordResetConfirmRequest`: `token`(`@NotBlank`, 메일 링크의 1회용 토큰) · `newPassword`(`@NotBlank`, 8~64자)
+
+계정 존재 여부를 응답으로 구분하지 않는다 — 요청은 항상 202, 무효/만료 토큰은 400 `INVALID_PASSWORD_RESET_TOKEN`, 메일 발송 실패만 503.
+
+#### `FindEmailRequest` / `FindEmailResponse`
+
+> **사용처** — `POST /api/auth/find-email` 요청 / 응답
+
+- `FindEmailRequest`: `parentName`(`@NotBlank`) · `childName`(선택) · `childBirthYear`(선택)
+- `FindEmailResponse`: `emails`(`List<String>`, 마스킹된 이메일 목록)
+
+매치가 없어도 200과 빈 배열이다 — 존재 여부를 에러로 구분하지 않는다.
 
 #### `AuthResponse` / `SocialAuthResponse`
 
@@ -509,7 +532,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `session`(`SessionResponse`) · `currentScene`(`SceneContentResponse`) · `messages`(`List<MessageResponse>`) · `lastCharacterMessage`(`CharacterMessageResponse`) · `exposedMission`(`MissionResponse`)
 
-`messages`는 세션 전체 내역이고 `lastCharacterMessage`는 마지막 캐릭터 발화다. `exposedMission`은 노출 판정이 `story.mission`에 있어 지금은 항상 null이다. 미션 구현 후 채워지며 응답 스키마는 바뀌지 않는다.
+`messages`는 세션 전체 내역이고 `lastCharacterMessage`는 마지막 캐릭터 발화다. `exposedMission`에는 노출 중이던 미션이 실제로 담긴다 - 미노출이면 null이고, 완료 여부는 구분하지 않는다.
 
 #### `SessionSummaryResponse` — 홈 이어하기 카드
 
@@ -951,8 +974,12 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 |---|---|---|---|
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
-| 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
 | 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
+| 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
+| 미결-01 | **STT/TTS 벤더 확정** | OpenAI 실측 구성(gpt-4o-mini)으로 동작 중. 비교용이지 최종 선정이 아니다 | 아동 실녹음 인식률 검증 후 최종 확정. 신뢰도 컷(0.5)도 그때 함께 보정 |
+| 미결-02 | **네이버 소셜 로그인** | kakao/google만 지원, 그 외 501 | 도입 여부 결정 |
+
+(결번 1, 2, 3, 6은 해소된 항목이다: 리프레시 토큰, 멀티파트 한도, STT 신뢰도 기준값, 단어 삭제 경로)
 
 ---
 
@@ -960,7 +987,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 영역 | 엔드포인트 | ✅ | ⚠️ | ⛔ |
 |---|---|---|---|---|
-| 인증 | 5 | 4 | 1 | 0 |
+| 인증 | 8 | 7 | 1 | 0 |
 | 보호자 | 2 | 1 | 1 | 0 |
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
@@ -969,14 +996,29 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 대화·미션 | 4 | 3 | 0 | 1 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
 | 리포트 | 3 | 2 | 0 | 1 |
-| 단어장 | 4 | 2 | 1 | 1 |
+| 단어장 | 4 | 3 | 1 | 0 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **56** | **48** | **3** | **5** |
+| **합계** | **59** | **54** | **3** | **2** |
 
-⛔ 5건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 2건(미션 결과 제출, 리포트 생성)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
 
 ⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-14 갱신분** (직전 집계는 48/3/5였다. 인증 3건 추가로 분모도 56 -> 59)
+
+- 상태 변화: 리프레시 토큰 발급/회전/무효화 구현(refresh, logout 미구현 -> 동작),
+  비밀번호 재설정 2건과 이메일 찾기 추가(전부 동작), 단어 삭제 구현(경로를
+  `/api/children/{childId}/words/{wordId}`로 확정). 남은 501은 미션 결과 제출과
+  리포트 생성 2건뿐이다
+- 계약 추가: 발화 제출/아이템 구매의 `Idempotency-Key` 헤더(1장), `/api/stt` 응답의
+  `confidence`/`lowConfidence`, 발화 응답의 `closingReaction`(최대 턴 종료)과
+  `sceneTransition.resultImageUrl`(결과 연출), `sceneTransition.next`의 `COMPLETED`
+  (후속 활동 무설정 이야기 즉시 완료), 인증 DTO 4종
+- 확정값 반영: 미션1 질문 key safety -> reason, preferred_turns 전 장면 2,
+  STT 저신뢰 기준 0.5, 아이템 가격 1/2/3과 누적 해금 3/4/5 인하
+- 에러 표에 세분 코드 보강(401 계열 4종, 423, 503, 400 재설정 토큰), 8절을
+  시점 기록으로 강등(현행은 액세스 30분 + 리프레시 14일)
 
 **2026-08-13 갱신분 5** (집계 변동 없음 - ⚠️ 범위만 넓어짐)
 
@@ -1021,7 +1063,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utterances`는 코드상 전
 구간이 이어졌고, 실호출 검증(LlmSmokeTest, .env에 LLM_API_KEY 필요)까지 통과했다.
 
-근거 문서 6종(통합 명세서, 발화 분석 연동 기준, 대화 작동 규칙, 콘텐츠, 캐릭터 성격,
+근거 문서 6종(통합 명세서 - 저장소 밖 팀 공유 문서, 발화 분석 연동 기준, 대화 작동 규칙, 콘텐츠, 캐릭터 성격,
 요구사항 목록)을 전수 대조하면서 규칙 세 가지를 문서 확정값에 맞췄다.
 
 - 유도 판단의 남은 턴 기준을 "미충족 요소 수"에서 문서 확정값 "남은 턴 <= 2"로 정정
@@ -1098,7 +1140,11 @@ MAX_TURNS 종료에 한정해 구현했다. 응답의 `closingReaction`(별도 �
 
 ---
 
-## 8. Access 토큰 단일 전략 — 동작 확인
+## 8. Access 토큰 단일 전략 — 동작 확인 (2026-08-10 시점 기록)
+
+> **주의**: 이 절은 리프레시 토큰 도입 전의 검증 기록이다. 현재는 리프레시 발급/회전/무효화가
+> 구현되어 액세스 30분 + 리프레시 14일로 운영한다(2.1절, 3.2절이 현행). 당시 검증한
+> 무상태 구조(재로그인해도 진행 상태가 이어진다)는 지금도 유효하다.
 
 리프레시 토큰 없이도 인증이 완결되는지 실제로 앱을 띄워 확인했다(2026-08-10).
 
