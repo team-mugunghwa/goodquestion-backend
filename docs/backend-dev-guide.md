@@ -411,7 +411,6 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 | --- | --- | --- |
 | 리프레시 토큰 | 테이블과 엔티티는 있고 로직이 없다. Access 단일 전략으로 완결 동작 | 도입 시점. 응답 스키마는 그대로라 클라이언트 변경은 없다 |
 | 멀티파트 1MB 한도 | `application.yml`에 설정이 없어 Boot 기본 1MB | 30초 WAV가 약 960KB라 아슬아슬하다. 10MB로 올릴지 |
-| STT 신뢰도 기준값 | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 |
 | `SafetyResponse` 감지 | 계약 자리만 있고 항상 null | AI 파이프라인 연동 시 구현 |
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
 | `DELETE /api/words/{wordId}` | 경로에 `childId`가 없어 소유권 검증이 애매하다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞출지 |
