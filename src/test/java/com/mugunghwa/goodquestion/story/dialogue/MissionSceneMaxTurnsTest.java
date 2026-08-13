@@ -70,12 +70,12 @@ class MissionSceneMaxTurnsTest {
         sessionService.completeStoryScene(PARENT_ID, sessionId);   // 1 도입
         sessionService.completeStoryScene(PARENT_ID, sessionId);   // 2 전개1
 
-        // 3 대화1 (PERSPECTIVE·EMOTION·SOLUTION, 최소 2턴)
+        // 3 대화1 (PERSPECTIVE, EMOTION, REASON, SOLUTION / 최소 2턴)
         analysisLlmClient.willDetect(UtteranceValidity.VALID, ThinkingElement.EMOTION);
         submit("며느리가 많이 힘들 것 같아요");
         analysisLlmClient.willDetect(UtteranceValidity.VALID,
-                ThinkingElement.PERSPECTIVE, ThinkingElement.SOLUTION);
-        submit("가족들도 이해해 줄 테니 솔직하게 말해 보세요");
+                ThinkingElement.PERSPECTIVE, ThinkingElement.REASON, ThinkingElement.SOLUTION);
+        submit("가족들도 이해해 줄 테니, 계속 참으면 아프니까 솔직하게 말해 보세요");
 
         sessionService.completeStoryScene(PARENT_ID, sessionId);   // 4 전개2
 

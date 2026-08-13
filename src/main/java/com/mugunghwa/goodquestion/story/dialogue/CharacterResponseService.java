@@ -88,8 +88,14 @@ public class CharacterResponseService {
         return null;
     }
 
+    /**
+     * 캐릭터 공통 성격(characters.personality)과 장면별 입장(scene_stance)을 합친다.
+     * 장면 상황·갈등까지 이어 붙여 캐릭터가 지금 왜 이런 태도인지를 프롬프트에 담는다.
+     */
     private String characterContext(StoryScene scene) {
-        return Stream.of(scene.getCharacterPersona(), scene.getSceneStance(),
+        String personality = scene.getCharacter() != null
+                ? scene.getCharacter().getPersonality() : null;
+        return Stream.of(personality, scene.getSceneStance(),
                         scene.getSceneDescription(), scene.getConflict())
                 .filter(part -> part != null && !part.isBlank())
                 .collect(Collectors.joining("\n"));
