@@ -8,6 +8,7 @@ import com.mugunghwa.goodquestion.story.mission.MissionConfigReader;
 import com.mugunghwa.goodquestion.story.session.Message;
 import com.mugunghwa.goodquestion.story.session.MessageService;
 import com.mugunghwa.goodquestion.story.session.SceneClosedEvent;
+import com.mugunghwa.goodquestion.story.session.SessionCompletedEvent;
 import com.mugunghwa.goodquestion.story.session.SceneTransitionTarget;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.SpeakerType;
@@ -89,17 +90,29 @@ public class SceneClosingHandler {
                         decision.closingReason(), resultImageUrl));
     }
 
-    /** 마지막 장면이 대화로 끝났다. 후속 활동으로 넘긴다. */
+    /**
+     * 마지막 장면이 대화로 끝났다. 후속 활동으로 넘기되, config가 없는 이야기는
+     * 건너뛰고 즉시 완료한다(2026-08 확정) - 전환해 두면 카드 시작이 404를 던져
+     * 세션이 빠져나갈 수 없다. 완주 별가루는 이벤트로 지급된다.
+     */
     private TurnClosure finish(StorySession session, ProgressionDecision decision,
                                Message closingMessage, Message reactionMessage,
                                String resultImageUrl) {
-        session.toPostActivity();
+        SceneTransitionTarget target;
+        if (session.getStory().getPostActivityConfig() == null) {
+            session.complete();
+            eventPublisher.publishEvent(new SessionCompletedEvent(session.getId()));
+            target = SceneTransitionTarget.COMPLETED;
+        } else {
+            session.toPostActivity();
+            target = SceneTransitionTarget.POST_ACTIVITY;
+        }
 
         return new TurnClosure(
                 CharacterMessageResponse.from(closingMessage),
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
-                        SceneTransitionTarget.POST_ACTIVITY, null, null, null,
+                        target, null, null, null,
                         decision.closingReason(), resultImageUrl));
     }
 }
