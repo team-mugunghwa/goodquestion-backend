@@ -44,7 +44,7 @@ class IdempotencyIntegrationTest {
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
     private static final UUID CHILD_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-000000000001");
     private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    /** R__1의 아이템 "돌" - 3별가루, 항상 해금. */
+    /** R__1의 아이템 "돌" - 1별가루, 항상 해금. */
     private static final UUID ROCK_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000001");
 
     @Autowired
@@ -155,9 +155,9 @@ class IdempotencyIntegrationTest {
         ItemPurchaseResponse first = purchase("buy-1");
         ItemPurchaseResponse replayed = purchase("buy-1");
 
-        assertThat(first.balance()).isEqualTo(balanceBefore - 3);
+        assertThat(first.balance()).isEqualTo(balanceBefore - 1);
         assertThat(replayed.balance()).isEqualTo(first.balance());
-        assertThat(balance()).isEqualTo(balanceBefore - 3);
+        assertThat(balance()).isEqualTo(balanceBefore - 1);
         // 재생이 입고를 반복하지 않는다 - 같은 아이템 여러 개 보유가 정상인 도메인이라
         // 유니크로는 못 막고, 멱등키만이 이 중복을 구분할 수 있다.
         assertThat(ownedRocks()).isEqualTo(rocksBefore + 1);
