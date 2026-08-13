@@ -639,7 +639,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `title` `description` | String | 미션 오버레이에 띄우는 제목과 안내 문구 |
 | `payload` | `Payload` | `{questions, cards}` — **유형에 따라 한쪽만 값이 있다** |
 
-- `Question`: `key`(`tool`/`safety`/`request`/`expectedResult`로 고정) · `label`
+- `Question`: `key`(`tool`/`reason`/`request`/`expectedResult`로 고정) · `label`
 - `Card`: `key` · `label` · `imageUrl` · `template`
 
 #### `CurrentMissionResponse`

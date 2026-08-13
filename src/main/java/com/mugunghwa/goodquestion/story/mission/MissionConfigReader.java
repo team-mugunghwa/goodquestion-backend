@@ -21,7 +21,7 @@ import java.util.Map;
 public class MissionConfigReader {
 
     /** 미션1 답변 칸의 고정 키(미션-04). 콘텐츠의 확인 항목 순서와 짝을 이룬다. */
-    private static final List<String> QUESTION_KEYS = List.of("tool", "safety", "request", "expectedResult");
+    private static final List<String> QUESTION_KEYS = List.of("tool", "reason", "request", "expectedResult");
 
     public String missionIdOf(StoryScene scene) {
         return string(config(scene), "mission_id");
