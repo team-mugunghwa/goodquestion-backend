@@ -25,13 +25,15 @@ public final class RewardFixtures {
     public static final UUID COMPLETED_SESSION_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-000000000001");
     public static final UUID IN_PROGRESS_SESSION_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-000000000002");
 
-    /** 돌 - 항상 열림, 3 */
+    /** 돌 - 항상 열림, 1 */
     public static final UUID ROCK_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000001");
-    /** 집 - 누적 15로 해금, 10 */
+    /** 집 - 누적 3으로 해금, 3 */
     public static final UUID HOUSE_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000d");
-    /** 강아지 - 방귀 이야기 완주로 해금, 10 */
+    /** 강아지 - 방귀 이야기 완주로 해금, 3 */
     public static final UUID DOG_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000e");
-    /** 거북이 - 누적 50으로 해금, 10 */
+    /** 토끼 - 누적 4로 해금, 3 */
+    public static final UUID RABBIT_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000f");
+    /** 거북이 - 누적 5로 해금, 3 */
     public static final UUID TURTLE_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000010");
 
     /** 풀 - 지우의 보관함에 있는 보유 아이템 */

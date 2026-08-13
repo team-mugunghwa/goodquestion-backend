@@ -494,8 +494,12 @@ where id = '33333333-3333-3333-3333-000000000007';
 
 -- ------------------------------------------------------------
 -- 6. items - 꾸미기 아이템 마스터 16종
---    가격: 소품 3 / 중형 5 / 대형/동물 10
---    해금: ALWAYS 12 / STARDUST_CUMULATIVE 3 / STORY_COMPLETE 1
+--    가격: 소품 1 / 중형 2 / 대형과 동물 3 (2026-08 인하 확정)
+--    해금: ALWAYS 12 / STARDUST_CUMULATIVE 3 (집 3, 토끼 4, 거북이 5) / STORY_COMPLETE 1
+--
+--    가격과 해금 근거: 이야기 1편의 평생 획득이 최대 6(1회차 완주 3 + 장면 보너스 2,
+--    2회차 완주 1)이다. 첫 완주만으로 동물 하나와 소품 두엇을 살 수 있어야 상점이
+--    보상으로 기능한다. 이전 값(가격 3/5/10, 해금 15/30/50)은 닿을 수 없었다.
 --
 --    토끼/거북이는 후속 이야기(토끼전 등) 완주 보상으로 예약된 것이지만,
 --    아직 그 이야기가 없어 unlock_story_id를 채울 수 없다  - 
@@ -506,26 +510,26 @@ where id = '33333333-3333-3333-3333-000000000007';
 -- ------------------------------------------------------------
 insert into items (id, name, category, price, unlock_type, unlock_story_id, unlock_stardust_total,
                    model_url, thumbnail_url, display_order) values
--- 지형 소품 6종 (항상 열림, 3)
-('44444444-4444-4444-4444-000000000001', '돌',       'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/rock.glb',      '/items/thumbs/rock.png',       1),
-('44444444-4444-4444-4444-000000000002', '풀',       'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/grass.glb',     '/items/thumbs/grass.png',      2),
-('44444444-4444-4444-4444-000000000003', '꽃',       'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/flower.glb',    '/items/thumbs/flower.png',     3),
-('44444444-4444-4444-4444-000000000004', '버섯',     'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/mushroom.glb',  '/items/thumbs/mushroom.png',   4),
-('44444444-4444-4444-4444-000000000005', '바위',     'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/boulder.glb',   '/items/thumbs/boulder.png',    5),
-('44444444-4444-4444-4444-000000000006', '그루터기', 'TERRAIN_PROP',  3, 'ALWAYS', null, null, '/items/models/stump.glb',     '/items/thumbs/stump.png',      6),
--- 식물 4종 (항상 열림, 5)
-('44444444-4444-4444-4444-000000000007', '작은나무', 'PLANT',         5, 'ALWAYS', null, null, '/items/models/tree_small.glb','/items/thumbs/tree_small.png', 7),
-('44444444-4444-4444-4444-000000000008', '큰나무',   'PLANT',         5, 'ALWAYS', null, null, '/items/models/tree_large.glb','/items/thumbs/tree_large.png', 8),
-('44444444-4444-4444-4444-000000000009', '꽃덤불',   'PLANT',         5, 'ALWAYS', null, null, '/items/models/bush.glb',      '/items/thumbs/bush.png',       9),
-('44444444-4444-4444-4444-00000000000a', '야자수',   'PLANT',         5, 'ALWAYS', null, null, '/items/models/palm.glb',      '/items/thumbs/palm.png',      10),
+-- 지형 소품 6종 (항상 열림, 1)
+('44444444-4444-4444-4444-000000000001', '돌',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/rock.glb',      '/items/thumbs/rock.png',       1),
+('44444444-4444-4444-4444-000000000002', '풀',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/grass.glb',     '/items/thumbs/grass.png',      2),
+('44444444-4444-4444-4444-000000000003', '꽃',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/flower.glb',    '/items/thumbs/flower.png',     3),
+('44444444-4444-4444-4444-000000000004', '버섯',     'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/mushroom.glb',  '/items/thumbs/mushroom.png',   4),
+('44444444-4444-4444-4444-000000000005', '바위',     'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/boulder.glb',   '/items/thumbs/boulder.png',    5),
+('44444444-4444-4444-4444-000000000006', '그루터기', 'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/stump.glb',     '/items/thumbs/stump.png',      6),
+-- 식물 4종 (항상 열림, 2)
+('44444444-4444-4444-4444-000000000007', '작은나무', 'PLANT',         2, 'ALWAYS', null, null, '/items/models/tree_small.glb','/items/thumbs/tree_small.png', 7),
+('44444444-4444-4444-4444-000000000008', '큰나무',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/tree_large.glb','/items/thumbs/tree_large.png', 8),
+('44444444-4444-4444-4444-000000000009', '꽃덤불',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/bush.glb',      '/items/thumbs/bush.png',       9),
+('44444444-4444-4444-4444-00000000000a', '야자수',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/palm.glb',      '/items/thumbs/palm.png',      10),
 -- 구조물 3종
-('44444444-4444-4444-4444-00000000000b', '울타리',   'STRUCTURE',     5, 'ALWAYS', null, null, '/items/models/fence.glb',     '/items/thumbs/fence.png',     11),
-('44444444-4444-4444-4444-00000000000c', '표지판',   'STRUCTURE',     5, 'ALWAYS', null, null, '/items/models/sign.glb',      '/items/thumbs/sign.png',      12),
-('44444444-4444-4444-4444-00000000000d', '집',       'STRUCTURE',    10, 'STARDUST_CUMULATIVE', null, 15, '/items/models/house.glb', '/items/thumbs/house.png', 13),
+('44444444-4444-4444-4444-00000000000b', '울타리',   'STRUCTURE',     2, 'ALWAYS', null, null, '/items/models/fence.glb',     '/items/thumbs/fence.png',     11),
+('44444444-4444-4444-4444-00000000000c', '표지판',   'STRUCTURE',     2, 'ALWAYS', null, null, '/items/models/sign.glb',      '/items/thumbs/sign.png',      12),
+('44444444-4444-4444-4444-00000000000d', '집',       'STRUCTURE',     3, 'STARDUST_CUMULATIVE', null,  3, '/items/models/house.glb', '/items/thumbs/house.png', 13),
 -- 동물 3종
-('44444444-4444-4444-4444-00000000000e', '강아지',   'ANIMAL',       10, 'STORY_COMPLETE', '11111111-1111-1111-1111-111111111111', null, '/items/models/dog.glb', '/items/thumbs/dog.png', 14),
-('44444444-4444-4444-4444-00000000000f', '토끼',     'ANIMAL',       10, 'STARDUST_CUMULATIVE', null, 30, '/items/models/rabbit.glb', '/items/thumbs/rabbit.png', 15),
-('44444444-4444-4444-4444-000000000010', '거북이',   'ANIMAL',       10, 'STARDUST_CUMULATIVE', null, 50, '/items/models/turtle.glb', '/items/thumbs/turtle.png', 16)
+('44444444-4444-4444-4444-00000000000e', '강아지',   'ANIMAL',        3, 'STORY_COMPLETE', '11111111-1111-1111-1111-111111111111', null, '/items/models/dog.glb', '/items/thumbs/dog.png', 14),
+('44444444-4444-4444-4444-00000000000f', '토끼',     'ANIMAL',        3, 'STARDUST_CUMULATIVE', null,  4, '/items/models/rabbit.glb', '/items/thumbs/rabbit.png', 15),
+('44444444-4444-4444-4444-000000000010', '거북이',   'ANIMAL',        3, 'STARDUST_CUMULATIVE', null,  5, '/items/models/turtle.glb', '/items/thumbs/turtle.png', 16)
 on conflict (id) do update set
     name = excluded.name,
     category = excluded.category,
