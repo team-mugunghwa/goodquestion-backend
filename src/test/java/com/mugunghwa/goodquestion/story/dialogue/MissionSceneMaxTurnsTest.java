@@ -43,7 +43,7 @@ class MissionSceneMaxTurnsTest {
     private static final UUID CHILD_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-000000000001");
     private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-    /** R__1_seed_content.sql의 대화3(장면 7). 필수 요소 4개, 최소 3턴, 최대 5턴, 미션1. */
+    /** R__1_seed_content.sql의 대화3(장면 7). 필수 요소 4개, 최소 2턴, 최대 5턴, 미션1. */
     private static final UUID MISSION_SCENE_ID = UUID.fromString("33333333-3333-3333-3333-000000000007");
     private static final String MISSION_ID = "mission_1";
 
@@ -79,7 +79,7 @@ class MissionSceneMaxTurnsTest {
 
         sessionService.completeStoryScene(PARENT_ID, sessionId);   // 4 전개2
 
-        // 5 대화2 (PERSPECTIVE·EMPATHY·REASON·REQUEST, 최소 3턴)
+        // 5 대화2 (PERSPECTIVE·EMPATHY·REASON·REQUEST, 최소 2턴)
         analysisLlmClient.willDetect(UtteranceValidity.VALID,
                 ThinkingElement.PERSPECTIVE, ThinkingElement.EMPATHY);
         submit("며느리 입장에서는 참기 힘들었을 거예요");
@@ -118,7 +118,7 @@ class MissionSceneMaxTurnsTest {
         요소를_다_채운다();
 
         analysisLlmClient.willDetect(UtteranceValidity.SHORT);
-        UtteranceResponse response = submit("음");   // 3턴 - 최소 대화량 충족, GOAL_MET 보류
+        UtteranceResponse response = submit("음");   // 3턴 - GOAL_MET 보류 지속 (보류는 2턴부터)
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.NORMAL);
         assertThat(response.sceneTransition()).isNull();
