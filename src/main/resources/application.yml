@@ -6,6 +6,13 @@ spring:
   application:
     name: goodquestion-backend
 
+  servlet:
+    multipart:
+      # 30초 16kHz mono WAV가 약 960KB라 Boot 기본 1MB에 아슬아슬하게 걸린다(팀 확정
+      # 대기였으나 STT 실측을 위해 10MB로 올린다). 요청 전체 한도도 같이 올린다.
+      max-file-size: 10MB
+      max-request-size: 12MB
+
   datasource:
     url: ${DB_URL}          # JDBC URL. Railway에서는 Postgres 서비스 참조로 조립한다.
     username: ${DB_USERNAME}
@@ -73,10 +80,30 @@ external:
   http:
     connect-timeout-ms: ${HTTP_CONNECT_TIMEOUT_MS:3000}
     response-timeout-ms: ${HTTP_RESPONSE_TIMEOUT_MS:10000}
+  # STT/TTS는 벤더 비교 중 OpenAI 실측 구성이다(미결-01). 키를 따로 주지 않으면 LLM 키를
+  # 같이 쓴다 - 벤더가 갈리면 각자 키를 지정한다.
   stt:
-    api-key: ${STT_API_KEY}
+    api-key: ${STT_API_KEY:${LLM_API_KEY}}
+    model: ${STT_MODEL:gpt-4o-mini-transcribe}
+    # 오인식이 잦은 이야기 어휘(시드 proper_nouns의 합집합). 실측에서 "방귀"가 "방비"로
+    # 인식됐다. 장면별 힌트가 정석이지만 /api/stt 계약에 장면 정보가 없어 전체를 준다.
+    vocabulary-hint: "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장"
   tts:
-    api-key: ${TTS_API_KEY}
+    api-key: ${TTS_API_KEY:${LLM_API_KEY}}
+    model: ${TTS_MODEL:gpt-4o-mini-tts}
+    default-voice: nova
+    # 캐릭터명은 story_scenes.character_name과 일치해야 한다. 캐릭터 메타(tts_voice)는
+    # story 도메인에 있는데 ai는 도메인을 참조할 수 없어 벤더 확정 전까지 설정으로 잇는다.
+    # 맵 키에 공백·한글이 있어 대괄호 표기를 쓴다. 벗기면 프로퍼티 이름 규칙(소문자,
+    # 숫자, 하이픈)에 걸려 바인딩이 통째로 실패하고 앱이 뜨지 않는다.
+    voices:
+      "[방귀쟁이 며느리]": nova
+      "[시아버지]": onyx
+      "[마을 이장]": echo
+    instructions:
+      "[방귀쟁이 며느리]": "조심스럽고 부끄러움이 많지만 따뜻한 젊은 여성. 미안해하면서도 다정하게 말한다."
+      "[시아버지]": "체면을 중시하고 호들갑스러운 할아버지. 과장되게 놀라지만 무섭지 않고 익살스럽다."
+      "[마을 이장]": "친근하고 반응이 큰 어른. 호기심 많고 시원시원하게 말한다."
   llm:
     api-key: ${LLM_API_KEY}
     base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
