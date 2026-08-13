@@ -155,13 +155,6 @@ app:
     password-reset-token-ttl: ${PASSWORD_RESET_TOKEN_TTL:30m}
 
 # Railway의 헬스체크가 /actuator/health를 호출한다. 인증 없이 응답하도록 노출한다.
-app:
-  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:7357}
-  mail-from: ${SMTP_FROM:no-reply@goodquestion.local}
-  auth:
-    max-login-attempts: ${MAX_LOGIN_ATTEMPTS:10}
-    lock-duration: ${LOGIN_LOCK_DURATION:24h}
-    password-reset-token-ttl: ${PASSWORD_RESET_TOKEN_TTL:30m}
 management:
   endpoints:
     web:
