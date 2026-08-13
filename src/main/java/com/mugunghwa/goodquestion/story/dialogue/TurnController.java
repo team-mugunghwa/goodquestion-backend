@@ -2,6 +2,7 @@ package com.mugunghwa.goodquestion.story.dialogue;
 
 import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceRequest;
 import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceResponse;
+import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.TurnStateResponse;
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class TurnController {
 
     private final TurnOrchestrator dialogOrchestrator;
+    private final SessionService sessionService;
 
     @PostMapping("/utterances")
     public UtteranceResponse submit(@CurrentParentId UUID parentId, @PathVariable UUID sessionId,
@@ -27,6 +29,6 @@ public class TurnController {
     @GetMapping("/turn-state")
     public TurnStateResponse getTurnState(@CurrentParentId UUID parentId,
                                           @PathVariable UUID sessionId) {
-        throw new UnsupportedOperationException("미구현: 턴 상태 조회");
+        return sessionService.getTurnState(parentId, sessionId);
     }
 }

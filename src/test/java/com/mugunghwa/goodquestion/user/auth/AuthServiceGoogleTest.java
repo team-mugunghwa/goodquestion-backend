@@ -38,7 +38,7 @@ class AuthServiceGoogleTest {
     @Mock
     private RefreshTokenService refreshTokenService;
     @Mock
-    private LoginAttemptStore loginAttemptStore;
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private AuthService authService;
@@ -64,7 +64,7 @@ class AuthServiceGoogleTest {
         when(refreshTokenService.issue(parent)).thenReturn("refresh-token");
         when(jwtProvider.getExpiresInSeconds()).thenReturn(3600L);
 
-        SocialAuthResponse response = authService.loginWithGoogle(request);
+        SocialAuthResponse response = authService.loginWithGoogle(request, "127.0.0.1");
 
         assertThat(response.tokens().accessToken()).isEqualTo("service-jwt");
         assertThat(response.parent().provider()).isEqualTo(AuthProvider.GOOGLE);

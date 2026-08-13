@@ -18,11 +18,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
-import java.util.UUID;
 
+/**
+ * 비밀번호 재설정 (계정-06).
+ *
+ * <p>RefreshTokenService와 같은 방식이다 — 원문은 저장하지 않고 해시만 남기고,
+ * 소비하면 consumed_at을 찍어 재사용을 막는다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,51 +36,60 @@ public class PasswordResetService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final ParentRepository parentRepository;
-    private final PasswordResetTokenStore tokenStore;
+    private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
 
-    @Value("${app.frontend-base-url:http://localhost:7357}")
+    @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
 
-    @Value("${app.mail-from:no-reply@goodquestion.local}")
+    @Value("${app.mail-from}")
     private String mailFrom;
 
-    @Value("${app.auth.password-reset-token-ttl:30m}")
+    @Value("${app.auth.password-reset-token-ttl}")
     private Duration tokenTtl;
 
-    /** 계정 존재 여부를 응답으로 노출하지 않는다. */
+    /** 계정 존재 여부를 응답으로 노출하지 않는다 — 없는 이메일이거나 소셜 계정이면 조용히 넘긴다. */
+    @Transactional
     public void request(String email) {
         Parent parent = parentRepository.findByEmail(email.trim().toLowerCase())
                 .filter(Parent::isLocal)
                 .orElse(null);
-        if (parent == null) return;
+        if (parent == null) {
+            return;
+        }
 
         String rawToken = newToken();
-        tokenStore.save(hash(rawToken), parent.getId(), Instant.now().plus(tokenTtl));
+        tokenRepository.save(PasswordResetToken.builder()
+                .parent(parent)
+                .tokenHash(hash(rawToken))
+                .expiresAt(OffsetDateTime.now().plus(tokenTtl))
+                .build());
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(mailFrom);
         message.setTo(parent.getEmail());
         message.setSubject("[GoodQuestion] 비밀번호 재설정");
-        message.setText("아래 링크에서 30분 이내에 새 비밀번호를 설정해 주세요.\n\n"
+        message.setText("아래 링크에서 " + tokenTtl.toMinutes() + "분 이내에 새 비밀번호를 설정해 주세요.\n\n"
                 + frontendBaseUrl + "/auth/reset-password?token=" + rawToken
                 + "\n\n요청하지 않았다면 이 메일을 무시해 주세요.");
         try {
             mailSender.send(message);
-        } catch (MailException error) {
+        } catch (MailException e) {
             throw new BusinessException(ErrorCode.EMAIL_DELIVERY_FAILED);
         }
     }
 
+    /** 토큰을 소비하고 비밀번호를 바꾼다. 없거나, 만료됐거나, 이미 쓴 토큰이면 예외. */
     @Transactional
     public void confirm(String rawToken, String newPassword) {
-        UUID parentId = tokenStore.consume(hash(rawToken), Instant.now())
+        PasswordResetToken token = tokenRepository.findByTokenHash(hash(rawToken))
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN));
-        Parent parent = parentRepository.findById(parentId)
-                .filter(Parent::isLocal)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN));
-        parent.updatePassword(passwordEncoder.encode(newPassword));
+        if (!token.isUsable()) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN);
+        }
+        token.consume();
+        token.getParent().updatePassword(passwordEncoder.encode(newPassword));
     }
 
     private String newToken() {
@@ -89,8 +103,8 @@ public class PasswordResetService {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(value.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new IllegalStateException("SHA-256 is unavailable", impossible);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256을 사용할 수 없습니다.", e);
         }
     }
 }

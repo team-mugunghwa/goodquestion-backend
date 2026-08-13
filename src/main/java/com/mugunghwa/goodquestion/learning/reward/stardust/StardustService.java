@@ -10,6 +10,7 @@ import com.mugunghwa.goodquestion.learning.reward.stardust.dto.StardustWalletRes
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.session.StorySession;
 import com.mugunghwa.goodquestion.user.child.ChildService;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ public class StardustService {
     private final StardustTransactionRepository transactionRepository;
     private final ChildService childService;
     private final StoryPlayCounter playCounter;
+    private final EntityManager entityManager;
 
     public StardustWalletResponse getWallet(UUID parentId, UUID childId) {
         childService.getOwnedChild(parentId, childId);
@@ -154,10 +156,15 @@ public class StardustService {
                                      StorySession session, StoryScene scene, Item item) {
         StardustWallet wallet = lockedWalletOf(childId);
         wallet.earn(amount);
-        return transactionRepository.save(StardustTransaction.builder()
+        StardustTransaction saved = transactionRepository.saveAndFlush(StardustTransaction.builder()
                 .wallet(wallet).amount(amount).reason(reason)
                 .session(session).scene(scene).item(item)
                 .build());
+
+        // created_at은 DB 기본값이라 저장 직후 엔티티에는 비어 있다. 완주 응답이 지급 내역을
+        // 그대로 담아 나가므로 되읽지 않으면 그 한 건만 시각이 null로 나간다.
+        entityManager.refresh(saved);
+        return saved;
     }
 
     private StardustWallet getWalletOf(UUID childId) {

@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.global.error;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -7,6 +8,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 낙관적 락 충돌 -> 409. 한 턴 처리는 STT/분석/대사 생성으로 수 초가 걸려, 아이가 연타하면
+     * 같은 세션에 두 턴이 겹친다. 500으로 나가면 클라이언트가 재시도해도 되는지 알 수 없다 -
+     * 409로 내려 "앞선 요청이 끝난 뒤 다시 보내라"는 뜻을 분명히 한다.
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentUpdate(OptimisticLockingFailureException e) {
+        return ResponseEntity.status(ErrorCode.CONCURRENT_TURN.getStatus())
+                .body(ErrorResponse.of(ErrorCode.CONCURRENT_TURN,
+                        ErrorCode.CONCURRENT_TURN.getDefaultMessage()));
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
