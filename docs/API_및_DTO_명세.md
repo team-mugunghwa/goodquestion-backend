@@ -976,7 +976,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `POST /api/sessions/{sessionId}/utterances` | ⚠️ | ✅ | gpt-5-mini 실호출 검증 통과 |
 
 **발화 제출이 완전 동작한다.** 대화 턴 파이프라인의 마지막 구멍이었다. 실호출 측정값:
-분석 3.1초, 캐릭터 2.9초 — 턴당 LLM 구간 약 6초(reasoning effort minimal). 남은 501은
+분석 3.1초, 캐릭터 2.9초로 턴당 LLM 구간 약 6초(reasoning effort minimal). 남은 501은
 미션 결과 제출, 리포트 생성, 단어 삭제, 단어 뜻 생성(단어 저장의 meaning 생략 경로),
 토큰 재발급과 로그아웃, 음성 2건이다.
 
