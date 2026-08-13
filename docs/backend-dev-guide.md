@@ -409,10 +409,8 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 
 | 항목 | 현재 | 결정 필요 |
 | --- | --- | --- |
-| 리프레시 토큰 | 테이블과 엔티티는 있고 로직이 없다. Access 단일 전략으로 완결 동작 | 도입 시점. 응답 스키마는 그대로라 클라이언트 변경은 없다 |
-| 멀티파트 1MB 한도 | `application.yml`에 설정이 없어 Boot 기본 1MB | 30초 WAV가 약 960KB라 아슬아슬하다. 10MB로 올릴지 |
 | `SafetyResponse` 감지 | 계약 자리만 있고 항상 null | AI 파이프라인 연동 시 구현 |
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
-| STT/TTS 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
+| STT/TTS 벤더 | OpenAI 실측 구성으로 동작 중 (비교용, 미결-01) | 벤더 최종 확정. 아동 한국어 실녹음 인식률 검증이 필수다 |
 
-LLM은 gpt-5-mini로 정했다. STT와 TTS는 아직 선정 전이고 클라이언트가 501을 받는다.
+LLM은 gpt-5-mini로 정했다. STT/TTS는 OpenAI 실측 구성으로 동작하며 벤더 최종 확정만 남았다.

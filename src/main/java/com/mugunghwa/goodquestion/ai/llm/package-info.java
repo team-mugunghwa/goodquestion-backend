@@ -1,7 +1,8 @@
 /**
- * LLM 공급자 호출 공통 계층(자리표시자).
+ * LLM 공급자 호출 공통 계층.
  *
- * <p>analysis·character·report·word 어댑터가 공유할 {@code LlmClient}와
- * 프롬프트 레지스트리를 여기에 둔다. 모델·키 선정(미결-01) 후 채운다.
+ * <p>analysis·character·report·word 어댑터가 공유하는 {@code LlmClient} 포트와
+ * OpenAI 구현체({@code OpenAiLlmClient}, gpt-5-mini, json_schema 구조화 출력)를 둔다.
+ * 다른 공급자로 바뀌면 구현체만 교체한다.
  */
 package com.mugunghwa.goodquestion.ai.llm;
