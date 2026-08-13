@@ -273,9 +273,16 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     '{
       "mission_id": "mission_1",
+      "mission_type": "PROBLEM_SOLVING",
       "name": "높이 있는 배 따기 미션",
       "purpose": "높은 배나무의 배를 떨어뜨리기 위해 며느리의 큰 방귀를 안전하게 사용하는 방법을 구성한다.",
       "check_points": ["무엇을 사용할 것인지", "왜 그 방법이 가능한지", "며느리에게 어떻게 부탁할 것인지", "그 결과 어떤 일이 생길지"],
+      "questions": [
+        {"key": "tool", "label": "무엇을 사용할 것인지"},
+        {"key": "safety", "label": "왜 그 방법이 가능한지"},
+        {"key": "request", "label": "며느리에게 어떻게 부탁할 것인지"},
+        {"key": "expectedResult", "label": "그 결과 어떤 일이 생길지"}
+      ],
       "exposure_principle": "대화 시작과 동시에 보여주지 않고, 해결 방법을 실제로 구성해야 하는 시점에 노출한다.",
       "exposure_conditions": [
         "아이가 며느리의 방귀를 활용할 수 있다고 제안한 경우",
@@ -353,8 +360,15 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     '{
       "mission_id": "mission_2",
+      "mission_type": "PERSPECTIVE_SHIFT",
       "name": "친구들의 단점을 장점으로 바꾸기 미션",
       "purpose": "친구나 주변 사람의 특징을 다른 관점에서 바라보고, 단점처럼 보이는 특징을 장점이나 가능성으로 바꾸어 말한다.",
+      "cards": [
+        {"key": "loud_voice", "label": "목소리가 큰 친구", "image_url": null, "template": "목소리가 큰 친구는 ___ 할 수 있어요."},
+        {"key": "many_questions", "label": "질문이 많은 친구", "image_url": null, "template": "질문이 많은 친구는 ___ 할 수 있어요."},
+        {"key": "strong", "label": "힘이 센 친구", "image_url": null, "template": "힘이 센 친구는 ___ 할 수 있어요."},
+        {"key": "quiet", "label": "조용한 친구", "image_url": null, "template": "조용한 친구는 ___ 할 수 있어요."}
+      ],
       "exposure_principle": "처음부터 보여주면 정해진 답을 찾으려 할 수 있으므로, 며느리의 질문에 먼저 자신의 생각을 말한 뒤 노출한다.",
       "exposure_flow": [
         "아이가 며느리에게 자신의 특징을 부끄러워하지 않아도 된다고 말함",
