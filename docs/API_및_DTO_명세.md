@@ -56,7 +56,7 @@
 |---|---|---|---|---|---|
 | POST | `/signup` | 이메일과 비밀번호로 계정을 만들고 토큰까지 바로 발급한다 | `SignUpRequest` | 201 `AuthResponse` | ✅ |
 | POST | `/login` | 이메일과 비밀번호를 확인하고 토큰을 발급한다 | `LoginRequest` | 200 `AuthResponse` | ✅ |
-| POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
+| POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`, `google`만. 그 외 501 |
 | POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ✅ |
 | POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ✅ |
 
@@ -967,7 +967,13 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 ⛔ 5건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
 
-⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-13 갱신분 5** (집계 변동 없음 - ⚠️ 범위만 넓어짐)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/auth/social/{provider}` | ⚠️ kakao만 | ⚠️ kakao, google | 구글 OAuth 인가 코드 교환 추가(PR #17). 그 외 공급자는 여전히 501 |
 
 **2026-08-13 갱신분 4** (직전 집계는 46/3/7이었다)
 
