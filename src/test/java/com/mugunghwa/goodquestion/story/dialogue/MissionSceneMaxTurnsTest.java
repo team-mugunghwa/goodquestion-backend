@@ -138,6 +138,8 @@ class MissionSceneMaxTurnsTest {
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.MAX_TURNS);
+        // 미션 보류가 MAX_TURNS로 치환된 종료도 짧은 반응 대상이다.
+        assertThat(response.closingReaction()).isNotNull();
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(8);
         assertThat(sessionService.getSession(PARENT_ID, sessionId).currentScene().sceneOrder())
                 .isEqualTo((short) 8);
@@ -163,6 +165,7 @@ class MissionSceneMaxTurnsTest {
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
+        assertThat(response.closingReaction()).isNull();
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(8);
     }
 }

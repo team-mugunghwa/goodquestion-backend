@@ -6,6 +6,7 @@ import com.mugunghwa.goodquestion.global.vocab.ReactionKey;
 import com.mugunghwa.goodquestion.global.vocab.ResponseMode;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionDecision;
+import com.mugunghwa.goodquestion.story.session.SceneEndReason;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ public class CharacterResponseService {
     public CharacterPrompt promptFor(StoryScene scene, AnalysisOutcome analysis,
                                      ProgressionDecision decision, ReactionKey reactionKey,
                                      String childUtterance) {
+        String fixedText = fixedText(scene, decision);
         return new CharacterPrompt(
                 childUtterance,
                 summarize(analysis),
@@ -45,7 +47,17 @@ public class CharacterResponseService {
                 remainingWorry(scene, decision),
                 decision.softCue(),
                 guidanceStyle(scene),
-                fixedText(scene, decision));
+                fixedText,
+                closingReactionNeeded(decision, fixedText));
+    }
+
+    /**
+     * 최대 턴 종료에만 짧은 반응을 붙인다(콘텐츠 문서의 "짧게 반응 -> 마지막 대사").
+     * 목표 달성 종료는 문서 요구가 없고 마무리 대사가 자연스러운 연결이라 붙이지 않는다.
+     * 고정 대사가 없는 장면은 LLM이 마무리 대사 자체를 만들므로 별도 반응이 필요 없다.
+     */
+    private boolean closingReactionNeeded(ProgressionDecision decision, String fixedText) {
+        return decision.closingReason() == SceneEndReason.MAX_TURNS && fixedText != null;
     }
 
     /** 걱정을 어떻게 드러낼지의 캐릭터별 표현 방식(캐릭터-11). 캐릭터 참조가 없으면 null. */
@@ -56,12 +68,14 @@ public class CharacterResponseService {
     /**
      * <b>트랜잭션 밖에서 부른다.</b>
      *
-     * <p>고정 마지막 대사가 있는 장면의 CLOSING 턴은 LLM을 부르지 않는다 - 장면을 어떻게
+     * <p>고정 마지막 대사가 있는 장면의 CLOSING 턴은 그 대사를 그대로 쓴다 - 장면을 어떻게
      * 끝냈든 이야기는 같은 자리로 돌아와야 다음 장면이 이어진다. 감정도 붙이지 않는다.
+     * 단 최대 턴 종료면 아이의 마지막 발화에 대한 짧은 반응을 LLM으로 만들어 앞에 붙인다 -
+     * 어려움을 겪던 아이의 마지막 말이 통째로 무시되지 않게 한다.
      */
     public CharacterReply reply(CharacterPrompt prompt) {
-        if (prompt.hasFixedText()) {
-            return new CharacterReply(prompt.fixedText(), null);
+        if (prompt.hasFixedText() && !prompt.closingReactionNeeded()) {
+            return new CharacterReply(prompt.fixedText(), null, null);
         }
         CharacterLlmClient.CharacterLlmResult result = characterLlmClient.reply(
                 new CharacterLlmClient.CharacterLlmInput(
@@ -69,7 +83,11 @@ public class CharacterResponseService {
                         prompt.reactionKey().name(), prompt.characterName(), prompt.characterContext(),
                         prompt.remainingWorry(), prompt.softCue(), prompt.guidanceStyle()));
 
-        return new CharacterReply(result.text(), toEmotion(result.emotion()));
+        if (prompt.hasFixedText()) {
+            return new CharacterReply(prompt.fixedText(), null,
+                    new CharacterReply.Reaction(result.text(), toEmotion(result.emotion())));
+        }
+        return new CharacterReply(result.text(), toEmotion(result.emotion()), null);
     }
 
     /** 고정 마무리 대사가 없는 장면은 CLOSING에서도 LLM이 마무리 대사를 만든다. */
@@ -126,6 +144,14 @@ public class CharacterResponseService {
         }
     }
 
-    /** 아이 이름 치환 전 원문이다. 치환은 저장 직전 트랜잭션 안에서 한다. */
-    public record CharacterReply(String text, CharacterEmotion emotion) {}
+    /**
+     * 아이 이름 치환 전 원문이다. 치환은 저장 직전 트랜잭션 안에서 한다.
+     *
+     * @param closingReaction 최대 턴 종료 턴의 짧은 반응. 마무리 대사(text) 앞에 재생된다.
+     *                        그 외에는 null
+     */
+    public record CharacterReply(String text, CharacterEmotion emotion, Reaction closingReaction) {
+
+        public record Reaction(String text, CharacterEmotion emotion) {}
+    }
 }
