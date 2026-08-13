@@ -178,12 +178,19 @@ public class TurnTransactions {
      * 미션을 남겨 둔 채 목표만으로 닫으면 미션 화면이 영영 뜨지 않는다.
      *
      * <p>최대 턴 도달로 닫는 것은 막지 않는다. 그것까지 미루면 장면이 끝나지 않는다.
+     * 요소를 다 채운 턴은 판정 순서상 최대 턴에 닿아도 GOAL_MET으로 오므로, 마지막 턴의
+     * 보류는 최대 턴 종료로 바꾼다 - 그대로 보류하면 장면이 열린 채 턴 수만 최대치가 되고,
+     * 이후 발화가 전부 진입 검사의 MAX_TURNS_EXCEEDED에 걸려 미션 수행 발화조차 못 보낸다.
      */
     private ProgressionDecision holdClosingUntilMissionDone(ProgressionDecision decision,
                                                             StorySession session, StoryScene scene) {
         boolean goalMetClosing = decision.mode() == ResponseMode.CLOSING
                 && decision.closingReason() == SceneEndReason.GOAL_MET;
         if (goalMetClosing && scene.hasMission() && !session.isMissionCompleted()) {
+            if (scene.getMaxTurns() != null
+                    && session.getCurrentChildTurnCount() >= scene.getMaxTurns()) {
+                return ProgressionDecision.closing(SceneEndReason.MAX_TURNS);
+            }
             return ProgressionDecision.normal();
         }
         return decision;
