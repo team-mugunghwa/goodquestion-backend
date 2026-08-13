@@ -214,12 +214,12 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/api/stt` | 아이 음성을 텍스트로 변환한다. 원본 음성은 저장하지 않는다 | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
-| POST | `/api/tts` | 대사 텍스트를 캐릭터 음성으로 합성한다 | `SynthesisRequest` | `SynthesisResponse` | ⛔ 벤더 클라이언트만 비어 있다 |
+| POST | `/api/stt` | 아이 음성을 텍스트로 변환한다. 원본 음성은 저장하지 않는다 | `multipart/form-data`, 파트명 `audio` | `TranscriptionResponse` | ✅ |
+| POST | `/api/tts` | 대사 텍스트를 캐릭터 음성으로 합성한다 | `SynthesisRequest` | `SynthesisResponse` | ✅ |
 
-두 건은 컨트롤러와 `SpeechService`까지 구현돼 있고 `DefaultSttClient`, `DefaultTtsClient`가 비어 있어 호출하면 501이 온다. 벤더를 정해 클라이언트만 채우면 그대로 동작한다.
+두 건 모두 OpenAI 실측 구성으로 동작한다(벤더 비교용, 미결-01). `audioUrl`은 스토리지 선정 전까지 data URL(base64 mp3)로 내려간다. 자세한 내용은 7절 갱신분 참고.
 
-> **멀티파트 한도 주의** — 30초 16kHz mono WAV가 약 960KB인데 Spring Boot 기본 `max-file-size`가 1MB다. 아슬아슬하게 걸리므로 설정을 올려야 한다. (→ §6)
+> **멀티파트 한도** — 30초 16kHz mono WAV가 약 960KB로 Spring Boot 기본 1MB에 아슬아슬하게 걸려, `max-file-size`를 10MB로 올려 두었다.
 
 ---
 
@@ -962,12 +962,33 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 리포트 | 3 | 2 | 0 | 1 |
 | 단어장 | 4 | 2 | 1 | 1 |
 | 보상 | 11 | 11 | 0 | 0 |
-| 음성 | 2 | 0 | 0 | 2 |
-| **합계** | **56** | **46** | **3** | **7** |
+| 음성 | 2 | 2 | 0 | 0 |
+| **합계** | **56** | **48** | **3** | **5** |
 
-⛔ 7건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 5건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
 
 ⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-13 갱신분 4** (직전 집계는 46/3/7이었다)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/stt` | ⛔ | ✅ | OpenAI gpt-4o-mini-transcribe. 왕복 실측 STT 0.5~1.8초 |
+| `POST /api/tts` | ⛔ | ✅ | OpenAI gpt-4o-mini-tts. 실측 1.5~2.6초, 대사 한 문장 약 60KB |
+
+**벤더 확정이 아니라 비교용 실측 구성이다(미결-01).** SttClient/TtsClient 인터페이스
+뒤의 OpenAI 구현체이므로 다른 벤더로 확정되면 구현체만 갈면 된다.
+
+- TTS `audioUrl`은 data URL(base64 mp3)이다. 스토리지 선정 전까지의 방식이며 응답 계약
+  (`audioUrl`, `expiresAt`)은 그대로다. `expiresAt`은 null - data URL은 만료가 없다
+- 캐릭터 3인 보이스와 말투는 서버 설정으로 매핑한다(`external.tts.voices`). 요청의
+  `characterName`이 매핑에 없으면 내레이션 보이스로 합성한다
+- 멀티파트 한도를 10MB로 올렸다(팀 확정 대기였던 항목. STT 실측을 위해 적용)
+- 실측 관찰: 왕복(TTS 합성음을 STT로 되읽기)에서 희귀어 "방귀"가 "방비/반비"로
+  오인식되는 경우가 있었다. `external.stt.vocabulary-hint`(시드 proper_nouns 합집합)로
+  개선했지만 비결정적이다. **아동 실녹음 인식률 검증(미결-01)은 여전히 필요하다.**
+  장면별 proper_nouns를 요청에 실어 보내는 구조는 /api/stt 계약에 장면 정보가 없어
+  보류했다 - 계약 변경이 필요하면 함께 정한다
 
 **2026-08-13 갱신분 3** (직전 집계는 45/4/7이었다)
 
