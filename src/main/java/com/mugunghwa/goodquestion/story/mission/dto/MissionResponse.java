@@ -17,7 +17,7 @@ public record MissionResponse(
 ) {
     public record Payload(List<Question> questions, List<Card> cards) {}
 
-    /** key는 tool·safety·request·expectedResult로 고정한다(미션-04). */
+    /** key는 tool/reason/request/expectedResult로 고정한다(미션-04). */
     public record Question(String key, String label) {}
 
     public record Card(String key, String label, String imageUrl, String template) {}
