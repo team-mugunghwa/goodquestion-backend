@@ -33,6 +33,7 @@ public enum ErrorCode {
     GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),
 
     // ---- 진행 단계 충돌 ----
+    CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
     MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
     MISSION_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 미션입니다."),
