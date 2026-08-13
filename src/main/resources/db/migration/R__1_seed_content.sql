@@ -292,7 +292,8 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
         "아이가 해결 방향은 말했지만 방법이 구체적이지 않은 경우",
         "2회 이상 대화했지만 실행 방법이 나오지 않은 경우",
         "캐릭터 질문만으로 해결 방법을 구체화하기 어려운 경우"
-      ]
+      ],
+      "result_image_url": "/stories/banggui/scenes/07_result.jpg"
     }'::jsonb,
     2, 5
 )

@@ -140,6 +140,9 @@ class MissionSceneMaxTurnsTest {
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.MAX_TURNS);
         // 미션 보류가 MAX_TURNS로 치환된 종료도 짧은 반응 대상이다.
         assertThat(response.closingReaction()).isNotNull();
+        // 결과 연출은 종료 사유와 무관하게 대화3이 닫히면 항상 내려간다.
+        assertThat(response.sceneTransition().resultImageUrl())
+                .isEqualTo("/stories/banggui/scenes/07_result.jpg");
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(8);
         assertThat(sessionService.getSession(PARENT_ID, sessionId).currentScene().sceneOrder())
                 .isEqualTo((short) 8);
@@ -166,6 +169,8 @@ class MissionSceneMaxTurnsTest {
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
         assertThat(response.closingReaction()).isNull();
+        assertThat(response.sceneTransition().resultImageUrl())
+                .isEqualTo("/stories/banggui/scenes/07_result.jpg");
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(8);
     }
 }
