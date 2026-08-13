@@ -72,7 +72,11 @@ public class ReportService {
                 report.getSummary(),
                 report.getStrengths(),
                 report.getNextFocus(),
-                representativeUtterances(sessionId),
+                report.getAnalysis().vocabulary(),
+                report.getAnalysis().competencies(),
+                report.getAnalysis().representativeUtterance(),
+                report.getAnalysis().homeGuide(),
+                elementEvidences(sessionId),
                 report.getCreatedAt());
     }
 
@@ -85,22 +89,22 @@ public class ReportService {
      * <p>인식이 미덥지 않았던 발화는 후보에서 뺀다. 저장된 원문이 아이가 실제로 한 말과
      * 다를 수 있는데, 리포트는 보호자에게 "아이가 이렇게 말했다"고 보여주는 자리다.
      */
-    private List<ReportDetailResponse.RepresentativeUtterance> representativeUtterances(UUID sessionId) {
-        Map<ThinkingElement, ReportDetailResponse.RepresentativeUtterance> byElement = new LinkedHashMap<>();
+        private List<ReportDetailResponse.ElementEvidence> elementEvidences(UUID sessionId) {
+            Map<ThinkingElement, ReportDetailResponse.ElementEvidence> byElement = new LinkedHashMap<>();
 
-        for (UtteranceAnalysis analysis : analysisRepository.findAllBySessionId(sessionId)) {
-            if (analysis.getMessage().isSttLowConfidence()) {
-                continue;
+            for (UtteranceAnalysis analysis : analysisRepository.findAllBySessionId(sessionId)) {
+                if (analysis.getMessage().isSttLowConfidence()) {
+                    continue;
+                }
+                for (DetectedElement detected : analysis.getDetectedElements()) {
+                    byElement.putIfAbsent(detected.type(),
+                            new ReportDetailResponse.ElementEvidence(
+                                    textOf(detected, analysis), detected.type()));
+                }
             }
-            for (DetectedElement detected : analysis.getDetectedElements()) {
-                byElement.putIfAbsent(detected.type(),
-                        new ReportDetailResponse.RepresentativeUtterance(
-                                textOf(detected, analysis), detected.type()));
-            }
+
+            return List.copyOf(byElement.values());
         }
-
-        return List.copyOf(byElement.values());
-    }
 
     /** 근거는 발화에서 잘라낸 조각이라 그대로 쓴다. 비어 있으면 발화 전체로 대신한다. */
     private String textOf(DetectedElement detected, UtteranceAnalysis analysis) {
