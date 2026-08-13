@@ -445,7 +445,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 **내레이션 분리는 서버가 한다.** 줄바꿈 기준으로 자른다 — 마침표로 자르면 `1.5km` 같은 표현이 깨진다.
 
-**서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`·`character_persona`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
+**서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
 
 #### `TopicResponse`
 
@@ -922,7 +922,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 **2. 파생값은 저장하지 않고 응답에서 계산한다.** `age`, `missingElements`, `phase`, `placed`, 보관함, 대표 발화.
 
-**3. 서버 내부 설정은 내리지 않는다.** LLM·STT 입력(`element_criteria`, `remaining_worries`, `character_persona`, `scene_stance`, `proper_nouns`), 추적용 메타(`analysisVersion`, `modelId`, `droppedEvidence`), 멱등 키(`card_order_seed`, 거래의 `sessionId`/`sceneId`).
+**3. 서버 내부 설정은 내리지 않는다.** LLM·STT 입력(`element_criteria`, `remaining_worries`, `scene_stance`, `proper_nouns`), 추적용 메타(`analysisVersion`, `modelId`, `droppedEvidence`), 멱등 키(`card_order_seed`, 거래의 `sessionId`/`sceneId`).
 
 **4. 분기는 필드 null로 표현한다.** 응답 스키마를 유형별로 나누지 않는다 — `UtteranceResponse` 하나로 대화 계속·미션 노출·장면 종료·안전 개입을 모두 표현한다.
 
