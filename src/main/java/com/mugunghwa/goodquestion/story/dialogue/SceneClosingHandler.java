@@ -4,6 +4,7 @@ import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionDecision;
+import com.mugunghwa.goodquestion.story.mission.MissionConfigReader;
 import com.mugunghwa.goodquestion.story.session.Message;
 import com.mugunghwa.goodquestion.story.session.MessageService;
 import com.mugunghwa.goodquestion.story.session.SceneClosedEvent;
@@ -36,6 +37,7 @@ public class SceneClosingHandler {
     private final SessionService sessionService;
     private final SceneService sceneService;
     private final MessageService messageService;
+    private final MissionConfigReader missionConfigReader;
     private final ApplicationEventPublisher eventPublisher;
 
     public TurnClosure close(StorySession session, StoryScene scene,
@@ -59,9 +61,14 @@ public class SceneClosingHandler {
         eventPublisher.publishEvent(new SceneClosedEvent(
                 session.getId(), scene.getId(), session.isSceneBonusEligible()));
 
+        // 결과 연출(대화3의 배 떨어지는 이미지). 종료 사유와 무관하게 장면이 닫히면 내린다.
+        String resultImageUrl = missionConfigReader.resultImageUrlOf(scene);
+
         return sceneService.getNextScene(scene)
-                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage, reactionMessage))
-                .orElseGet(() -> finish(session, decision, closingMessage, reactionMessage));
+                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage,
+                        reactionMessage, resultImageUrl))
+                .orElseGet(() -> finish(session, decision, closingMessage, reactionMessage,
+                        resultImageUrl));
     }
 
     /**
@@ -70,7 +77,7 @@ public class SceneClosingHandler {
      */
     private TurnClosure moveOn(StorySession session, StoryScene nextScene,
                                ProgressionDecision decision, Message closingMessage,
-                               Message reactionMessage) {
+                               Message reactionMessage, String resultImageUrl) {
         sessionService.advanceTo(session, nextScene);
 
         return new TurnClosure(
@@ -79,12 +86,13 @@ public class SceneClosingHandler {
                 new SceneTransitionResponse(
                         SceneTransitionTarget.SCENE, nextScene.getId(),
                         (int) nextScene.getSceneOrder(), nextScene.getSceneType(),
-                        decision.closingReason()));
+                        decision.closingReason(), resultImageUrl));
     }
 
     /** 마지막 장면이 대화로 끝났다. 후속 활동으로 넘긴다. */
     private TurnClosure finish(StorySession session, ProgressionDecision decision,
-                               Message closingMessage, Message reactionMessage) {
+                               Message closingMessage, Message reactionMessage,
+                               String resultImageUrl) {
         session.toPostActivity();
 
         return new TurnClosure(
@@ -92,6 +100,6 @@ public class SceneClosingHandler {
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         SceneTransitionTarget.POST_ACTIVITY, null, null, null,
-                        decision.closingReason()));
+                        decision.closingReason(), resultImageUrl));
     }
 }

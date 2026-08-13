@@ -28,6 +28,16 @@ public class MissionConfigReader {
     }
 
     /**
+     * 장면이 닫힐 때 끼워 넣을 결과 연출 이미지(대화3의 "배가 떨어지는" 연출, 2026-08 확정).
+     * 미션 소속 콘텐츠라 mission_config에 두지만, 노출/완료 여부와 무관하게 장면 종료
+     * 전환에 항상 실린다 - 마지막 대사가 결과를 전제하므로 어떤 사유로 닫혀도 연출은 같다.
+     * 없으면 null.
+     */
+    public String resultImageUrlOf(StoryScene scene) {
+        return string(config(scene), "result_image_url");
+    }
+
+    /**
      * 미션 유형. 콘텐츠에 {@code mission_type}이 있으면 그대로 쓰고,
      * 없으면 확인 항목(check_points)을 가진 쪽을 문제 해결 미션으로 본다.
      */
