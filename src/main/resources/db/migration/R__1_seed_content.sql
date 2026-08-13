@@ -280,7 +280,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
       "check_points": ["무엇을 사용할 것인지", "왜 그 방법이 가능한지", "며느리에게 어떻게 부탁할 것인지", "그 결과 어떤 일이 생길지"],
       "questions": [
         {"key": "tool", "label": "무엇을 사용할 것인지"},
-        {"key": "safety", "label": "왜 그 방법이 가능한지"},
+        {"key": "reason", "label": "왜 그 방법이 가능한지"},
         {"key": "request", "label": "며느리에게 어떻게 부탁할 것인지"},
         {"key": "expectedResult", "label": "그 결과 어떤 일이 생길지"}
       ],
