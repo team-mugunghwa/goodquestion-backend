@@ -43,7 +43,7 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-111111111111',
     '방귀 뀌는 며느리',
     '큰 방귀를 부끄러워하던 며느리가 자신의 다름을 장점으로 바꾸는 이야기',
-    '/stories/banggui/cover.png',
+    '/stories/banggui/cover.jpg',
     '보통',
     20,
     '{
@@ -84,7 +84,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '11111111-1111-1111-1111-111111111111',
     1, 'STORY',
     '옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다. 며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다. 시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.',
-    '/stories/banggui/scenes/01_intro.png'
+    '/stories/banggui/scenes/01_intro.jpg'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -100,7 +100,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '11111111-1111-1111-1111-111111111111',
     2, 'STORY',
     '그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다. 하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다. 몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다.',
-    '/stories/banggui/scenes/02_holding.png'
+    '/stories/banggui/scenes/02_holding.jpg'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -122,7 +122,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     3, 'DIALOGUE',
     '며느리가 방귀를 참는 것이 너무 힘들지만, 가족들이 자신을 이상하게 볼까 봐 걱정하고 있다.',
     '방귀를 뀌고 싶지만 가족들이 이상하게 생각할까 봐 솔직하게 말하지 못한다.',
-    '/stories/banggui/scenes/03_dialogue1.png',
+    '/stories/banggui/scenes/03_dialogue1.jpg',
     '방귀쟁이 며느리',
     '남을 많이 의식해 조심스럽지만 따뜻한 인물. 가족에게 폐를 끼치거나 이상하게 보이는 것을 걱정하고, 자신의 불편함보다 주변 사람의 반응을 먼저 생각한다. 부끄러움이 많아 자신의 특별한 특징을 쉽게 드러내지 못한다. 이 장면에서는 방귀를 오래 참아 몸이 힘든데도 걱정 때문에 말하지 못하는 상태다.',
     'ㅇㅇ아, 내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
@@ -166,7 +166,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '11111111-1111-1111-1111-111111111111',
     4, 'STORY',
     '며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다. 하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다. 마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다.',
-    '/stories/banggui/scenes/04_bigfart.png'
+    '/stories/banggui/scenes/04_bigfart.jpg'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -186,7 +186,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     5, 'DIALOGUE',
     '시아버지가 며느리의 요란한 방귀에 깜짝 놀라 화를 내며, 이런 며느리와는 함께 살 수 없다고 말한다.',
     '시아버지는 창피한 며느리와 함께 살 수 없다고 생각하지만, 며느리는 일부러 그런 것이 아니다.',
-    '/stories/banggui/scenes/05_dialogue2.png',
+    '/stories/banggui/scenes/05_dialogue2.jpg',
     '시아버지',
     '체면을 중시하고 호들갑스러우며, 고집이 있지만 익살스러운 어른. 집안의 체면과 다른 사람의 시선을 중요하게 생각한다. 놀라면 반응이 크고 과장되어 웃음을 준다. 아이의 말에 반박하거나 따져 묻기도 하지만 호통치거나 위압적으로 대하지 않으며, 일리가 있으면 인정하지만 곧바로 결정을 뒤집지는 않는다. 갈등 상황에서도 동화적인 재미를 유지한다.',
     '아이고, 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못 살겠다! 그렇지 않니?',
@@ -232,7 +232,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '11111111-1111-1111-1111-111111111111',
     6, 'STORY',
     '한참 걷다 보니 아랫마을 길가에 아주 높은 배나무가 한 그루 서 있었습니다. 나무 꼭대기에는 노랗고 탐스러운 배들이 주렁주렁 매달려 있었습니다. 시아버지는 배를 보자 군침이 돌았습니다. 마침 아랫마을 사람들도 그 배를 먹고 싶어 했지만, 나무가 너무 높아 아무도 딸 수 없었습니다.',
-    '/stories/banggui/scenes/06_peartree.png'
+    '/stories/banggui/scenes/06_peartree.jpg'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -252,7 +252,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     7, 'DIALOGUE',
     '마을 이장이 너무 높아 아무도 딸 수 없는 배나무를 두고 좋은 방법이 없는지 고민하고 있다.',
     '탐스러운 배가 열렸지만 나무가 너무 높아 긴 장대로도 닿지 않고, 올라갈 수도 없다.',
-    '/stories/banggui/scenes/07_dialogue3.png',
+    '/stories/banggui/scenes/07_dialogue3.jpg',
     '마을 이장',
     '마을 일을 챙기며 현실적인 문제 해결을 중요하게 생각하는, 친근하고 반응이 큰 어른. 마을의 불편이나 문제를 먼저 살피고 사람들의 의견을 모은다. 특이하거나 낯선 방법이라도 실제로 도움이 된다면 받아들이며, 새로운 생각을 들으면 "그게 정말 되겠소?" 하며 관심을 보인다. 해결 방법만큼 주변 사람들이 다치지 않는지도 신경 쓰고, 좋은 결과는 편견 없이 감탄하고 칭찬한다.',
     '이 배나무는 해마다 탐스러운 배가 열리지만, 너무 높아서 아무도 딸 수가 없었단다. 무슨 뾰족한 방법이 없겠는가?',
@@ -319,7 +319,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '11111111-1111-1111-1111-111111111111',
     8, 'STORY',
     '시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다. 자신이 며느리를 구박했던 일을 후회하고 사과합니다.',
-    '/stories/banggui/scenes/08_apology.png'
+    '/stories/banggui/scenes/08_apology.jpg'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -339,7 +339,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     9, 'DIALOGUE',
     '며느리가 자신의 방귀가 누군가에게 도움이 될 수 있다는 것을 처음 알고, 이제는 부끄러워하지 않아도 되는지 아이에게 묻는다.',
     '자신의 특징이 도움이 된다는 것을 알았지만, 아직 부끄러운 마음이 남아 있다.',
-    '/stories/banggui/scenes/09_dialogue4.png',
+    '/stories/banggui/scenes/09_dialogue4.jpg',
     '방귀쟁이 며느리',
     '남을 많이 의식해 조심스럽지만, 자신의 모습을 조금씩 받아들이는 따뜻한 인물. 자신의 능력을 과시하기보다는 다른 사람을 돕는 데 사용한다. 이 장면에서는 자신의 특징이 무조건 나쁜 것만은 아니라는 점을 알아가며 조금씩 당당해지고 있지만, 아직 부끄러움이 남아 있는 상태다.',
     'ㅇㅇ이 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어. 이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?',
