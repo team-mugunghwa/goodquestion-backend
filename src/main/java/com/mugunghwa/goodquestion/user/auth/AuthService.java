@@ -6,6 +6,8 @@ import com.mugunghwa.goodquestion.global.security.JwtProvider;
 import com.mugunghwa.goodquestion.user.auth.dto.*;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoClient;
 import com.mugunghwa.goodquestion.user.auth.kakao.KakaoProfile;
+import com.mugunghwa.goodquestion.user.auth.google.GoogleClient;
+import com.mugunghwa.goodquestion.user.auth.google.GoogleProfile;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 이메일/비밀번호 자체 인증 + 카카오 소셜 로그인. 토큰 전략은 Access 토큰 단일(MVP). */
+/** 이메일/비밀번호 자체 인증 + 카카오, 구글 소셜 로그인. 토큰 전략은 Access 토큰 단일(MVP). */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +26,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final KakaoClient kakaoClient;
     private final RefreshTokenService refreshTokenService;
+    private final GoogleClient googleClient;
     private final LoginAttemptService loginAttemptService;
 
     @Transactional
@@ -96,5 +99,22 @@ public class AuthService {
                 jwtProvider.issue(parent.getId()),
                 refreshTokenService.issue(parent),
                 jwtProvider.getExpiresInSeconds());
+    }
+
+    @Transactional
+    public SocialAuthResponse loginWithGoogle(SocialLoginRequest request, String clientIp) {
+        String googleAccessToken =
+                googleClient.exchangeCodeForToken(request.authorizationCode(), request.redirectUri());
+        GoogleProfile profile = googleClient.getProfile(googleAccessToken);
+
+        Parent existing = parentRepository
+                .findByProviderAndProviderId(AuthProvider.GOOGLE, profile.providerId())
+                .orElse(null);
+        boolean isNewUser = existing == null;
+        Parent parent = isNewUser
+                ? parentRepository.save(Parent.ofGoogle(profile.providerId(), profile.email(), profile.name()))
+                : existing;
+        parent.recordLoginSuccess(clientIp);
+        return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 }
