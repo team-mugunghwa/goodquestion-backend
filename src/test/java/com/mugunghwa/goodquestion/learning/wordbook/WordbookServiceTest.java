@@ -1,5 +1,7 @@
 package com.mugunghwa.goodquestion.learning.wordbook;
 
+import com.mugunghwa.goodquestion.ai.word.WordMeaningLlmClient;
+import com.mugunghwa.goodquestion.ai.word.WordMeaningLlmClient.WordMeaningResult;
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
@@ -7,12 +9,14 @@ import com.mugunghwa.goodquestion.learning.wordbook.dto.WordResponse;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @IntegrationTest
 @Transactional
@@ -29,8 +33,17 @@ class WordbookServiceTest {
     private static final UUID SCENE_ID = UUID.fromString("33333333-3333-3333-3333-000000000001");
     private static final UUID SEEDED_WORD_ID = UUID.fromString("17770000-0000-0000-0000-000000000001");
 
+    /** SCENE_ID(R__1_seed_content.sql 장면 1)의 scene_description 원문. */
+    private static final String SCENE_DESCRIPTION =
+            "옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다. 며느리는 시집에 온 뒤로 늘 얌전하고 "
+                    + "예의 바르게 보이고 싶었습니다. 시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.";
+
     @Autowired
     private WordbookService wordbookService;
+
+    /** LLM은 실제로 부르지 않는다 — 단어-02 자체는 WordMeaningLlmClientTest가 검증한다. */
+    @MockitoBean
+    private WordMeaningLlmClient wordMeaningLlmClient;
 
     @Test
     void 뜻을_함께_보내면_그대로_저장한다() {
@@ -55,12 +68,30 @@ class WordbookServiceTest {
     }
 
     @Test
-    void 뜻을_보내지_않으면_LLM을_타고_아직_미구현이다() {
+    void 뜻을_보내지_않으면_LLM이_생성한_뜻과_예문을_저장한다() {
+        when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
+                .thenReturn(new WordMeaningResult("음식을 끓이는 큰 솥", "가마솥에서 밥을 지었어요."));
+
         WordCreateRequest request = new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);
 
-        assertThatThrownBy(() -> wordbookService.create(PARENT_ID, CHILD_ID, request))
-                .isInstanceOf(UnsupportedOperationException.class);
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, request);
+
+        assertThat(saved.meaning()).isEqualTo("음식을 끓이는 큰 솥");
+        assertThat(saved.exampleSentence()).isEqualTo("가마솥에서 밥을 지었어요.");
+    }
+
+    @Test
+    void LLM_생성이_실패해도_저장_자체는_막히지_않는다() {
+        when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
+                .thenReturn(new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null));
+
+        WordCreateRequest request = new WordCreateRequest(
+                "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);
+
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, request);
+
+        assertThat(saved.meaning()).isEqualTo("지금은 뜻을 알려줄 수 없어요");
     }
 
     @Test
