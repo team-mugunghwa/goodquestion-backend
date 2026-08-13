@@ -1,0 +1,48 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      로컬은 콘솔만 쓴다. 개발 중 로그까지 외부로 보내면 사용량과 노이즈만 늘어난다.
+    -->
+    <springProfile name="!prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!--
+      배포 환경만 Loki로 전송한다. 비동기 배치라 애플리케이션 응답이 느려지지 않는다.
+      Loki가 죽으면 버퍼가 차는 시점부터 로그가 유실되지만, 수집기를 따로 두는
+      비용보다 낫다고 보고 직접 전송을 택했다.
+    -->
+    <springProfile name="prod">
+        <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+            <http>
+                <url>${LOKI_URL}</url>
+                <auth>
+                    <username>${LOKI_USER}</username>
+                    <password>${LOKI_TOKEN}</password>
+                </auth>
+            </http>
+            <format>
+                <label>
+                    <pattern>app=goodquestion,level=%level</pattern>
+                </label>
+                <message>
+                    <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+                </message>
+            </format>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOKI"/>
+        </root>
+    </springProfile>
+</configuration>
