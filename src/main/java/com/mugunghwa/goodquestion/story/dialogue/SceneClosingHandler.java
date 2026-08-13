@@ -40,7 +40,10 @@ public class SceneClosingHandler {
 
     public TurnClosure close(StorySession session, StoryScene scene,
                              ProgressionDecision decision, CharacterReply reply) {
-        boolean goalMet = scene.missingElements(session.getAccumulatedElements()).isEmpty();
+        // 미션 필수 장면의 목표는 "요소 충족 && 미션 완료"다. 요소만 채운 채 최대 턴으로
+        // 닫힌 장면이 목표 달성(장면 보너스 자격)으로 기록되면 안 된다.
+        boolean goalMet = scene.missingElements(session.getAccumulatedElements()).isEmpty()
+                && (!scene.hasMission() || session.isMissionCompleted());
         session.closeScene(decision.closingReason(), goalMet);
 
         Message closingMessage = messageService.append(session, scene, SpeakerType.CHARACTER,
