@@ -44,6 +44,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         // 회원가입·로그인은 토큰 발급 이전 단계라 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
+                        // 이야기 정적 에셋(장면/미션 이미지). 개인정보가 없는 공개 콘텐츠라
+                        // 인증 없이 연다 - 이미지 태그가 Authorization 헤더를 못 싣는 환경도 있다.
+                        .requestMatchers("/stories/**").permitAll()
                         .anyRequest().authenticated())
                 // 기본값은 401·403 모두 403 + 빈 본문이라 만료와 권한 없음을 구분할 수 없다.
                 // 리프레시 토큰이 없어 만료 복구가 재로그인뿐이므로 둘을 반드시 갈라야 한다.
