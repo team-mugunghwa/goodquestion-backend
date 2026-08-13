@@ -178,7 +178,7 @@
 | POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⚠️ `meaning`을 함께 보내면 동작. 생략하면 501 |
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
-| DELETE | `/api/words/{wordId}` | 저장한 단어를 삭제한다 | — | 204 | ⛔ |
+| DELETE | `/api/children/{childId}/words/{wordId}` | 저장한 단어를 삭제한다 (2026-08 경로 확정) | — | 204 | ✅ |
 
 아이가 이야기를 듣다 모르는 단어를 누르는 경로에서는 뜻이 올 수 없어 LLM을 타므로, 벤더 선정
 전까지 그 경로만 501이다. 클라이언트가 뜻을 담아 보내면 지금도 저장된다.
@@ -231,7 +231,7 @@
 
 각 DTO 아래의 **사용처**가 그 DTO를 주고받는 엔드포인트다. `X에 중첩`은 단독 응답이 아니라 다른 DTO의 필드로만 실려 나간다는 뜻이고, 그때는 최종적으로 어느 엔드포인트가 전달하는지도 함께 적었다.
 
-여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/words/{wordId}`(204).
+여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/children/{childId}/words/{wordId}`(204).
 
 ### 3.1 공통
 
@@ -555,7 +555,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `phase`(`PlayPhase`) · `currentScene`(`SceneContentResponse`) · `openingMessage`(`CharacterMessageResponse`)
 
-다음 장면이 DIALOGUE면 고정 첫 대사를 함께 저장·반환한다. 마지막 장면이 STORY로 끝났다면 `phase=POST_ACTIVITY`이고 `currentScene`은 null이다.
+다음 장면이 DIALOGUE면 고정 첫 대사를 함께 저장·반환한다. 마지막 장면이 STORY로 끝났다면 `phase=POST_ACTIVITY`이고 `currentScene`은 null이다. 후속 활동 config가 없는 이야기는 건너뛰고 즉시 완료되어 `phase=ENDED`다(2026-08 확정, 완주 별가루 포함).
 
 #### `SceneTransitionResponse`
 
@@ -953,7 +953,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 2 | **멀티파트 1MB 한도** | `application.yml`에 `spring.servlet.multipart` 설정 없음 → Boot 기본 1MB | 30초 WAV ≈ 960KB라 아슬아슬하다. 10MB로 올린다 |
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
-| 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매. `WordbookService.delete`는 소유 검증까지 구현돼 있고 컨트롤러만 501이다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추면 컨트롤러만 바꾸면 된다 |
 | 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
 | 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
 

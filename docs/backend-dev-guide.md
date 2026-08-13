@@ -390,7 +390,7 @@ POST /api/sessions/{sessionId}/utterances
 | 4 | `WordMeaningLlmClient` | 단어 저장에서 뜻을 생략할 수 있게 된다 |
 | 5 | 잔여 스텁 | 미션 결과 제출, 단어 삭제, 비밀번호 변경. 서로 독립이라 순서는 자유다 |
 
-**단어 삭제는 구현 전에 경로부터 정해야 한다.** `DELETE /api/words/{wordId}`에 `childId`가
+단어 삭제 경로는 `DELETE /api/children/{childId}/words/{wordId}`로 확정됐다(2026-08). 이전 명세 경로는 `childId`가
 없어 소유권 검증이 애매하다(9절 참고).
 
 ---
@@ -413,7 +413,6 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 | 멀티파트 1MB 한도 | `application.yml`에 설정이 없어 Boot 기본 1MB | 30초 WAV가 약 960KB라 아슬아슬하다. 10MB로 올릴지 |
 | `SafetyResponse` 감지 | 계약 자리만 있고 항상 null | AI 파이프라인 연동 시 구현 |
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
-| `DELETE /api/words/{wordId}` | 경로에 `childId`가 없어 소유권 검증이 애매하다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞출지 |
 | STT/TTS 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
 
 LLM은 gpt-5-mini로 정했다. STT와 TTS는 아직 선정 전이고 클라이언트가 501을 받는다.
