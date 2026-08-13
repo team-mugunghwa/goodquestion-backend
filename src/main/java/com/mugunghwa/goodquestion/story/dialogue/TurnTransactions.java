@@ -7,8 +7,10 @@ import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
 import com.mugunghwa.goodquestion.story.dialogue.dto.AnalysisResponse;
 import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceRequest;
+import com.mugunghwa.goodquestion.global.vocab.ReactionKey;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionDecision;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionEngine;
+import com.mugunghwa.goodquestion.story.dialogue.engine.ReactionKeyResolver;
 import com.mugunghwa.goodquestion.story.mission.MissionConfigReader;
 import com.mugunghwa.goodquestion.story.mission.MissionPolicy;
 import com.mugunghwa.goodquestion.story.mission.dto.MissionResponse;
@@ -49,6 +51,7 @@ public class TurnTransactions {
     private final MessageService messageService;
     private final UtteranceAnalysisService analysisService;
     private final ProgressionEngine progressionEngine;
+    private final ReactionKeyResolver reactionKeyResolver;
     private final MissionPolicy missionPolicy;
     private final MissionConfigReader missionConfigReader;
     private final CharacterResponseService characterResponseService;
@@ -93,7 +96,7 @@ public class TurnTransactions {
 
         // 진행 판단. 미션 필수 장면은 미션을 끝내기 전에는 목표 달성으로 닫지 않는다.
         ProgressionDecision decision = holdClosingUntilMissionDone(
-                progressionEngine.decide(session, scene, previousMode), session, scene);
+                progressionEngine.decide(session, scene, previousMode, analysis), session, scene);
         session.recordDecision(decision.mode(), decision.guidanceTarget());
 
         MissionResponse mission = exposeMissionIfNeeded(session, scene, analysis, decision);
@@ -101,10 +104,14 @@ public class TurnTransactions {
         // 진행 상태는 장면이 바뀌기 전에 떠 놓는다. 장면을 옮기면 누적 요소가 초기화된다.
         ProgressResponse progress = sessionService.toProgress(session, scene);
 
+        // 반응 원칙은 서버가 정해 캐릭터 프롬프트에 넣는다(대화 작동 규칙 3.1). LLM이 고르지 않는다.
+        ReactionKey reactionKey = reactionKeyResolver.resolve(
+                analysis, decision.mode() == ResponseMode.CLOSING);
+
         return new ChildTurnRecord(
                 MessageResponse.from(childMessage), AnalysisResponse.from(analysis),
                 progress, mission, decision,
-                characterResponseService.promptFor(scene, outcome, decision, request.text()));
+                characterResponseService.promptFor(scene, outcome, decision, reactionKey, request.text()));
     }
 
     /**

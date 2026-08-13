@@ -183,7 +183,7 @@ class TurnConnectionExhaustionTest {
         @Bean
         @Primary
         CharacterLlmClient slowCharacterLlmClient() {
-            return new CharacterLlmClient() {
+            return new CharacterLlmClient(null, null) {
                 @Override
                 public CharacterLlmResult reply(CharacterLlmInput input) {
                     sleep(LLM_LATENCY);
@@ -200,6 +200,10 @@ class TurnConnectionExhaustionTest {
      * 상태이므로, 테스트는 풀이 확실히 비었을 때 로그인을 시도할 수 있다.
      */
     static class SlowAnalysisLlmClient extends AnalysisLlmClient {
+
+        SlowAnalysisLlmClient() {
+            super(null, null);
+        }
 
         private volatile CountDownLatch entered = new CountDownLatch(0);
 

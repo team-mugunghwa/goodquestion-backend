@@ -2,6 +2,7 @@ package com.mugunghwa.goodquestion.story.dialogue;
 
 import com.mugunghwa.goodquestion.ai.character.CharacterLlmClient;
 import com.mugunghwa.goodquestion.global.vocab.CharacterEmotion;
+import com.mugunghwa.goodquestion.global.vocab.ReactionKey;
 import com.mugunghwa.goodquestion.global.vocab.ResponseMode;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionDecision;
@@ -30,16 +31,26 @@ public class CharacterResponseService {
 
     private final CharacterLlmClient characterLlmClient;
 
-    /** 트랜잭션 안에서 조립한다 - 장면 엔티티가 붙어 있어야 읽을 수 있다. */
+    /** 트랜잭션 안에서 조립한다 - 장면·캐릭터 엔티티가 붙어 있어야 읽을 수 있다. */
     public CharacterPrompt promptFor(StoryScene scene, AnalysisOutcome analysis,
-                                     ProgressionDecision decision, String childUtterance) {
+                                     ProgressionDecision decision, ReactionKey reactionKey,
+                                     String childUtterance) {
         return new CharacterPrompt(
                 childUtterance,
                 summarize(analysis),
                 decision.mode(),
+                reactionKey,
+                scene.getCharacterName(),
                 characterContext(scene),
                 remainingWorry(scene, decision),
+                decision.softCue(),
+                guidanceStyle(scene),
                 fixedText(scene, decision));
+    }
+
+    /** 걱정을 어떻게 드러낼지의 캐릭터별 표현 방식(캐릭터-11). 캐릭터 참조가 없으면 null. */
+    private String guidanceStyle(StoryScene scene) {
+        return scene.getCharacter() != null ? scene.getCharacter().getGuidanceStyle() : null;
     }
 
     /**
@@ -55,7 +66,8 @@ public class CharacterResponseService {
         CharacterLlmClient.CharacterLlmResult result = characterLlmClient.reply(
                 new CharacterLlmClient.CharacterLlmInput(
                         prompt.childUtterance(), prompt.analysisSummary(), prompt.mode().name(),
-                        prompt.characterContext(), prompt.remainingWorry()));
+                        prompt.reactionKey().name(), prompt.characterName(), prompt.characterContext(),
+                        prompt.remainingWorry(), prompt.softCue(), prompt.guidanceStyle()));
 
         return new CharacterReply(result.text(), toEmotion(result.emotion()));
     }

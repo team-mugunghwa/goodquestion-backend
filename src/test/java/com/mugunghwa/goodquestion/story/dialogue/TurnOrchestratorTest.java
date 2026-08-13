@@ -162,7 +162,7 @@ class TurnOrchestratorTest {
         @Bean
         @Primary
         CharacterLlmClient stubCharacterLlmClient() {
-            return new CharacterLlmClient() {
+            return new CharacterLlmClient(null, null) {
                 @Override
                 public CharacterLlmResult reply(CharacterLlmInput input) {
                     return new CharacterLlmResult("그렇구나, 조금 더 듣고 싶어.", "WORRIED");
@@ -176,6 +176,10 @@ class TurnOrchestratorTest {
      * 근거는 아이 발화 원문을 그대로 쓴다 - 후처리의 근거 검증을 통과시키기 위해서다.
      */
     static class ScriptedAnalysisLlmClient extends AnalysisLlmClient {
+
+        ScriptedAnalysisLlmClient() {
+            super(null, null);
+        }
 
         private record Script(UtteranceValidity validity, List<ThinkingElement> elements) {}
 
