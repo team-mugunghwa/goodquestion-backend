@@ -20,7 +20,8 @@
 -- 원본 시드 문서의 확인 필요 값
 -- - 콘텐츠 문서 문자열 ID(s_banggui_..., sc_banggui_01~09)는 uuid로 치환 (주석에 원본 병기)
 -- - preferred_turns는 문서에 없어 제안값 (max_turns - 2)
--- - 대화1 target_elements의 'EXPRESSION'은 사고 요소 8종에 없어 시드 제외
+-- - 대화1 요소는 콘텐츠 문서 3절 표의 배열(REASON 포함 4종)을 채택. 5절의 'EXPRESSION'은
+--   사고 요소 8종에 없는 미정의 값이라 제외했다 (2026-08 확정)
 -- ============================================================
 
 
@@ -110,10 +111,11 @@ on conflict (id) do update set
     image_url = excluded.image_url;
 
 -- 장면 3. 대화1 (sc_banggui_03) - 방귀쟁이 며느리와의 대화
--- 문서 target_elements: PERSPECTIVE, EMOTION, EXPRESSION, SOLUTION
--- 참고: EXPRESSION은 사고 요소 8종에 없는 미정의 값 -> 제외하고 시드. 콘텐츠팀 확인 필요.
+-- 요소는 문서 3절 표의 ["PERSPECTIVE", "EMOTION", "REASON", "SOLUTION"]을 채택 (2026-08 확정).
+-- 5절의 'EXPRESSION'은 사고 요소 8종에 없는 미정의 값이라 제외했다.
+-- REASON의 기준/걱정 문구는 문서에 없어 제안값이다 - 콘텐츠팀 검수 필요.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
-                          character_name, character_persona, character_opening, character_closing,
+                          character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           preferred_turns, max_turns) values
 (
@@ -124,19 +126,20 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '방귀를 뀌고 싶지만 가족들이 이상하게 생각할까 봐 솔직하게 말하지 못한다.',
     '/stories/banggui/scenes/03_dialogue1.jpg',
     '방귀쟁이 며느리',
-    '남을 많이 의식해 조심스럽지만 따뜻한 인물. 가족에게 폐를 끼치거나 이상하게 보이는 것을 걱정하고, 자신의 불편함보다 주변 사람의 반응을 먼저 생각한다. 부끄러움이 많아 자신의 특별한 특징을 쉽게 드러내지 못한다. 이 장면에서는 방귀를 오래 참아 몸이 힘든데도 걱정 때문에 말하지 못하는 상태다.',
     'ㅇㅇ아, 내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
     '그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.',
-    '며느리의 걱정에 공감하며, 며느리의 마음과 상황에 대한 자기 생각을 표현하고 해결 방법을 함께 생각한다.',
-    array['PERSPECTIVE', 'EMOTION', 'SOLUTION'],
+    '방귀를 숨기고 싶어하는 며느리의 입장을 이해하고, 공감해주며 문제를 숨기지 않고 솔직하게 말할 수 있는 용기를 준다.',
+    array['PERSPECTIVE', 'EMOTION', 'REASON', 'SOLUTION'],
     '{
       "PERSPECTIVE": "며느리나 가족의 상황/입장을 헤아려 말함 (예: 가족들도 놀라긴 하겠지만 이해해 줄 거예요)",
       "EMOTION": "며느리의 감정이나 그 상황에 대한 자신의 감정을 직접 표현함 (예: 많이 힘들겠어요, 답답할 것 같아요)",
+      "REASON": "참지 말고 솔직하게 말해야 하는 까닭을 설명함 (예: 계속 참으면 몸이 아프니까요)",
       "SOLUTION": "며느리가 할 수 있는 구체적인 행동을 제안함 (예: 가족들에게 솔직하게 말해 보세요)"
     }'::jsonb,
     '{
       "PERSPECTIVE": "가족들이 나를 어떻게 생각할지 아직도 무서워.",
       "EMOTION": "참자니 몸이 힘들고, 말하자니 부끄러워서 마음이 복잡해.",
+      "REASON": "솔직하게 말하면 뭐가 좋아지는 걸까? 왜 말해야 하는지 아직 모르겠어.",
       "SOLUTION": "어떻게 하면 좋을지 도무지 방법을 모르겠어."
     }'::jsonb,
     2, 4
@@ -149,7 +152,6 @@ on conflict (id) do update set
     conflict = excluded.conflict,
     image_url = excluded.image_url,
     character_name = excluded.character_name,
-    character_persona = excluded.character_persona,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
     scene_goal = excluded.scene_goal,
@@ -176,8 +178,10 @@ on conflict (id) do update set
     image_url = excluded.image_url;
 
 -- 장면 5. 대화2 (sc_banggui_05) - 시아버지와의 대화
+-- 요소는 5절의 ["PERSPECTIVE", "EMPATHY", "REASON", "REQUEST"]를 채택 (2026-08 확정).
+-- 3절 표의 배열은 대화1과 동일해 복붙 정황이 있고, 장면 목표("설득한다")와도 맞지 않는다.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
-                          character_name, character_persona, character_opening, character_closing,
+                          character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           preferred_turns, max_turns) values
 (
@@ -188,10 +192,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '시아버지는 창피한 며느리와 함께 살 수 없다고 생각하지만, 며느리는 일부러 그런 것이 아니다.',
     '/stories/banggui/scenes/05_dialogue2.jpg',
     '시아버지',
-    '체면을 중시하고 호들갑스러우며, 고집이 있지만 익살스러운 어른. 집안의 체면과 다른 사람의 시선을 중요하게 생각한다. 놀라면 반응이 크고 과장되어 웃음을 준다. 아이의 말에 반박하거나 따져 묻기도 하지만 호통치거나 위압적으로 대하지 않으며, 일리가 있으면 인정하지만 곧바로 결정을 뒤집지는 않는다. 갈등 상황에서도 동화적인 재미를 유지한다.',
     '아이고, 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못 살겠다! 그렇지 않니?',
     '흥, 그래도 도저히 이런 며느리와는 함께 살 수 없으니 친정으로 데려다줘야겠다.',
-    '시아버지의 관점을 이해하면서도, 며느리가 그렇게 행동한 이유를 설명하고 며느리를 이해해 달라고 요청한다.',
+    '시아버지가 놀란 마음을 이해하면서도, 며느리가 일부러 그런 것이 아니라 오래 참아서 힘들었던 것임을 말하고, 며느리를 따뜻하게 이해해 달라고 설득한다.',
     array['PERSPECTIVE', 'EMPATHY', 'REASON', 'REQUEST'],
     '{
       "PERSPECTIVE": "시아버지 또는 며느리의 상황/입장을 고려해 말함 (예: 며느리도 일부러 그런 게 아니에요)",
@@ -215,7 +218,6 @@ on conflict (id) do update set
     conflict = excluded.conflict,
     image_url = excluded.image_url,
     character_name = excluded.character_name,
-    character_persona = excluded.character_persona,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
     scene_goal = excluded.scene_goal,
@@ -243,7 +245,7 @@ on conflict (id) do update set
 
 -- 장면 7. 대화3 (sc_banggui_07) - 마을 이장과의 대화 + 미션1
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
-                          character_name, character_persona, character_opening, character_closing,
+                          character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           mission_config, preferred_turns, max_turns) values
 (
@@ -254,10 +256,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '탐스러운 배가 열렸지만 나무가 너무 높아 긴 장대로도 닿지 않고, 올라갈 수도 없다.',
     '/stories/banggui/scenes/07_dialogue3.jpg',
     '마을 이장',
-    '마을 일을 챙기며 현실적인 문제 해결을 중요하게 생각하는, 친근하고 반응이 큰 어른. 마을의 불편이나 문제를 먼저 살피고 사람들의 의견을 모은다. 특이하거나 낯선 방법이라도 실제로 도움이 된다면 받아들이며, 새로운 생각을 들으면 "그게 정말 되겠소?" 하며 관심을 보인다. 해결 방법만큼 주변 사람들이 다치지 않는지도 신경 쓰고, 좋은 결과는 편견 없이 감탄하고 칭찬한다.',
     '이 배나무는 해마다 탐스러운 배가 열리지만, 너무 높아서 아무도 딸 수가 없었단다. 무슨 뾰족한 방법이 없겠는가?',
     '아이고, 방귀 뀌는 며느리 덕분에 온 마을이 배 잔치를 할 수 있겠구려, 고맙소!',
-    '높은 배나무의 배를 떨어뜨릴 구체적인 해결 방법을 제안하고, 그 방법이 가능한 까닭과 부탁하는 방법, 예상되는 결과까지 이야기한다.',
+    '높은 배나무의 배를 떨어뜨릴 방법을 생각하고, 며느리의 큰 방귀를 안전하게 사용할 수 있는 해결책을 제안한다.',
     array['SOLUTION', 'REASON', 'REQUEST', 'RESULT'],
     '{
       "SOLUTION": "배를 떨어뜨릴 구체적인 방법을 제시함 (예: 며느리의 방귀로 배나무를 흔들어요)",
@@ -301,7 +302,6 @@ on conflict (id) do update set
     conflict = excluded.conflict,
     image_url = excluded.image_url,
     character_name = excluded.character_name,
-    character_persona = excluded.character_persona,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
     scene_goal = excluded.scene_goal,
@@ -330,7 +330,7 @@ on conflict (id) do update set
 
 -- 장면 9. 대화4 (sc_banggui_09) - 방귀쟁이 며느리와의 마지막 대화 + 미션2
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
-                          character_name, character_persona, character_opening, character_closing,
+                          character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           mission_config, preferred_turns, max_turns) values
 (
@@ -341,10 +341,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '자신의 특징이 도움이 된다는 것을 알았지만, 아직 부끄러운 마음이 남아 있다.',
     '/stories/banggui/scenes/09_dialogue4.jpg',
     '방귀쟁이 며느리',
-    '남을 많이 의식해 조심스럽지만, 자신의 모습을 조금씩 받아들이는 따뜻한 인물. 자신의 능력을 과시하기보다는 다른 사람을 돕는 데 사용한다. 이 장면에서는 자신의 특징이 무조건 나쁜 것만은 아니라는 점을 알아가며 조금씩 당당해지고 있지만, 아직 부끄러움이 남아 있는 상태다.',
     'ㅇㅇ이 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어. 이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?',
     '이제는 부끄러워하며 숨기지 않고, 조심해서 좋은 일에 써 볼게.',
-    '단점처럼 보이는 특징을 다른 관점에서 바라보고, 장점이나 가능성으로 바꾸어 말하며 며느리의 달라진 마음을 함께 이야기한다.',
+    '다름을 인정하고, 자신의 특징을 긍정적으로 받아들이는 태도를 말한다.',
     array['EMOTION', 'PERSPECTIVE', 'RESULT', 'SOLUTION'],
     '{
       "EMOTION": "며느리의 달라진 마음이나 그에 대한 자신의 감정을 표현함 (예: 이제 당당해져서 기뻐요)",
@@ -393,7 +392,6 @@ on conflict (id) do update set
     conflict = excluded.conflict,
     image_url = excluded.image_url,
     character_name = excluded.character_name,
-    character_persona = excluded.character_persona,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
     scene_goal = excluded.scene_goal,
@@ -408,10 +406,7 @@ on conflict (id) do update set
 -- 4. characters - 캐릭터 레지스트리 (3명)
 --    장면에 흩어져 있던 캐릭터 속성을 모은다. personality는 장면과 무관한 공통 성격이고,
 --    장면마다 달라지는 부분은 story_scenes.scene_stance에 둔다.
---
---    story_scenes.character_persona는 기존 파이프라인 호환을 위해 그대로 남겨 둔다  - 
---    지금은 personality + scene_stance와 내용이 겹친다.
---    TODO: 캐릭터 LLM 프롬프트를 characters + scene_stance로 옮기면 character_persona를 없앤다.
+--    캐릭터 LLM 입력은 personality + scene_stance 조합이다 (기존 character_persona는 V5에서 제거).
 -- ------------------------------------------------------------
 insert into characters (id, story_id, character_key, name, personality, guidance_style,
                         tts_voice, tts_style, tts_gender, expression_keys) values
@@ -461,7 +456,7 @@ on conflict (id) do update set
 
 -- ------------------------------------------------------------
 -- 5. story_scenes 보강 - 캐릭터 참조 / 장면별 입장 / STT 고유명사 힌트
---    scene_stance는 기존 character_persona의 "이 장면에서는 ..." 부분을 옮긴 것이다.
+--    scene_stance는 페르소나 문장 중 "이 장면에서는 ..." 부분만 떼어 옮긴 것이다.
 --    proper_nouns는 아동 발화에서 오인식이 잦은 낱말이라 STT 디코딩 힌트로 넘긴다.
 -- ------------------------------------------------------------
 update story_scenes set
