@@ -415,6 +415,5 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
 | `DELETE /api/words/{wordId}` | 경로에 `childId`가 없어 소유권 검증이 애매하다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞출지 |
 | STT/TTS 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
-| 발화 재전송 규약 | 턴 처리가 여러 트랜잭션으로 나뉘어 중간 실패 상태가 생길 수 있다 | 멱등키를 쓸지. 쓴다면 클라이언트가 키를 재시도 사이에 유지해야 한다 |
 
 LLM은 gpt-5-mini로 정했다. STT와 TTS는 아직 선정 전이고 클라이언트가 501을 받는다.

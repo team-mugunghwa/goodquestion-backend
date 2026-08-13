@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @IntegrationTest
 @Transactional
-class TurnOrchestratorTest {
+public class TurnOrchestratorTest {
 
     /** R__2_seed_demo_data.sql의 데모 계정. 보호자 "김보호" / 아이 "지우". */
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
@@ -152,7 +152,7 @@ class TurnOrchestratorTest {
     // ----- LLM 대역 -----
 
     @TestConfiguration
-    static class StubLlmConfig {
+    public static class StubLlmConfig {
 
         @Bean
         @Primary
@@ -176,7 +176,7 @@ class TurnOrchestratorTest {
      * 턴마다 어떤 요소가 확인될지 테스트가 미리 정해 두는 분석 대역.
      * 근거는 아이 발화 원문을 그대로 쓴다 - 후처리의 근거 검증을 통과시키기 위해서다.
      */
-    static class ScriptedAnalysisLlmClient extends AnalysisLlmClient {
+    public static class ScriptedAnalysisLlmClient extends AnalysisLlmClient {
 
         ScriptedAnalysisLlmClient() {
             super(null, null);
@@ -186,11 +186,11 @@ class TurnOrchestratorTest {
 
         private final Deque<Script> scripts = new ArrayDeque<>();
 
-        void reset() {
+        public void reset() {
             scripts.clear();
         }
 
-        void willDetect(UtteranceValidity validity, ThinkingElement... elements) {
+        public void willDetect(UtteranceValidity validity, ThinkingElement... elements) {
             scripts.add(new Script(validity, List.of(elements)));
         }
 

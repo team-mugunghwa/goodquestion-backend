@@ -33,6 +33,10 @@ public enum ErrorCode {
     STARDUST_INSUFFICIENT(HttpStatus.CONFLICT, "별가루가 부족합니다."),
     GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),
 
+    // ---- 멱등키 ----
+    REQUEST_IN_PROGRESS(HttpStatus.CONFLICT, "같은 요청을 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
+    INVALID_IDEMPOTENCY_KEY(HttpStatus.BAD_REQUEST, "Idempotency-Key는 64자 이하여야 합니다."),
+
     // ---- 진행 단계 충돌 ----
     CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
