@@ -40,6 +40,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.7'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.7'
 
+    // 로그를 Grafana Cloud Loki로 전송. 수집기 없이 Logback이 직접 HTTP로 보낸다.
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'
