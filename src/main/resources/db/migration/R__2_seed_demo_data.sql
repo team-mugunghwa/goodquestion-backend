@@ -303,7 +303,7 @@ insert into mission_results (id, session_id, scene_id, mission_id, mission_type,
  '{"answers": {"who": "며느리가", "how": "방귀를 세게 뀌어서", "why": "장대로는 닿지 않으니까", "result": "배가 우수수 떨어졌어요"}}'::jsonb),
 ('d4440000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
  '33333333-3333-3333-3333-000000000009', 'mission_2', 'PERSPECTIVE_SHIFT',
- '{"cards": [{"trait": "목소리가 큰 친구", "strength": "멀리 있는 사람을 부를 수 있어요"}, {"trait": "질문이 많은 친구", "strength": "새로운 생각을 찾을 수 있어요"}]}'::jsonb)
+ '{"cards": [{"trait": "목소리가 큰 친구", "strength": "멀리 있는 사람을 부를 수 있어요"}, {"trait": "말이 많은 친구", "strength": "재미있는 이야기를 들려줄 수 있어요"}]}'::jsonb)
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
