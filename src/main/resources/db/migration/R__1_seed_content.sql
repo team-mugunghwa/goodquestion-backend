@@ -367,9 +367,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
       "purpose": "친구나 주변 사람의 특징을 다른 관점에서 바라보고, 단점처럼 보이는 특징을 장점이나 가능성으로 바꾸어 말한다.",
       "cards": [
         {"key": "loud_voice", "label": "목소리가 큰 친구", "image_url": null, "template": "목소리가 큰 친구는 ___ 할 수 있어요."},
-        {"key": "many_questions", "label": "질문이 많은 친구", "image_url": null, "template": "질문이 많은 친구는 ___ 할 수 있어요."},
-        {"key": "strong", "label": "힘이 센 친구", "image_url": null, "template": "힘이 센 친구는 ___ 할 수 있어요."},
-        {"key": "quiet", "label": "조용한 친구", "image_url": null, "template": "조용한 친구는 ___ 할 수 있어요."}
+        {"key": "talkative", "label": "말이 많은 친구", "image_url": null, "template": "말이 많은 친구는 ___ 할 수 있어요."},
+        {"key": "fearful", "label": "겁이 많은 친구", "image_url": null, "template": "겁이 많은 친구는 ___ 할 수 있어요."},
+        {"key": "playful", "label": "장난을 많이 치는 친구", "image_url": null, "template": "장난을 많이 치는 친구는 ___ 할 수 있어요."}
       ],
       "exposure_principle": "처음부터 보여주면 정해진 답을 찾으려 할 수 있으므로, 며느리의 질문에 먼저 자신의 생각을 말한 뒤 노출한다.",
       "exposure_flow": [
@@ -380,9 +380,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
       ],
       "examples": [
         "목소리가 큰 친구는 멀리 있는 사람을 부를 수 있어요.",
-        "질문이 많은 친구는 새로운 생각을 찾을 수 있어요.",
-        "힘이 센 친구는 무거운 물건을 옮길 때 도울 수 있어요.",
-        "조용한 친구는 다른 사람의 말을 잘 들어 줄 수 있어요."
+        "말이 많은 친구는 재미있는 이야기를 들려줄 수 있어요.",
+        "겁이 많은 친구는 위험한 일을 먼저 알아차릴 수 있어요.",
+        "장난을 많이 치는 친구는 친구들을 즐겁게 해 줄 수 있어요."
       ]
     }'::jsonb,
     2, 4

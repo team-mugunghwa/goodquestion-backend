@@ -39,7 +39,7 @@ class MissionPolicyTest {
     }
 
     @Test
-    void 아이가_한_번_말한_뒤에_노출한다() {
+    void 해결_방향이_나온_뒤_문제해결_미션을_노출한다() {
         StorySession session = StorySession.builder().build();
         session.applyTurn(List.of("SOLUTION"), false);
 
@@ -48,7 +48,7 @@ class MissionPolicyTest {
     }
 
     @Test
-    void 아직_아무_말도_하지_않았으면_노출하지_않는다() {
+    void 아직_아무_말도_하지_않았다면_노출하지_않는다() {
         StorySession session = StorySession.builder().build();
 
         assertThat(policy.shouldExpose(session, scene(MissionType.PROBLEM_SOLVING),
@@ -65,7 +65,7 @@ class MissionPolicyTest {
     }
 
     @Test
-    void 필수_요소를_이미_다_채웠으면_노출하지_않는다() {
+    void 필수_요소를_이미_다_채웠다면_노출하지_않는다() {
         StorySession session = StorySession.builder().build();
         session.applyTurn(List.of("SOLUTION", "REASON"), false);
 
@@ -74,14 +74,43 @@ class MissionPolicyTest {
     }
 
     @Test
-    void 관점_전환_미션은_한_턴_더_기다린다() {
+    void 해결_방향이_없는_첫_발화에는_노출하지_않는다() {
+        StorySession session = StorySession.builder().build();
+        session.applyTurn(List.of("EMOTION"), false);
+
+        assertThat(policy.shouldExpose(session, scene(MissionType.PROBLEM_SOLVING),
+                analysis(UtteranceValidity.VALID))).isFalse();
+    }
+
+    @Test
+    void 두_번_대화해도_실행_방법이_없으면_문제해결_미션을_노출한다() {
+        StorySession session = StorySession.builder().build();
+        session.applyTurn(List.of("EMOTION"), false);
+        session.applyTurn(List.of(), false);
+
+        assertThat(policy.shouldExpose(session, scene(MissionType.PROBLEM_SOLVING),
+                analysis(UtteranceValidity.VALID))).isTrue();
+    }
+
+    @Test
+    void 관점전환_미션은_관점이_나온_뒤에도_두_번_대화를_기다린다() {
         StoryScene scene = scene(MissionType.PERSPECTIVE_SHIFT);
         StorySession session = StorySession.builder().build();
 
-        session.applyTurn(List.of("SOLUTION"), false);
+        session.applyTurn(List.of("PERSPECTIVE"), false);
         assertThat(policy.shouldExpose(session, scene, analysis(UtteranceValidity.VALID))).isFalse();
 
         session.applyTurn(List.of(), false);
         assertThat(policy.shouldExpose(session, scene, analysis(UtteranceValidity.VALID))).isTrue();
+    }
+
+    @Test
+    void 관점이_나오지_않으면_두_번_대화해도_관점전환_미션을_노출하지_않는다() {
+        StoryScene scene = scene(MissionType.PERSPECTIVE_SHIFT);
+        StorySession session = StorySession.builder().build();
+        session.applyTurn(List.of("EMOTION"), false);
+        session.applyTurn(List.of("REASON"), false);
+
+        assertThat(policy.shouldExpose(session, scene, analysis(UtteranceValidity.VALID))).isFalse();
     }
 }
