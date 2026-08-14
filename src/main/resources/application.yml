@@ -166,7 +166,7 @@ management:
         include: health
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
         enabled: true
     # Resend SMTP 접속 실패 시 메일 인디케이터가 타임아웃 없이 매달려
