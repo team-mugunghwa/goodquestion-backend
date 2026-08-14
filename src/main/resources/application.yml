@@ -169,3 +169,9 @@ management:
       show-details: always
       probes:
         enabled: true
+    # Resend SMTP 접속 실패 시 메일 인디케이터가 타임아웃 없이 매달려
+    # /actuator/health 응답 자체가 안 나간다. 헬스체크가 외부 벤더 상태에
+    # 묶이지 않도록 뺀다. 메일 발송 기능 자체는 그대로 동작한다.
+  health:
+    mail:
+      enabled: false
