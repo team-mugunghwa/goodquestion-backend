@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.ai.llm;
 
+import reactor.core.publisher.Mono;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +51,8 @@ public class OpenAiLlmClient implements LlmClient {
 
     @Override
     public LlmJsonResult completeJson(String systemPrompt, String userPrompt,
-                                      String schemaName, Map<String, Object> schema) {
+                                      String schemaName, Map<String, Object> schema,
+                                      Duration timeout) {
         Map<String, Object> body = Map.of(
                 "model", model,
                 "reasoning_effort", reasoningEffort,
@@ -63,14 +66,15 @@ public class OpenAiLlmClient implements LlmClient {
                                 "strict", true,
                                 "schema", schema)));
 
-        JsonNode response = webClient.post()
+        Mono<JsonNode> mono = webClient.post()
                 .uri(baseUrl + "/chat/completions")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body)
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+                .bodyToMono(JsonNode.class);
+
+        JsonNode response = (timeout == null ? mono : mono.timeout(timeout)).block();
 
         if (response == null) {
             throw new IllegalStateException("LLM 응답이 비어 있습니다");

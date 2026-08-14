@@ -448,7 +448,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
 아침에 한 번, 저녁에 한 번씩요.
 어느 아침, 흙을 뚫고 초록 싹이 고개를 내밀었어요.',
  '/stories/seed/sc_03.png')
-on conflict (id) do nothing;
+on conflict do nothing;
 
 
 -- ============================================================
