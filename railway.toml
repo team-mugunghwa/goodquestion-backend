@@ -5,6 +5,6 @@ dockerfilePath = "Dockerfile"
 [deploy]
 # Spring Boot Actuator의 health 엔드포인트가 200을 돌려주면 준비 완료로 본다.
 healthcheckPath = "/actuator/health/liveness"
-healthcheckTimeout = 300
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
