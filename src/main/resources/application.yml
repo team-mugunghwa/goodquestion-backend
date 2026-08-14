@@ -166,6 +166,6 @@ management:
         include: health
   endpoint:
     health:
-      show-details: never
+      show-details: always
       probes:
         enabled: true
