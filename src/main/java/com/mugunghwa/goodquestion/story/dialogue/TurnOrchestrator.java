@@ -69,7 +69,8 @@ public class TurnOrchestrator {
             // safety는 위험 신호 감지가 붙기 전까지 항상 null이다 (SafetyResponse의 TODO).
             return new UtteranceResponse(
                     record.childMessage(), record.analysis(), record.progress(),
-                    closure.message(), record.mission(), closure.transition(), null);
+                    closure.message(), closure.closingReaction(), record.mission(),
+                    closure.transition(), null);
         } catch (DataIntegrityViolationException e) {
             throw concurrentTurn(sessionId, e);
         } finally {

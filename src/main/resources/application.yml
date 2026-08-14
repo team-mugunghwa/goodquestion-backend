@@ -96,6 +96,10 @@ kakao:
   client-id: ${KAKAO_CLIENT_ID:}          # 카카오 REST API 키 - 인가 코드 교환에 필요
   client-secret: ${KAKAO_CLIENT_SECRET:}  # 카카오 콘솔에서 사용함으로 설정한 경우에만
 
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
+  client-secret: ${GOOGLE_CLIENT_SECRET:}
+
 external:
   # 외부 API 호출 상한. 벤더가 응답하지 않을 때 호출 스레드와 DB 커넥션이 함께 묶이는 것을 막는다.
   # 응답 타임아웃은 LLM 두 번을 순차로 부르는 것을 감안해 정한다 - 이 값의 두 배가 턴 하나의
@@ -108,6 +112,10 @@ external:
   stt:
     api-key: ${STT_API_KEY:${LLM_API_KEY}}
     model: ${STT_MODEL:gpt-4o-mini-transcribe}
+    # 저신뢰 기준값(2026-08 확정). 신뢰도 = exp(토큰 logprob 평균), 미만이면 낮음.
+    # 아동 음성은 신뢰도 분포가 낮게 깔려 성인 기준(Whisper 실패 컷 환산 0.37)과
+    # 품질 의심 수준(0.6) 사이로 완화했다. 아동 실녹음 검증(미결-01) 후 조정한다.
+    low-confidence-threshold: ${STT_LOW_CONFIDENCE_THRESHOLD:0.5}
     # 오인식이 잦은 이야기 어휘(시드 proper_nouns의 합집합). 실측에서 "방귀"가 "방비"로
     # 인식됐다. 장면별 힌트가 정석이지만 /api/stt 계약에 장면 정보가 없어 전체를 준다.
     vocabulary-hint: "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장"

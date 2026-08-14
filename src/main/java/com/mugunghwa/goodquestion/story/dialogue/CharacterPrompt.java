@@ -17,6 +17,9 @@ import com.mugunghwa.goodquestion.global.vocab.ResponseMode;
  * @param guidanceStyle    걱정을 어떻게 드러낼지에 대한 캐릭터별 표현 방식(캐릭터-11)
  * @param fixedText        값이 있으면 LLM을 부르지 않고 이 대사를 그대로 쓴다. 고정 마지막 대사가
  *                         있는 장면의 CLOSING 턴이 여기 해당한다(캐릭터-12)
+ * @param closingReactionNeeded true면 고정 마무리 대사 앞에 아이의 마지막 발화에 대한
+ *                         짧은 반응을 LLM으로 생성한다. 최대 턴 종료(MAX_TURNS)에만 해당한다 -
+ *                         콘텐츠 문서의 "최대 턴 도달 -> 짧게 반응 -> 마지막 대사" 흐름(2026-08 확정)
  */
 public record CharacterPrompt(String childUtterance,
                               String analysisSummary,
@@ -27,7 +30,8 @@ public record CharacterPrompt(String childUtterance,
                               String remainingWorry,
                               boolean softCue,
                               String guidanceStyle,
-                              String fixedText) {
+                              String fixedText,
+                              boolean closingReactionNeeded) {
 
     public boolean hasFixedText() {
         return fixedText != null;

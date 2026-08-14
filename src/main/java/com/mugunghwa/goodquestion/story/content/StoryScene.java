@@ -76,10 +76,6 @@ public class StoryScene {
     @Column(name = "proper_nouns", nullable = false, columnDefinition = "text[]")
     private List<String> properNouns = new ArrayList<>();
 
-    /** 캐릭터 성격·상태 설명 — 캐릭터 LLM 입력. 장면별로 두어 이야기 진행에 따른 변화 반영 */
-    @Column(name = "character_persona", columnDefinition = "text")
-    private String characterPersona;
-
     @Column(name = "character_opening", columnDefinition = "text")
     private String characterOpening;
 
@@ -119,7 +115,7 @@ public class StoryScene {
     public StoryScene(Story story, short sceneOrder, SceneType sceneType,
                       String sceneDescription, String conflict, String imageUrl,
                       StoryCharacter character, String characterName, String sceneStance,
-                      List<String> properNouns, String characterPersona,
+                      List<String> properNouns,
                       String characterOpening, String characterClosing, String sceneGoal,
                       List<String> requiredElements, Map<String, String> elementCriteria,
                       Map<String, String> remainingWorries, Map<String, Object> missionConfig,
@@ -134,7 +130,6 @@ public class StoryScene {
         this.characterName = characterName;
         this.sceneStance = sceneStance;
         this.properNouns = properNouns != null ? properNouns : new ArrayList<>();
-        this.characterPersona = characterPersona;
         this.characterOpening = characterOpening;
         this.characterClosing = characterClosing;
         this.sceneGoal = sceneGoal;

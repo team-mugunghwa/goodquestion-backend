@@ -390,7 +390,7 @@ POST /api/sessions/{sessionId}/utterances
 | 4 | `WordMeaningLlmClient` | 단어 저장에서 뜻을 생략할 수 있게 된다 |
 | 5 | 잔여 스텁 | 미션 결과 제출, 단어 삭제, 비밀번호 변경. 서로 독립이라 순서는 자유다 |
 
-**단어 삭제는 구현 전에 경로부터 정해야 한다.** `DELETE /api/words/{wordId}`에 `childId`가
+단어 삭제 경로는 `DELETE /api/children/{childId}/words/{wordId}`로 확정됐다(2026-08). 이전 명세 경로는 `childId`가
 없어 소유권 검증이 애매하다(9절 참고).
 
 ---
@@ -409,13 +409,8 @@ Railway에 Docker 이미지로 배포한다. `develop` 브랜치에 push하면 �
 
 | 항목 | 현재 | 결정 필요 |
 | --- | --- | --- |
-| 리프레시 토큰 | 테이블과 엔티티는 있고 로직이 없다. Access 단일 전략으로 완결 동작 | 도입 시점. 응답 스키마는 그대로라 클라이언트 변경은 없다 |
-| 멀티파트 1MB 한도 | `application.yml`에 설정이 없어 Boot 기본 1MB | 30초 WAV가 약 960KB라 아슬아슬하다. 10MB로 올릴지 |
-| STT 신뢰도 기준값 | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 |
 | `SafetyResponse` 감지 | 계약 자리만 있고 항상 null | AI 파이프라인 연동 시 구현 |
 | `CharacterEmotion` 6종 | 응답 enum은 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 표정 키로 옮길지 |
-| `DELETE /api/words/{wordId}` | 경로에 `childId`가 없어 소유권 검증이 애매하다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞출지 |
-| STT/TTS 벤더 | 인터페이스만 있다 | 벤더 선정. 아동 한국어 STT 인식률 검증이 필수다 |
-| 발화 재전송 규약 | 턴 처리가 여러 트랜잭션으로 나뉘어 중간 실패 상태가 생길 수 있다 | 멱등키를 쓸지. 쓴다면 클라이언트가 키를 재시도 사이에 유지해야 한다 |
+| STT/TTS 벤더 | OpenAI 실측 구성으로 동작 중 (비교용, 미결-01) | 벤더 최종 확정. 아동 한국어 실녹음 인식률 검증이 필수다 |
 
-LLM은 gpt-5-mini로 정했다. STT와 TTS는 아직 선정 전이고 클라이언트가 501을 받는다.
+LLM은 gpt-5-mini로 정했다. STT/TTS는 OpenAI 실측 구성으로 동작하며 벤더 최종 확정만 남았다.

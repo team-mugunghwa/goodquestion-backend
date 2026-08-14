@@ -98,6 +98,24 @@ class ProgressionEngineTest {
         assertThat(decision.closingReason()).isEqualTo(SceneEndReason.MAX_TURNS);
     }
 
+    /**
+     * 두 종료 조건이 같이 걸리면 목표 달성이 우선한다. 요소를 다 채운 턴은 최대 턴에
+     * 닿아도 MAX_TURNS 판정에 이르지 못하므로, 미션 보류(TurnTransactions)가
+     * 마지막 턴을 따로 처리해야 한다 - 그 전제를 여기서 못박는다.
+     */
+    @Test
+    void 요소를_다_채운_채_최대_턴에_닿으면_목표_달성_종료가_우선한다() {
+        StorySession session = session();
+        for (int i = 0; i < 5; i++) {
+            session.applyTurn(List.of("SOLUTION", "REASON"), false);
+        }
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, opinion());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.CLOSING);
+        assertThat(decision.closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
+    }
+
     @Test
     void 첫_발화에는_유도하지_않는다() {
         StorySession session = session();

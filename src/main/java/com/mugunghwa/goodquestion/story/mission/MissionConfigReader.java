@@ -21,10 +21,20 @@ import java.util.Map;
 public class MissionConfigReader {
 
     /** 미션1 답변 칸의 고정 키(미션-04). 콘텐츠의 확인 항목 순서와 짝을 이룬다. */
-    private static final List<String> QUESTION_KEYS = List.of("tool", "safety", "request", "expectedResult");
+    private static final List<String> QUESTION_KEYS = List.of("tool", "reason", "request", "expectedResult");
 
     public String missionIdOf(StoryScene scene) {
         return string(config(scene), "mission_id");
+    }
+
+    /**
+     * 장면이 닫힐 때 끼워 넣을 결과 연출 이미지(대화3의 "배가 떨어지는" 연출, 2026-08 확정).
+     * 미션 소속 콘텐츠라 mission_config에 두지만, 노출/완료 여부와 무관하게 장면 종료
+     * 전환에 항상 실린다 - 마지막 대사가 결과를 전제하므로 어떤 사유로 닫혀도 연출은 같다.
+     * 없으면 null.
+     */
+    public String resultImageUrlOf(StoryScene scene) {
+        return string(config(scene), "result_image_url");
     }
 
     /**
