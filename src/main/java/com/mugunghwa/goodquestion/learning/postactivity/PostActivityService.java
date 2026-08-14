@@ -58,7 +58,7 @@ public class PostActivityService {
     private final StardustTransactionRepository transactionRepository;
     private final ItemRepository itemRepository;
     private final ItemUnlockPolicy unlockPolicy;
-    private final ReportService reportService;
+
     /**
      * 카드 순서 맞추기 시작. 카드를 무작위 순서로 준다(활동-02).
      *
@@ -143,9 +143,8 @@ public class PostActivityService {
                 .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedOf(session)))
                 .toList();
 
-        // 리포트 생성은 비동기다. LLM 호출이 수 초 걸리는데 아이가 완료 화면을 기다릴
-        // 이유가 없고, 실패해도 완주와 별가루 지급은 그대로 끝나야 한다.
-        reportService.generate(session.getId());
+        // 리포트 생성은 SessionCompletedEvent를 듣는 ReportGenerationListener가 맡는다.
+        // 별가루 지급과 같은 방식이고, 후속 활동을 거치지 않는 완료 경로에서도 만들어진다.
 
         return new RetellingResponse(
                 session.getStatus().name(),
