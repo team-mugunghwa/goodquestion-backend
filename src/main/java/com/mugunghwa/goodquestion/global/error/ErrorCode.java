@@ -21,6 +21,7 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 시도가 많아 계정이 일시적으로 잠겼습니다."),
     KAKAO_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "카카오 인증에 실패했습니다."),
+    GOOGLE_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "구글 인증에 실패했습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     INVALID_PASSWORD_RESET_TOKEN(HttpStatus.BAD_REQUEST, "비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다."),
     EMAIL_DELIVERY_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "이메일을 발송할 수 없습니다. 잠시 후 다시 시도해 주세요."),
@@ -31,6 +32,10 @@ public enum ErrorCode {
     ITEM_LOCKED(HttpStatus.CONFLICT, "아직 열리지 않은 아이템입니다."),
     STARDUST_INSUFFICIENT(HttpStatus.CONFLICT, "별가루가 부족합니다."),
     GRID_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_ENTITY, "격자 범위를 벗어났습니다."),
+
+    // ---- 멱등키 ----
+    REQUEST_IN_PROGRESS(HttpStatus.CONFLICT, "같은 요청을 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
+    INVALID_IDEMPOTENCY_KEY(HttpStatus.BAD_REQUEST, "Idempotency-Key는 64자 이하여야 합니다."),
 
     // ---- 진행 단계 충돌 ----
     CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),

@@ -1,6 +1,7 @@
 package com.mugunghwa.goodquestion.ai.speech;
 
 import com.mugunghwa.goodquestion.ai.stt.OpenAiSttClient;
+import com.mugunghwa.goodquestion.ai.stt.SttResult;
 import com.mugunghwa.goodquestion.ai.tts.OpenAiTtsClient;
 import com.mugunghwa.goodquestion.ai.tts.SynthesizedAudio;
 import com.mugunghwa.goodquestion.global.config.WebClientConfig;
@@ -62,18 +63,27 @@ class SpeechSmokeTest {
                 .decode(audio.audioUrl().substring("data:audio/mp3;base64,".length()));
 
         long sttStart = System.nanoTime();
-        String text = stt.transcribe(new MockMultipartFile("audio", "roundtrip.mp3", "audio/mpeg", mp3));
+        SttResult result = stt.transcribe(
+                new MockMultipartFile("audio", "roundtrip.mp3", "audio/mpeg", mp3));
         long sttMs = (System.nanoTime() - sttStart) / 1_000_000;
+        String text = result.text();
 
-        System.out.printf("TTS %dms (%dKB mp3) -> STT %dms, 인식 결과: %s%n", ttsMs, mp3.length / 1024, sttMs, text);
-        System.out.printf("희귀어 '방귀' 인식: %s%n",
-                text.replaceAll("\\s", "").contains("방귀") ? "성공" : "실패(오인식)");
+        String compact = text.replaceAll("\\s", "");
+        long hit = java.util.stream.Stream.of("며느리", "방귀", "배가").filter(compact::contains).count();
+        System.out.printf("TTS %dms (%dKB mp3) -> STT %dms, 핵심 단어 %d/3, 신뢰도 %s, 인식 결과: %s%n",
+                ttsMs, mp3.length / 1024, sttMs, hit, result.confidence(), text);
 
-        // 검증은 안정적으로 잡히는 단어까지만 한다. 희귀어("방귀")는 왕복 실측에서 잡혔다
-        // 안 잡혔다 했다 - TTS 발음이 매번 달라 STT만의 문제로 단정할 수 없고, 여기 하드
-        // 검증을 걸면 흔들리는 테스트가 된다. 위 출력으로 관찰만 남기고, 실제 인식률 판정은
-        // 미결-01대로 아동 실녹음으로 한다.
+        // include[]=logprobs를 요청했으므로 신뢰도가 계산돼야 한다. 벤더가 응답 형식을
+        // 바꾸면 여기서 잡힌다 - 판정(0.5 컷)의 입력이 사라지는 회귀다.
+        assertThat(result.confidence()).isNotNull();
+        assertThat(result.confidence()).isBetween(java.math.BigDecimal.ZERO, java.math.BigDecimal.ONE);
+
+        // 특정 단어 하나에 하드 검증을 걸지 않는다. TTS 발음이 매번 달라 왕복 실측에서
+        // "방귀"가 "방비"로, "며느리"가 "와느리"로 각각 다른 실행에서 오인식됐다 - 어느
+        // 단어든 흔들릴 수 있다. 핵심 단어 3개 중 2개 이상이면 연동이 동작하는 것으로 보고,
+        // 실제 인식률 판정은 미결-01대로 아동 실녹음으로 한다.
         assertThat(text).isNotBlank();
-        assertThat(text.replaceAll("\\s", "")).contains("며느리").contains("배가");
+        assertThat(hit).as("핵심 단어(며느리/방귀/배가) 인식 수. 결과: %s", text)
+                .isGreaterThanOrEqualTo(2);
     }
 }

@@ -15,6 +15,7 @@ import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import com.mugunghwa.goodquestion.user.consent.ConsentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ public class SessionService {
     private final MessageService messageService;
     private final MessageRepository messageRepository;
     private final MissionService missionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
@@ -151,9 +153,16 @@ public class SessionService {
         }
 
         // 마지막 장면이 STORY로 끝나는 경우 후속 활동으로 전환한다.
+        // 후속 활동 config가 없는 이야기는 건너뛰고 즉시 완료한다(2026-08 확정) -
+        // 전환해 두면 카드 시작이 404를 던져 세션이 빠져나갈 수 없다.
         StoryScene nextScene = sceneService.getNextScene(currentScene).orElse(null);
         if (nextScene == null) {
-            session.toPostActivity();
+            if (session.getStory().getPostActivityConfig() == null) {
+                session.complete();
+                eventPublisher.publishEvent(new SessionCompletedEvent(session.getId()));
+            } else {
+                session.toPostActivity();
+            }
             return new SceneAdvanceResponse(session.resolvePhase(), null, null);
         }
 

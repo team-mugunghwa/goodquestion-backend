@@ -47,20 +47,26 @@ class ShopServiceTest {
 
     @Test
     void 누적_획득량이_기준을_넘으면_해금된다() {
-        // 지우는 누적 25 - 집(15)은 열리고 거북이(50)는 잠긴다
+        // 지우는 누적 25 - 집(3)도 거북이(5)도 열린다. 하준은 누적 0 - 잠기고 실루엣이다
         List<ShopItemResponse> items = shopService.getShopItems(PARENT_ID, CHILD_ID);
-
         assertThat(find(items, HOUSE_ITEM_ID).unlocked()).isTrue();
-        assertThat(find(items, TURTLE_ITEM_ID).unlocked()).isFalse();
-        assertThat(find(items, TURTLE_ITEM_ID).silhouette()).isTrue();
+        assertThat(find(items, TURTLE_ITEM_ID).unlocked()).isTrue();
+
+        List<ShopItemResponse> siblingItems = shopService.getShopItems(PARENT_ID, SIBLING_ID);
+        assertThat(find(siblingItems, TURTLE_ITEM_ID).unlocked()).isFalse();
+        assertThat(find(siblingItems, TURTLE_ITEM_ID).silhouette()).isTrue();
     }
 
     @Test
     void 잔액이_아니라_누적_획득량으로_판정한다() {
-        // 지우의 잔액은 14로 집 해금 기준 15보다 적지만 누적은 25다
-        assertThat(walletRepository.findByChildId(CHILD_ID).orElseThrow().getBalance()).isLessThan(15);
+        // 지우의 잔액을 거북이 해금 기준(5) 아래로 써 버려도 누적(25) 기반 해금은 유지된다
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(HOUSE_ITEM_ID));
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(DOG_ITEM_ID));
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(RABBIT_ITEM_ID));
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(TURTLE_ITEM_ID));
+        assertThat(walletRepository.findByChildId(CHILD_ID).orElseThrow().getBalance()).isLessThan(5);
 
-        assertThat(find(shopService.getShopItems(PARENT_ID, CHILD_ID), HOUSE_ITEM_ID).unlocked()).isTrue();
+        assertThat(find(shopService.getShopItems(PARENT_ID, CHILD_ID), TURTLE_ITEM_ID).unlocked()).isTrue();
     }
 
     @Test
@@ -82,15 +88,15 @@ class ShopServiceTest {
 
     @Test
     void 부족한_별가루를_계산해_내려준다() {
-        // 지우 잔액 14, 집 가격 10 - 살 수 있다
+        // 지우 잔액 14, 집 가격 3 - 살 수 있다
         ShopItemResponse house = find(shopService.getShopItems(PARENT_ID, CHILD_ID), HOUSE_ITEM_ID);
         assertThat(house.purchasable()).isTrue();
         assertThat(house.shortfall()).isZero();
 
-        // 하준 잔액 0, 돌 가격 3
+        // 하준 잔액 0, 돌 가격 1
         ShopItemResponse rock = find(shopService.getShopItems(PARENT_ID, SIBLING_ID), ROCK_ITEM_ID);
         assertThat(rock.purchasable()).isFalse();
-        assertThat(rock.shortfall()).isEqualTo(3);
+        assertThat(rock.shortfall()).isEqualTo(1);
     }
 
     @Test
@@ -100,7 +106,7 @@ class ShopServiceTest {
         ItemPurchaseResponse response =
                 shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(ROCK_ITEM_ID));
 
-        assertThat(response.balance()).isEqualTo(before - 3);
+        assertThat(response.balance()).isEqualTo(before - 1);
         assertThat(response.item().placed()).isFalse();
         assertThat(response.item().acquiredAt()).isNotNull();
         assertThat(shopService.getChildItems(PARENT_ID, CHILD_ID, false))
@@ -130,8 +136,9 @@ class ShopServiceTest {
 
     @Test
     void 잠긴_아이템은_살_수_없다() {
+        // 하준은 누적 0이라 거북이(누적 5)가 잠겨 있다. 해금 검증이 잔액 검증보다 먼저다.
         assertThatThrownBy(() ->
-                shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(TURTLE_ITEM_ID)))
+                shopService.purchase(PARENT_ID, SIBLING_ID, new ItemPurchaseRequest(TURTLE_ITEM_ID)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ITEM_LOCKED);
     }

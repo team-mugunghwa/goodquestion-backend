@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 /**
  * 발화 제출.
  *
- * <p>STT 신뢰도는 클라이언트(또는 AI 서비스)가 인식 결과와 함께 올린다 —
- * 서버가 messages에 그대로 보관하고, 기준값 이하 판정(sttLowConfidence)은 서버가 한다.
- * 기준값이 아직 미정이라 지금은 저장만 하고 걸러내지 않는다.
+ * <p>STT 신뢰도는 /api/stt 응답의 confidence를 클라이언트가 그대로 되올린다 —
+ * 서버가 messages에 보관하며, 기준값(0.5) 미만 판정(sttLowConfidence)은 저장 시
+ * 서버가 한다. 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들리기 때문이다.
  */
 public record UtteranceRequest(
         @NotBlank String text,   // 확정 발화 텍스트

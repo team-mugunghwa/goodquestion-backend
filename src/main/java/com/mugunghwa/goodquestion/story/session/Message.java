@@ -48,7 +48,7 @@ public class Message {
     @Column(name = "stt_raw_text", columnDefinition = "text")
     private String sttRawText;
 
-    /** STT 신뢰도(0~1). 기준값이 아직 미정이라 판정은 애플리케이션이 한다. */
+    /** STT 신뢰도(0~1). 판정은 저장 시 SttConfidencePolicy(기준값 0.5)가 한다. */
     @Column(name = "stt_confidence", precision = 4, scale = 3)
     private BigDecimal sttConfidence;
 
