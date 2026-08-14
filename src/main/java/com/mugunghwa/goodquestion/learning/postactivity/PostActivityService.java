@@ -8,6 +8,7 @@ import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStartRes
 import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStatusResponse;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingRequest;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingResponse;
+import com.mugunghwa.goodquestion.learning.report.ReportService;
 import com.mugunghwa.goodquestion.learning.reward.shop.Item;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemRepository;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemStatus;
@@ -142,7 +143,8 @@ public class PostActivityService {
                 .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedOf(session)))
                 .toList();
 
-        // TODO: 리포트 생성 트리거 - ReportService.generate가 LLM 벤더 미정으로 비어 있어 아직 걸지 않는다.
+        // 리포트 생성은 SessionCompletedEvent를 듣는 ReportGenerationListener가 맡는다.
+        // 별가루 지급과 같은 방식이고, 후속 활동을 거치지 않는 완료 경로에서도 만들어진다.
 
         return new RetellingResponse(
                 session.getStatus().name(),
