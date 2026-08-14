@@ -52,6 +52,9 @@ public class ReportPromptBuilder {
 
             각 역량은 name, finding(이번 활동에서 나타난 특징), evidenceUtterance(근거가 된
             실제 발화 그대로), strength(잘한 점), nextFocus(추가로 보완할 부분)를 채운다.
+            strength와 nextFocus는 보호자가 읽을 완성된 문장으로 쓴다. 사고 요소 코드를
+            그대로 넣지 않는다 — "EMPATHY"가 아니라 "다른 사람 마음을 물어보는 말을 더 해
+            보면 좋겠습니다"처럼 쓴다.
             근거로 쓸 발화가 없으면 evidenceUtterance는 빈 문자열로 두고, finding에는
             이번 활동에서 그 모습이 잘 드러나지 않았다는 사실만 담담히 적는다.
 
