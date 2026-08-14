@@ -8,6 +8,7 @@ import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStartRes
 import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStatusResponse;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingRequest;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingResponse;
+import com.mugunghwa.goodquestion.learning.report.ReportService;
 import com.mugunghwa.goodquestion.learning.reward.shop.Item;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemRepository;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemStatus;
@@ -57,7 +58,7 @@ public class PostActivityService {
     private final StardustTransactionRepository transactionRepository;
     private final ItemRepository itemRepository;
     private final ItemUnlockPolicy unlockPolicy;
-
+    private final ReportService reportService;
     /**
      * 카드 순서 맞추기 시작. 카드를 무작위 순서로 준다(활동-02).
      *
@@ -142,7 +143,9 @@ public class PostActivityService {
                 .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedOf(session)))
                 .toList();
 
-        // TODO: 리포트 생성 트리거 - ReportService.generate가 LLM 벤더 미정으로 비어 있어 아직 걸지 않는다.
+        // 리포트 생성은 비동기다. LLM 호출이 수 초 걸리는데 아이가 완료 화면을 기다릴
+        // 이유가 없고, 실패해도 완주와 별가루 지급은 그대로 끝나야 한다.
+        reportService.generate(session.getId());
 
         return new RetellingResponse(
                 session.getStatus().name(),
