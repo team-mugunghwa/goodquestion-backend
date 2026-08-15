@@ -13,6 +13,8 @@ import com.mugunghwa.goodquestion.story.session.SceneTransitionTarget;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,9 @@ public class TurnOrchestratorTest {
     private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Autowired
+    private StorySessionRepository storySessionRepositoryForIsolation;
+
+    @Autowired
     private TurnOrchestrator orchestrator;
 
     @Autowired
@@ -58,6 +63,8 @@ public class TurnOrchestratorTest {
     /** 장면 3(대화1)까지 진행해 둔다. 필수 요소 PERSPECTIVE, EMOTION, REASON, SOLUTION / 최소 2턴, 최대 4턴. */
     @BeforeEach
     void 대화_장면까지_진행한다() {
+        // 세션 시작이 진행 중 세션을 이어받으므로(#70) 시드/앞 테스트의 잔여 세션을 치운다.
+        TestSessions.stopAllInProgress(storySessionRepositoryForIsolation);
         analysisLlmClient.reset();
         sessionId = sessionService.start(PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID))
                 .sessionId();
