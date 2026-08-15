@@ -45,6 +45,9 @@ public class AuthService {
         Parent parent = parentRepository.findByEmail(request.email())
                 .filter(Parent::isLocal)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        // 관리자가 막은 계정은 비밀번호가 맞아도 들어올 수 없다. 잠금보다 먼저 본다 -
+        // 정지된 계정이 잠기기까지 했다면 사용자가 알아야 할 것은 정지 쪽이다.
+        requireNotSuspended(parent);
         // 잠긴 계정은 비밀번호가 맞아도 통과시키지 않는다.
         if (parent.isLocked()) {
             throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
@@ -74,6 +77,9 @@ public class AuthService {
         Parent parent = isNewUser
                 ? parentRepository.save(Parent.ofKakao(profile.providerId(), profile.email(), profile.nickname()))
                 : existing;
+        // 소셜 로그인도 정지를 거친다. 여기를 빠뜨리면 카카오로 다시 들어오는 것만으로
+        // 정지가 무력화된다.
+        requireNotSuspended(parent);
         parent.recordLoginSuccess(clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
@@ -92,6 +98,18 @@ public class AuthService {
     @Transactional
     public void logout(String refreshToken) {
         refreshTokenService.revoke(refreshToken);
+    }
+
+    /**
+     * 정지된 계정이면 막는다.
+     *
+     * <p>상태를 바꾸는 것은 관리자 콘솔이지만 그것을 실제로 강제하는 자리는 여기다.
+     * 관리자 쪽이 리프레시 토큰까지 끊어 두므로, 이 검사와 합쳐 로그인 경로가 모두 막힌다.
+     */
+    private void requireNotSuspended(Parent parent) {
+        if (parent.isSuspended()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_SUSPENDED);
+        }
     }
 
     private TokenResponse issueTokens(Parent parent) {
@@ -114,6 +132,7 @@ public class AuthService {
         Parent parent = isNewUser
                 ? parentRepository.save(Parent.ofGoogle(profile.providerId(), profile.email(), profile.name()))
                 : existing;
+        requireNotSuspended(parent);
         parent.recordLoginSuccess(clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
