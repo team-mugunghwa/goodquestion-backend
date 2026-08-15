@@ -353,48 +353,11 @@ insert into wordbook (id, child_id, word, meaning, example_sentence, entry_type,
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
--- 22. scene_audio - TTS 사전 생성 음성 13건
---     내레이션 5(도입/전개1~4) + 고정 첫/마지막 대사 8 = 13.
---
---     engine/voice/duration_ms/sentence_timings는 PLACEHOLDER다.
---       이 값들은 실제 렌더 산출물의 메타데이터라 만들어 낼 수 없다  - 
---       TTS초안/{chirp3,gemini}/manifest.json의 실측값으로 반드시 교체한다.
---
---     text_hash만은 진짜다. 렌더 원본 텍스트에서 그대로 계산하므로,
---     대사를 고치면 곧바로 불일치가 잡힌다(음성이 조용히 옛것으로 남는 사고 방지).
+-- 22. scene_audio - R__1_seed_content.sql 로 옮겼다
+--     이 파일은 머리말대로 배포 전 삭제되거나 dev 프로파일로 빠질 데모 데이터인데,
+--     사전 렌더 음성은 데모가 아니라 이야기 콘텐츠라 같이 사라지면 안 된다.
+--     자리표시자였던 engine/voice/duration_ms/sentence_timings 도 그쪽에서 실측값으로 채웠다.
 -- ------------------------------------------------------------
-insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
-                         engine, voice, duration_ms, sentence_timings)
-select s.id, 'NARRATION', null,
-       'tts/banggui/sc_banggui_0' || s.scene_order || '.mp3',
-       encode(digest(s.scene_description, 'sha256'), 'hex'),
-       'PLACEHOLDER', 'PLACEHOLDER', 1, '[]'::jsonb
-from story_scenes s
-where s.story_id = '11111111-1111-1111-1111-111111111111'
-  and s.scene_type = 'STORY'
-on conflict do nothing;
-
-insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
-                         engine, voice, duration_ms, sentence_timings)
-select s.id, 'OPENING', null,
-       'tts/banggui/sc_banggui_0' || s.scene_order || '_opening.mp3',
-       encode(digest(s.character_opening, 'sha256'), 'hex'),
-       'PLACEHOLDER', 'PLACEHOLDER', 1, '[]'::jsonb
-from story_scenes s
-where s.story_id = '11111111-1111-1111-1111-111111111111'
-  and s.scene_type = 'DIALOGUE'
-on conflict do nothing;
-
-insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
-                         engine, voice, duration_ms, sentence_timings)
-select s.id, 'CLOSING', null,
-       'tts/banggui/sc_banggui_0' || s.scene_order || '_closing.mp3',
-       encode(digest(s.character_closing, 'sha256'), 'hex'),
-       'PLACEHOLDER', 'PLACEHOLDER', 1, '[]'::jsonb
-from story_scenes s
-where s.story_id = '11111111-1111-1111-1111-111111111111'
-  and s.scene_type = 'DIALOGUE'
-on conflict do nothing;
 
 
 -- ------------------------------------------------------------

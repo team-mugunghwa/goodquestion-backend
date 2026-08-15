@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.story.dialogue;
 
+import com.mugunghwa.goodquestion.story.content.SceneAudioResolver;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
@@ -40,6 +41,7 @@ public class SceneClosingHandler {
     private final MessageService messageService;
     private final MissionConfigReader missionConfigReader;
     private final ApplicationEventPublisher eventPublisher;
+    private final SceneAudioResolver sceneAudioResolver;
 
     public TurnClosure close(StorySession session, StoryScene scene,
                              ProgressionDecision decision, CharacterReply reply) {
@@ -82,7 +84,8 @@ public class SceneClosingHandler {
         sessionService.advanceTo(session, nextScene);
 
         return new TurnClosure(
-                CharacterMessageResponse.from(closingMessage),
+                CharacterMessageResponse.from(closingMessage, closingAudioUrl(closingMessage)),
+                // 반응은 LLM이 그때그때 만든 문장이라 사전 렌더 대상이 아니다
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         SceneTransitionTarget.SCENE, nextScene.getId(),
@@ -109,10 +112,17 @@ public class SceneClosingHandler {
         }
 
         return new TurnClosure(
-                CharacterMessageResponse.from(closingMessage),
+                CharacterMessageResponse.from(closingMessage, closingAudioUrl(closingMessage)),
+                // 반응은 LLM이 그때그때 만든 문장이라 사전 렌더 대상이 아니다
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         target, null, null, null,
                         decision.closingReason(), resultImageUrl));
+    }
+
+    /** 고정 마지막 대사의 사전 렌더 음성. 대사를 고쳤으면 해시가 어긋나 null이 나간다. */
+    private String closingAudioUrl(Message closingMessage) {
+        return sceneAudioResolver.urlFor(
+                closingMessage.getScene().getId(), closingMessage.getText());
     }
 }

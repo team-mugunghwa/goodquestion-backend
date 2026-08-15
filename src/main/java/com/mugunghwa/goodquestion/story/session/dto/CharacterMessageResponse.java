@@ -10,8 +10,20 @@ import java.util.UUID;
  */
 public record CharacterMessageResponse(UUID messageId, String text, String audioUrl) {
 
-    /** audioUrl은 설계상 null - 사전 렌더(scene_audio) 도입 전까지 클라이언트가 /api/tts로 합성한다. */
+    /**
+     * 사전 렌더 음성이 없는 메시지 — LLM이 그때그때 만든 대사는 미리 렌더할 수 없다.
+     * 클라이언트가 {@code /api/tts}로 합성한다.
+     */
     public static CharacterMessageResponse from(Message message) {
-        return new CharacterMessageResponse(message.getId(), message.getText(), null);
+        return from(message, null);
+    }
+
+    /**
+     * @param audioUrl 이 문장으로 렌더된 음성의 URL. null이면 클라이언트가 합성한다.
+     *                 {@code SceneAudioResolver}가 문장 해시로 찾아 준 값만 넣어야 한다 —
+     *                 슬롯만 보고 넣으면 대사를 고쳤을 때 옛 음성이 그대로 나간다.
+     */
+    public static CharacterMessageResponse from(Message message, String audioUrl) {
+        return new CharacterMessageResponse(message.getId(), message.getText(), audioUrl);
     }
 }
