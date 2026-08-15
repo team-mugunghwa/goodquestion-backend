@@ -19,6 +19,7 @@ import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransactionRe
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
 import com.mugunghwa.goodquestion.story.content.Story;
+import com.mugunghwa.goodquestion.story.session.SessionCompletedEvent;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.SessionStatus;
 import com.mugunghwa.goodquestion.story.session.StorySession;
@@ -52,6 +53,7 @@ public class PostActivityService {
     private static final String STATUS_COMPLETED = "COMPLETED";
 
     private final PostActivityResultRepository resultRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final SessionService sessionService;
     private final StardustService stardustService;
     private final StardustWalletRepository walletRepository;
@@ -144,7 +146,14 @@ public class PostActivityService {
                 .toList();
 
         // 리포트 생성은 SessionCompletedEvent를 듣는 ReportGenerationListener가 맡는다.
-        // 별가루 지급과 같은 방식이고, 후속 활동을 거치지 않는 완료 경로에서도 만들어진다.
+        // 직행 완료 경로(SceneClosingHandler·SessionService)는 이 이벤트를 발행하는데 이
+        // 경로만 빠져 있어, 후속 활동을 거친 완주에서 리포트가 영영 생성되지 않았다(08-15 감사 ①).
+        //
+        // 발행은 반드시 해금 계산 **뒤에** 둔다. StoryCompletionListener도 같은 이벤트를 듣고
+        // 완주 별가루를 지급하는데, 위 스냅숏(unlockedBefore)을 찍기 전에 지급되면 이번 완주로
+        // 열린 아이템이 "원래 열려 있던 것"으로 잡혀 unlockedItems에서 빠진다. 지급 자체는
+        // 세션당 1회 유니크라 두 번 불려도 늘지 않지만, 순서는 결과를 바꾼다.
+        eventPublisher.publishEvent(new SessionCompletedEvent(session.getId()));
 
         return new RetellingResponse(
                 session.getStatus().name(),
