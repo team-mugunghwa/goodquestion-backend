@@ -1,0 +1,740 @@
+{
+  "engine": "gemini-2.5-flash-preview-tts",
+  "sceneVoices": {
+    "3": "Leda",
+    "5": "Puck",
+    "7": "Charon",
+    "9": "Leda"
+  },
+  "items": [
+    {
+      "id": "c3_t1_1",
+      "file": "c3_t1_1.mp3",
+      "text": "계속 참으면 많이 힘들 것 같아요. 가족들도 처음엔 놀라도 곧 이해해 줄 거예요.",
+      "elements": [
+        "EMOTION",
+        "PERSPECTIVE"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 9.971,
+      "url": "/tts/banggui/choices/c3_t1_1.mp3"
+    },
+    {
+      "id": "c3_t1_2",
+      "file": "c3_t1_2.mp3",
+      "text": "자꾸 참으면 배가 아프니까, 가족들한테 먼저 솔직하게 말해 보세요.",
+      "elements": [
+        "REASON",
+        "SOLUTION"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 7.131,
+      "url": "/tts/banggui/choices/c3_t1_2.mp3"
+    },
+    {
+      "id": "c3_t1_3",
+      "file": "c3_t1_3.mp3",
+      "text": "부끄러워서 말 못 하는 마음 알아요. 제일 편한 사람한테 먼저 말해 보면 어때요?",
+      "elements": [
+        "EMOTION",
+        "SOLUTION"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 7.851,
+      "url": "/tts/banggui/choices/c3_t1_3.mp3"
+    },
+    {
+      "id": "c3_EMOTION",
+      "file": "c3_EMOTION.mp3",
+      "text": "혼자 참고 있으면 많이 외롭고 속상할 것 같아요.",
+      "elements": [
+        "EMOTION"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.171,
+      "url": "/tts/banggui/choices/c3_EMOTION.mp3"
+    },
+    {
+      "id": "c3_PERSPECTIVE",
+      "file": "c3_PERSPECTIVE.mp3",
+      "text": "가족들도 놀라기는 하겠지만 미워하지는 않을 거예요.",
+      "elements": [
+        "PERSPECTIVE"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.571,
+      "url": "/tts/banggui/choices/c3_PERSPECTIVE.mp3"
+    },
+    {
+      "id": "c3_REASON",
+      "file": "c3_REASON.mp3",
+      "text": "오래 참으면 몸이 아프고 마음도 답답해지니까 말하는 게 좋아요.",
+      "elements": [
+        "REASON"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 7.371,
+      "url": "/tts/banggui/choices/c3_REASON.mp3"
+    },
+    {
+      "id": "c3_SOLUTION",
+      "file": "c3_SOLUTION.mp3",
+      "text": "밥 먹고 나서 조용할 때 가족들한테 이야기해 보세요.",
+      "elements": [
+        "SOLUTION"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 6.251,
+      "url": "/tts/banggui/choices/c3_SOLUTION.mp3"
+    },
+    {
+      "id": "c3_t2_1",
+      "file": "c3_t2_1.mp3",
+      "text": "오래 참으면 몸이 아프니까, 밥 먹고 나서 조용할 때 이야기해 보세요.",
+      "elements": [
+        "REASON",
+        "SOLUTION"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 7.251,
+      "url": "/tts/banggui/choices/c3_t2_1.mp3"
+    },
+    {
+      "id": "c3_t2_2",
+      "file": "c3_t2_2.mp3",
+      "text": "혼자 참고 있으면 많이 속상할 거예요. 가족들도 놀라기는 하겠지만 미워하지는 않을 거예요.",
+      "elements": [
+        "EMOTION",
+        "PERSPECTIVE"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 9.131,
+      "url": "/tts/banggui/choices/c3_t2_2.mp3"
+    },
+    {
+      "id": "c3_t2_3",
+      "file": "c3_t2_3.mp3",
+      "text": "가족들도 곧 이해해 줄 거예요. 오래 참으면 몸이 아프니까 말하는 게 좋아요.",
+      "elements": [
+        "PERSPECTIVE",
+        "REASON"
+      ],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 9.291,
+      "url": "/tts/banggui/choices/c3_t2_3.mp3"
+    },
+    {
+      "id": "c5_t1_1",
+      "file": "c5_t1_1.mp3",
+      "text": "며느리도 일부러 그런 게 아니에요. 오래 참다가 한꺼번에 크게 나온 거예요.",
+      "elements": [
+        "PERSPECTIVE",
+        "REASON"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 7.051,
+      "url": "/tts/banggui/choices/c5_t1_1.mp3"
+    },
+    {
+      "id": "c5_t1_2",
+      "file": "c5_t1_2.mp3",
+      "text": "며느리가 지금 얼마나 창피하고 속상하겠어요. 친정에 보내기 전에 이야기를 한 번만 들어 주세요.",
+      "elements": [
+        "EMPATHY",
+        "REQUEST"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 8.171,
+      "url": "/tts/banggui/choices/c5_t1_2.mp3"
+    },
+    {
+      "id": "c5_t1_3",
+      "file": "c5_t1_3.mp3",
+      "text": "시아버지도 갑자기 놀라셨을 것 같아요. 그래도 며느리 마음도 많이 아플 거예요.",
+      "elements": [
+        "PERSPECTIVE",
+        "EMPATHY"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 7.811,
+      "url": "/tts/banggui/choices/c5_t1_3.mp3"
+    },
+    {
+      "id": "c5_PERSPECTIVE",
+      "file": "c5_PERSPECTIVE.mp3",
+      "text": "며느리는 그동안 눈치 보면서 계속 참기만 했을 거예요.",
+      "elements": [
+        "PERSPECTIVE"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 5.971,
+      "url": "/tts/banggui/choices/c5_PERSPECTIVE.mp3"
+    },
+    {
+      "id": "c5_EMPATHY",
+      "file": "c5_EMPATHY.mp3",
+      "text": "며느리도 지금 제일 놀라고 부끄러울 거예요.",
+      "elements": [
+        "EMPATHY"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 3.731,
+      "url": "/tts/banggui/choices/c5_EMPATHY.mp3"
+    },
+    {
+      "id": "c5_REASON",
+      "file": "c5_REASON.mp3",
+      "text": "너무 오래 참아서 한 번에 크게 터진 거예요.",
+      "elements": [
+        "REASON"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 4.291,
+      "url": "/tts/banggui/choices/c5_REASON.mp3"
+    },
+    {
+      "id": "c5_REQUEST",
+      "file": "c5_REQUEST.mp3",
+      "text": "보내지 마시고, 왜 그랬는지 며느리한테 한 번만 물어봐 주세요.",
+      "elements": [
+        "REQUEST"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 6.131,
+      "url": "/tts/banggui/choices/c5_REQUEST.mp3"
+    },
+    {
+      "id": "c5_t2_1",
+      "file": "c5_t2_1.mp3",
+      "text": "며느리도 지금 제일 놀라고 부끄러울 거예요. 왜 그랬는지 한 번만 물어봐 주세요.",
+      "elements": [
+        "EMPATHY",
+        "REQUEST"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 8.011,
+      "url": "/tts/banggui/choices/c5_t2_1.mp3"
+    },
+    {
+      "id": "c5_t2_2",
+      "file": "c5_t2_2.mp3",
+      "text": "며느리는 그동안 눈치 보면서 참기만 했을 거예요. 너무 오래 참아서 한 번에 크게 터진 거예요.",
+      "elements": [
+        "PERSPECTIVE",
+        "REASON"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 9.931,
+      "url": "/tts/banggui/choices/c5_t2_2.mp3"
+    },
+    {
+      "id": "c5_t2_3",
+      "file": "c5_t2_3.mp3",
+      "text": "너무 오래 참아서 크게 나온 거예요. 보내지 마시고 한 번만 이야기를 들어 주세요.",
+      "elements": [
+        "REASON",
+        "REQUEST"
+      ],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 7.411,
+      "url": "/tts/banggui/choices/c5_t2_3.mp3"
+    },
+    {
+      "id": "c7_t1_1",
+      "file": "c7_t1_1.mp3",
+      "text": "며느리 방귀로 배나무를 흔들어요. 며느리 방귀는 지붕도 흔들 만큼 힘이 세니까요.",
+      "elements": [
+        "SOLUTION",
+        "REASON"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 8.331,
+      "url": "/tts/banggui/choices/c7_t1_1.mp3"
+    },
+    {
+      "id": "c7_t1_2",
+      "file": "c7_t1_2.mp3",
+      "text": "며느리한테 도와달라고 부탁하고, 사람들은 나무에서 멀리 떨어져 있어요.",
+      "elements": [
+        "REQUEST",
+        "SOLUTION"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 6.011,
+      "url": "/tts/banggui/choices/c7_t1_2.mp3"
+    },
+    {
+      "id": "c7_t1_3",
+      "file": "c7_t1_3.mp3",
+      "text": "며느리가 나무 아래에서 방귀를 뀌면 배가 우수수 떨어져서 다 같이 나눠 먹을 수 있어요.",
+      "elements": [
+        "SOLUTION",
+        "RESULT"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 7.131,
+      "url": "/tts/banggui/choices/c7_t1_3.mp3"
+    },
+    {
+      "id": "c7_SOLUTION",
+      "file": "c7_SOLUTION.mp3",
+      "text": "며느리가 나무 아래에 서서 방귀를 뀌면 배가 떨어져요.",
+      "elements": [
+        "SOLUTION"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 6.091,
+      "url": "/tts/banggui/choices/c7_SOLUTION.mp3"
+    },
+    {
+      "id": "c7_REASON",
+      "file": "c7_REASON.mp3",
+      "text": "며느리 방귀는 기왓장도 날릴 만큼 세니까 배도 떨어질 거예요.",
+      "elements": [
+        "REASON"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 5.851,
+      "url": "/tts/banggui/choices/c7_REASON.mp3"
+    },
+    {
+      "id": "c7_REQUEST",
+      "file": "c7_REQUEST.mp3",
+      "text": "며느리한테 한 번만 도와달라고 부탁하고, 사람들은 옆으로 피해 있어요.",
+      "elements": [
+        "REQUEST"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 5.731,
+      "url": "/tts/banggui/choices/c7_REQUEST.mp3"
+    },
+    {
+      "id": "c7_RESULT",
+      "file": "c7_RESULT.mp3",
+      "text": "배가 많이 떨어져서 마을에서 배 잔치를 할 수 있어요.",
+      "elements": [
+        "RESULT"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 4.971,
+      "url": "/tts/banggui/choices/c7_RESULT.mp3"
+    },
+    {
+      "id": "c7_t2_1",
+      "file": "c7_t2_1.mp3",
+      "text": "며느리한테 부탁하고 사람들은 옆으로 피하면, 배가 떨어져서 다 같이 나눠 먹을 수 있어요.",
+      "elements": [
+        "REQUEST",
+        "RESULT"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 8.171,
+      "url": "/tts/banggui/choices/c7_t2_1.mp3"
+    },
+    {
+      "id": "c7_t2_2",
+      "file": "c7_t2_2.mp3",
+      "text": "며느리 방귀는 기왓장도 날릴 만큼 세니까, 배가 우수수 떨어질 거예요.",
+      "elements": [
+        "REASON",
+        "RESULT"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 7.251,
+      "url": "/tts/banggui/choices/c7_t2_2.mp3"
+    },
+    {
+      "id": "c7_t2_3",
+      "file": "c7_t2_3.mp3",
+      "text": "며느리 방귀는 지붕도 흔들 만큼 세요. 한 번만 도와달라고 부탁해 봐요.",
+      "elements": [
+        "REASON",
+        "REQUEST"
+      ],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 6.571,
+      "url": "/tts/banggui/choices/c7_t2_3.mp3"
+    },
+    {
+      "id": "c9_t1_1",
+      "file": "c9_t1_1.mp3",
+      "text": "이제 당당해진 것 같아서 저도 기뻐요. 큰 방귀는 부끄러운 게 아니라 특별한 힘이에요.",
+      "elements": [
+        "EMOTION",
+        "PERSPECTIVE"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 10.011,
+      "url": "/tts/banggui/choices/c9_t1_1.mp3"
+    },
+    {
+      "id": "c9_t1_2",
+      "file": "c9_t1_2.mp3",
+      "text": "미리 알려 주고 사람 없는 쪽에서 뀌면 돼요. 그러면 높은 곳 열매를 딸 때 도와줄 수 있어요.",
+      "elements": [
+        "SOLUTION",
+        "RESULT"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 10.651,
+      "url": "/tts/banggui/choices/c9_t1_2.mp3"
+    },
+    {
+      "id": "c9_t1_3",
+      "file": "c9_t1_3.mp3",
+      "text": "이제 부끄러워하지 않아도 돼요. 남을 도울 수 있는 좋은 점이니까요.",
+      "elements": [
+        "PERSPECTIVE",
+        "RESULT"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 7.531,
+      "url": "/tts/banggui/choices/c9_t1_3.mp3"
+    },
+    {
+      "id": "c9_EMOTION",
+      "file": "c9_EMOTION.mp3",
+      "text": "웃는 걸 보니까 저도 마음이 놓이고 기뻐요.",
+      "elements": [
+        "EMOTION"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 4.971,
+      "url": "/tts/banggui/choices/c9_EMOTION.mp3"
+    },
+    {
+      "id": "c9_PERSPECTIVE",
+      "file": "c9_PERSPECTIVE.mp3",
+      "text": "남들과 다른 건 이상한 게 아니라 특별한 거예요.",
+      "elements": [
+        "PERSPECTIVE"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.771,
+      "url": "/tts/banggui/choices/c9_PERSPECTIVE.mp3"
+    },
+    {
+      "id": "c9_RESULT",
+      "file": "c9_RESULT.mp3",
+      "text": "높은 나무의 열매를 딸 때 마을 사람들을 도와줄 수 있어요.",
+      "elements": [
+        "RESULT"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.091,
+      "url": "/tts/banggui/choices/c9_RESULT.mp3"
+    },
+    {
+      "id": "c9_SOLUTION",
+      "file": "c9_SOLUTION.mp3",
+      "text": "뀌기 전에 미리 말해 주고, 사람이 없는 쪽으로 서서 뀌면 돼요.",
+      "elements": [
+        "SOLUTION"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 6.331,
+      "url": "/tts/banggui/choices/c9_SOLUTION.mp3"
+    },
+    {
+      "id": "c9_t2_1",
+      "file": "c9_t2_1.mp3",
+      "text": "미리 알려 주고 사람 없는 쪽에서 뀌면, 높은 나무 열매를 딸 때 도와줄 수 있어요.",
+      "elements": [
+        "SOLUTION",
+        "RESULT"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 8.091,
+      "url": "/tts/banggui/choices/c9_t2_1.mp3"
+    },
+    {
+      "id": "c9_t2_2",
+      "file": "c9_t2_2.mp3",
+      "text": "웃는 걸 보니까 저도 기뻐요. 남들과 다른 건 이상한 게 아니라 특별한 거예요.",
+      "elements": [
+        "EMOTION",
+        "PERSPECTIVE"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 9.931,
+      "url": "/tts/banggui/choices/c9_t2_2.mp3"
+    },
+    {
+      "id": "c9_t2_3",
+      "file": "c9_t2_3.mp3",
+      "text": "이제 마음이 놓여서 기뻐요. 뀌기 전에 미리 말해 주면 돼요.",
+      "elements": [
+        "EMOTION",
+        "SOLUTION"
+      ],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 6.251,
+      "url": "/tts/banggui/choices/c9_t2_3.mp3"
+    },
+    {
+      "id": "retry_1_c3",
+      "file": "retry_1_c3.mp3",
+      "text": "괜찮아, 다시 한 번 말해 줄래?",
+      "elements": [],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 4.051,
+      "url": "/tts/banggui/choices/retry_1_c3.mp3"
+    },
+    {
+      "id": "retry_1_c5",
+      "file": "retry_1_c5.mp3",
+      "text": "허허, 잘 못 들었구나. 다시 한 번 말해 보거라.",
+      "elements": [],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 4.171,
+      "url": "/tts/banggui/choices/retry_1_c5.mp3"
+    },
+    {
+      "id": "retry_1_c7",
+      "file": "retry_1_c7.mp3",
+      "text": "허허, 잘 안 들렸소. 한 번만 더 말해 주겠소?",
+      "elements": [],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 4.011,
+      "url": "/tts/banggui/choices/retry_1_c7.mp3"
+    },
+    {
+      "id": "retry_1_c9",
+      "file": "retry_1_c9.mp3",
+      "text": "괜찮아, 다시 한 번 말해 줄래?",
+      "elements": [],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 3.891,
+      "url": "/tts/banggui/choices/retry_1_c9.mp3"
+    },
+    {
+      "id": "retry_2_c3",
+      "file": "retry_2_c3.mp3",
+      "text": "소리가 잘 안 들렸어. 조금만 크게 말해 줄래?",
+      "elements": [],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.451,
+      "url": "/tts/banggui/choices/retry_2_c3.mp3"
+    },
+    {
+      "id": "retry_2_c5",
+      "file": "retry_2_c5.mp3",
+      "text": "이 늙은이가 귀가 어두워서 그런다. 조금 크게 말해 보거라.",
+      "elements": [],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 5.091,
+      "url": "/tts/banggui/choices/retry_2_c5.mp3"
+    },
+    {
+      "id": "retry_2_c7",
+      "file": "retry_2_c7.mp3",
+      "text": "소리가 작아서 잘 안 들리는구려. 조금 크게 말해 주시오.",
+      "elements": [],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 5.651,
+      "url": "/tts/banggui/choices/retry_2_c7.mp3"
+    },
+    {
+      "id": "retry_2_c9",
+      "file": "retry_2_c9.mp3",
+      "text": "소리가 잘 안 들렸어. 조금만 크게 말해 줄래?",
+      "elements": [],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.331,
+      "url": "/tts/banggui/choices/retry_2_c9.mp3"
+    },
+    {
+      "id": "choice_intro_c3",
+      "file": "choice_intro_c3.mp3",
+      "text": "그럼 이 중에서 하고 싶은 말을 골라 볼래?",
+      "elements": [],
+      "scene": 3,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 4.611,
+      "url": "/tts/banggui/choices/choice_intro_c3.mp3"
+    },
+    {
+      "id": "choice_intro_c5",
+      "file": "choice_intro_c5.mp3",
+      "text": "그럼 이 중에서 골라 말해 보거라.",
+      "elements": [],
+      "scene": 5,
+      "character": "시아버지",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Puck",
+      "duration": 3.091,
+      "url": "/tts/banggui/choices/choice_intro_c5.mp3"
+    },
+    {
+      "id": "choice_intro_c7",
+      "file": "choice_intro_c7.mp3",
+      "text": "그럼 이 중에서 골라 말해 주겠소?",
+      "elements": [],
+      "scene": 7,
+      "character": "마을 이장님",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Charon",
+      "duration": 2.931,
+      "url": "/tts/banggui/choices/choice_intro_c7.mp3"
+    },
+    {
+      "id": "choice_intro_c9",
+      "file": "choice_intro_c9.mp3",
+      "text": "그럼 이 중에서 하고 싶은 말을 골라 볼래?",
+      "elements": [],
+      "scene": 9,
+      "character": "며느리",
+      "engine": "gemini-2.5-flash-preview-tts",
+      "voice": "Leda",
+      "duration": 5.371,
+      "url": "/tts/banggui/choices/choice_intro_c9.mp3"
+    }
+  ],
+  "basePath": "/tts/banggui/choices/"
+}
