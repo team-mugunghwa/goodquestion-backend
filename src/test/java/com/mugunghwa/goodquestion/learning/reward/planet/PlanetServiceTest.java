@@ -134,11 +134,13 @@ class PlanetServiceTest {
 
     @Test
     void 놓인_아이템을_다른_칸으로_옮긴다() {
+        // 섬은 원형으로 깎은 격자라 모서리는 칸이 아니다. 원래 쓰던 (7,-7)은
+        // hypot 9.90 > 8.35라 클라이언트가 만들지 않는 좌표여서 (7,-3)으로 옮겼다.
         PlacementResponse moved = planetService.move(PARENT_ID, PLACED_AT_ORIGIN_ID,
-                new PlacementMoveRequest(7, -7));
+                new PlacementMoveRequest(7, -3));
 
         assertThat(moved.placedQ()).isEqualTo(7);
-        assertThat(moved.placedR()).isEqualTo(-7);
+        assertThat(moved.placedR()).isEqualTo(-3);
     }
 
     @Test
