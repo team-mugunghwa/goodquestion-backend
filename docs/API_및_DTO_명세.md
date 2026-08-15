@@ -30,6 +30,9 @@
 | 상태 충돌 | 409 | 아래 목록 |
 | 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
 | 로그인 시도 초과 잠금 | 423 | `ACCOUNT_LOCKED` |
+| 업로드 한도 초과 | 413 | `AUDIO_TOO_LARGE` (2026-08-16 추가. 기존 500) |
+| AI 벤더 오류 | **502** | `AI_UPSTREAM_ERROR` — 벤더가 4xx/5xx를 돌려줌(429 제외) |
+| AI 쿼터 소진·연결 실패 | **503** | `AI_RATE_LIMITED`(벤더 429), `AI_UNAVAILABLE`(연결 실패/타임아웃). 재시도 안내 대상 |
 | 메일 발송 실패 | 503 | `EMAIL_DELIVERY_FAILED` |
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
@@ -470,11 +473,16 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `sceneOrder` | short | 이야기 안에서의 장면 순서 |
 | `sceneType` | `SceneType` | `STORY` / `DIALOGUE` |
 | `narrationSentences` | `List<String>` | STORY만. DIALOGUE는 빈 배열 |
+| `narrationAudioUrl` | String | STORY만. 내레이션 사전 렌더 음성. null이면 음성 없이 진행하거나 `/api/tts`로 합성한다 (2026-08-16 추가) |
+| `narrationTimings` | `List<{index, start, end}>` | 문장별 실측 시작/끝(초). `narrationAudioUrl`이 있을 때만 값이 있다. index는 `narrationSentences` 순서와 같다 (2026-08-16 추가) |
 | `imageUrl` | String | 장면 배경 이미지 |
 | `characterName` | String | DIALOGUE만 |
 | `maxTurns` | Short | DIALOGUE만 — 남은 턴 UI |
 
 **내레이션 분리는 서버가 한다.** 줄바꿈 기준으로 자른다 — 마침표로 자르면 `1.5km` 같은 표현이 깨진다.
+
+**자막 넘김은 `narrationTimings`를 쓴다.** 이게 없으면 글자수 비례 추정밖에 없는데,
+문장 길이와 실제 낭독 길이가 어긋나 자막이 소리보다 먼저/늦게 넘어간다.
 
 **서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
 
@@ -527,6 +535,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `mode` | `ResponseMode` | `NORMAL`/`GUIDED`/`CLOSING` |
 | `accumulatedElements` | `List<ThinkingElement>` | 현재 장면 누적 |
 | `missingElements` | `List<ThinkingElement>` | **저장하지 않고 계산** (목표 − 누적) |
+| `newElements` | `List<ThinkingElement>` | 이번 발화에서 **새로** 인정된 요소. 표정/연출 트리거용 (2026-08-16 추가) |
 | `turnCount` `maxTurns` | int | 현재 장면에서 아이가 말한 횟수와 그 장면의 최대 대화 범위 |
 | `guidanceTarget` | `ThinkingElement` | GUIDED일 때만 |
 
@@ -566,7 +575,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `messageId` · `text` · `audioUrl`
 
-`audioUrl`이 null이면 클라이언트가 `/api/tts`를 호출한다. 고정 대사는 사전 렌더 음성(`scene_audio`)을 내려줄 수 있다.
+`audioUrl`이 null이면 클라이언트가 `/api/tts`를 호출한다. **고정 대사(첫/마지막 대사)는
+사전 렌더 음성이 실제로 내려간다(2026-08-16부터).** 서버가 지금 내보내는 문장의
+SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM이 만든 대사와
+아이 이름이 치환된 문장은 자동으로 null이 되어 기존 합성 경로를 탄다. 클라이언트
+로직은 그대로다 - `audioUrl ?? 합성` 분기면 충분하다.
 
 #### `SceneOpeningResponse`
 
@@ -993,6 +1006,26 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 ⛔는 0건이다. 명세에 있는 엔드포인트는 전부 동작한다.
 
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
+
+- 사전 렌더 장면 음성 연결(#69). `SceneContentResponse`에 `narrationAudioUrl`과
+  `narrationTimings`(문장별 실측 시작/끝) 추가 - STORY 장면 내레이션이 실제 음성으로
+  재생 가능해졌다. 프론트가 이 필드를 쓰기 전까지는 기존 글자수 타이머로 동작한다
+- `characterMessage.audioUrl`이 고정 첫/마지막 대사에서 실제 값으로 내려간다.
+  문장 SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로 LLM 생성
+  대사와 아이 이름 치환 문장은 자동으로 null(기존 합성 경로). 클라이언트 분기
+  (`audioUrl ?? 합성`)는 변경 불필요
+- 대화1 필수 요소 확정 반영(#45): `REASON` 제외 3종(PERSPECTIVE, EMOTION,
+  SOLUTION). `progress.missingElements` 등에 REASON이 더는 나타나지 않는다
+- 대화 장면 종료가 요소 충족 즉시로 변경(#68). preferred_turns는 종료 게이트가
+  아니라 권장 길이다(충족조건 확정) - 1턴에 요소를 다 채우면 그 턴에 닫힌다
+- AI 실패 상태코드 세분화(#68): 벤더 429 -> 503 `AI_RATE_LIMITED`, 그 외 벤더
+  오류 -> 502 `AI_UPSTREAM_ERROR`, 연결 실패 -> 503 `AI_UNAVAILABLE`, 업로드
+  초과 -> 413 `AUDIO_TOO_LARGE`, 본문 파싱 실패 -> 400 `INVALID_REQUEST`.
+  전부 500으로 나가던 것의 구분이다
+- `ProgressResponse.newElements` 추가(#68): 이번 발화에서 새로 인정된 요소.
+  표정 연출 트리거용
 
 **2026-08-15 갱신분 3** (미션 결과 제출 제거로 분모 59 -> 58. ⛔ 0건)
 
