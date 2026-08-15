@@ -6,23 +6,28 @@ import com.mugunghwa.goodquestion.user.auth.dto.SignUpRequest;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 /**
  * 비밀번호 재설정 (계정-06).
  *
- * <p>실제 메일이 나가면 안 되므로 JavaMailSender를 목으로 대체한다.
+ * <p>실제 메일이 나가면 안 되므로 WebClient(Resend HTTP API 호출)를 목으로 대체한다.
+ * 딥 스텁을 쓰는 이유: 실제 코드가 post().uri().header().contentType().bodyValue()...로
+ * 체이닝하는데, 중간 단계마다 일일이 stub하지 않아도 마지막 bodyValue() 인자를 검증할 수 있다.
  */
 @IntegrationTest
 @Transactional
@@ -46,8 +51,8 @@ class PasswordResetServiceTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @MockitoBean
-    private JavaMailSender mailSender;
+    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
+    private WebClient webClient;
 
     private void 가입한다(String email) {
         authService.signUp(new SignUpRequest(email, PASSWORD, "김보호"), IP);
@@ -59,9 +64,10 @@ class PasswordResetServiceTest {
         // request()가 저장한 해시와 매칭되는 원문을 얻으려면 request() 호출 지점에서 가로채야
         // 하지만 이 테스트는 서비스 바깥에서 원문을 알 수 없다는 게 핵심 보안 속성이라,
         // request()를 호출한 뒤 메일 발송 인자에서 링크를 읽어 토큰을 뽑는다.
-        var captor = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(captor.capture());
-        String text = captor.getValue().getText();
+        var captor = org.mockito.ArgumentCaptor.forClass(Map.class);
+        verify(webClient.post().uri(anyString()).header(anyString(), anyString()).contentType(any()))
+                .bodyValue(captor.capture());
+        String text = (String) captor.getValue().get("text");
         String marker = "token=";
         int start = text.indexOf(marker) + marker.length();
         int end = text.indexOf('\n', start);
@@ -75,7 +81,8 @@ class PasswordResetServiceTest {
         passwordResetService.request("reset-a@test.com");
 
         assertThat(tokenRepository.count()).isEqualTo(1);
-        verify(mailSender).send(any(SimpleMailMessage.class));
+        verify(webClient.post().uri(anyString()).header(anyString(), anyString()).contentType(any()))
+                .bodyValue(any());
     }
 
     @Test
@@ -83,7 +90,7 @@ class PasswordResetServiceTest {
         passwordResetService.request("no-such-account@test.com");
 
         assertThat(tokenRepository.count()).isZero();
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        verify(webClient, never()).post();
     }
 
     @Test
