@@ -41,7 +41,7 @@ public class CorsConfig {
 
         // 컨트롤러가 실제로 쓰는 메서드만 연다. PUT 은 쓰는 곳이 없다.
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
 
         // 쿠키를 쓰지 않는다. 토큰은 Authorization 헤더로 보내고 프론트의
         // 오리진별 저장소에 둔다. 남의 오리진이 이 토큰을 읽을 수 없으므로
