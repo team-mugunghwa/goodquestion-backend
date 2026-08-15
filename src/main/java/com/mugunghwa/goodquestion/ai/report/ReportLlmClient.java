@@ -1,10 +1,11 @@
 package com.mugunghwa.goodquestion.ai.report;
 
 import com.mugunghwa.goodquestion.ai.llm.LlmClient;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,18 +16,29 @@ import java.util.List;
  * ai 어댑터는 호출과 변환만 한다.
  */
 @Component
-@RequiredArgsConstructor
 public class ReportLlmClient {
 
     private final LlmClient llmClient;
     private final ReportPromptBuilder promptBuilder;
+    private final Duration timeout;
+
+    public ReportLlmClient(LlmClient llmClient, ReportPromptBuilder promptBuilder,
+                           @Value("${external.report.timeout-ms:30000}") long timeoutMs) {
+        this.llmClient = llmClient;
+        this.promptBuilder = promptBuilder;
+        this.timeout = Duration.ofMillis(timeoutMs);
+    }
 
     public ReportLlmResult generate(ReportLlmInput input) {
         LlmClient.LlmJsonResult result = llmClient.completeJson(
                 promptBuilder.systemPrompt(),
                 promptBuilder.userPrompt(input),
                 "guardian_report",
-                promptBuilder.outputSchema());
+                promptBuilder.outputSchema(),
+                // 전용 타임아웃을 반드시 넘긴다. 4-인자 버전을 부르면 공용 10초에 걸리는데,
+                // 리포트는 세션 전체 대화를 넣고 긴 JSON을 받아 공용 값으로는 끊긴다 —
+                // LlmClient 인터페이스 주석이 경고하는 바로 그 형태였다(08-15 감사 ⑤).
+                timeout);
 
         JsonNode json = result.json();
         return new ReportLlmResult(

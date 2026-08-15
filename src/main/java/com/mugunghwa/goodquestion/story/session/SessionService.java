@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -50,6 +51,21 @@ public class SessionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다."));
         if (story.getStatus() != StoryStatus.PUBLISHED) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다.");
+        }
+
+        // 같은 이야기를 진행 중이면 새로 만들지 않고 그 세션을 돌려준다.
+        // 매번 새 세션을 만들면 버려진 IN_PROGRESS 세션이 쌓이고, 홈의 이어하기
+        // 카드가 완주한 세션이 아니라 그 찌꺼기를 가리키게 된다.
+        Optional<StorySession> resumable = sessionRepository
+                .findFirstByChildIdAndStoryIdAndStatusOrderByLastActivityAtDesc(
+                        childId, story.getId(), SessionStatus.IN_PROGRESS);
+        if (resumable.isPresent()) {
+            StorySession session = resumable.get();
+            StoryScene scene = session.getCurrentScene();
+            return new SessionStartResponse(
+                    session.getId(), session.getStatus(),
+                    scene == null ? null : SceneContentResponse.from(scene),
+                    session.resolvePhase());
         }
 
         StoryScene firstScene = sceneService.getFirstScene(story.getId());
@@ -131,14 +147,26 @@ public class SessionService {
     }
 
     /** 부족 요소는 저장하지 않고 (장면 목표 요소 − 누적 요소)로 매번 계산한다(진행-04). */
+    /** 조회용(복구·디버그). 이번 턴 신규 요소는 알 수 없어 빈 목록이다. */
     public ProgressResponse toProgress(StorySession session, StoryScene scene) {
+        return toProgress(session, scene, List.of());
+    }
+
+    /**
+     * 턴 응답용. {@code newElements}는 이번 발화에서 새로 인정된 요소다 —
+     * 프론트가 표정·반응을 고르는 데 쓴다(08-15 요청 #9-4).
+     */
+    public ProgressResponse toProgress(StorySession session, StoryScene scene,
+                                       List<String> newElementNames) {
         List<ThinkingElement> accumulated = session.getAccumulatedElements().stream()
                 .map(ThinkingElement::valueOf).toList();
         List<ThinkingElement> missing = (scene == null)
                 ? List.of() : scene.missingElements(session.getAccumulatedElements());
+        List<ThinkingElement> newElements = newElementNames == null ? List.of()
+                : newElementNames.stream().map(ThinkingElement::valueOf).toList();
 
         return new ProgressResponse(
-                session.getLastResponseMode(), accumulated, missing,
+                session.getLastResponseMode(), accumulated, newElements, missing,
                 session.getCurrentChildTurnCount(),
                 (scene == null || scene.getMaxTurns() == null) ? 0 : scene.getMaxTurns(),
                 session.getLastGuidanceTarget());

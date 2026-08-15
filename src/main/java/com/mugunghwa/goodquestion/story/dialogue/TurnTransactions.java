@@ -102,7 +102,7 @@ public class TurnTransactions {
         MissionResponse mission = exposeMissionIfNeeded(session, scene, analysis, decision);
 
         // 진행 상태는 장면이 바뀌기 전에 떠 놓는다. 장면을 옮기면 누적 요소가 초기화된다.
-        ProgressResponse progress = sessionService.toProgress(session, scene);
+        ProgressResponse progress = sessionService.toProgress(session, scene, outcome.elementNames());
 
         // 반응 원칙은 서버가 정해 캐릭터 프롬프트에 넣는다(대화 작동 규칙 3.1). LLM이 고르지 않는다.
         ReactionKey reactionKey = reactionKeyResolver.resolve(
