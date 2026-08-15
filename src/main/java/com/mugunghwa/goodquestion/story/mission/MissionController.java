@@ -29,8 +29,7 @@ public class MissionController {
     @GetMapping("/current")
     public CurrentMissionResponse getCurrentMission(@CurrentParentId UUID parentId,
                                                     @PathVariable UUID sessionId) {
-        return new CurrentMissionResponse(missionService.exposedMissionOf(
-                sessionService.getOwnedSession(parentId, sessionId)));
+        return new CurrentMissionResponse(sessionService.currentMission(parentId, sessionId));
     }
 
     @PostMapping("/{missionId}/result")
