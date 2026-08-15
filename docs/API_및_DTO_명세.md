@@ -34,7 +34,7 @@
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
 
 **멱등키(2026-08 확정)** — 발화 제출과 아이템 구매는 `Idempotency-Key` 헤더(선택, UUID 권장, 64자 이하)를 받는다. 클라이언트가 작업마다 새로 만들고 **재시도 사이에만 유지**한다. 같은 키의 재전송은 완료된 요청이면 저장된 응답을 그대로 재생하고, 처리 중이면 409 `REQUEST_IN_PROGRESS`를 돌려준다. 키가 없으면 기존 동작 그대로다. 기록은 24시간 보관 후 청소된다.
 
@@ -150,7 +150,11 @@
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
 | GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ✅ |
-| POST | `/{missionId}/result` | 미션 수행 결과를 제출한다 | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
+
+**수행 결과 제출은 별도 API가 아니다.** 아이가 미션에 대해 말한 발화를 발화 제출
+(`POST /utterances`)에 `missionId`를 실어 보내면 서버가 완료 표시와 분석을 함께
+처리한다(이야기_전개_가이드.md 3.5). 한때 계약만 있던 `POST /{missionId}/result`는
+2026-08-15에 제거했다 - 구현도 호출처도 없었다.
 
 ### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
 
@@ -680,21 +684,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `mission`(`MissionResponse`) — **미노출 상태면 null이고 404가 아니다.** 노출 여부는 정상 상태이지 오류가 아니다.
 
-#### `MissionResultRequest`
-
-> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 요청
-
-| 필드 | 타입 | 설명 |
-|---|---|---|
-| `answers` | `Map<String,String>` | 미션1 — Question의 key별 답 |
-| `cards` | `List<CardAnswer>` | 미션2 — `{key, strengthText}` |
-
-#### `MissionResultResponse`
-
-> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 응답
-
-`missionId` · `accepted`(boolean) — 결과는 다음 턴 캐릭터 대사에 반영된다.
-
 ---
 
 ### 3.9 말하기 후 활동
@@ -993,17 +982,30 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 홈 | 1 | 1 | 0 | 0 |
 | 콘텐츠 | 4 | 4 | 0 | 0 |
 | 세션·장면 | 8 | 8 | 0 | 0 |
-| 대화·미션 | 4 | 3 | 0 | 1 |
+| 대화·미션 | 3 | 3 | 0 | 0 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
 | 리포트 | 3 | 3 | 0 | 0 |
 | 단어장 | 4 | 4 | 0 | 0 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **59** | **56** | **2** | **1** |
+| **합계** | **58** | **56** | **2** | **0** |
 
-⛔ 1건(미션 결과 제출)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔는 0건이다. 명세에 있는 엔드포인트는 전부 동작한다.
 
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-15 갱신분 3** (미션 결과 제출 제거로 분모 59 -> 58. ⛔ 0건)
+
+- `POST /api/sessions/{sessionId}/missions/{missionId}/result` 계약 제거. 유일하게
+  남아 있던 미구현(501)이었는데, 구현도 호출처도 없었다 - 프론트는 처음부터 발화
+  제출(`POST /utterances` + `missionId`)로 미션을 냈고, 이야기_전개_가이드 3.5도
+  "별도 API가 아니다, 쓰지 않는다"로 확정돼 있었다. 명세만 "구현 예정"으로 남아
+  가이드와 모순되던 것을 해소했다
+- 발화 경로가 검증(409 MISSION_NOT_EXPOSED, 404), 완료 표시, 분석, 캐릭터 응답을
+  전부 처리하므로 기능 차이는 없다. 유일한 차이였던 질문별 구조화 저장은 소비처가
+  없고(리포트 미사용, 질문별 표시 계획 없음 확인), `mission_results` 테이블과
+  엔티티는 스키마 변경 리스크를 피해 휴면으로 남긴다
+- `MISSION_ALREADY_SUBMITTED`(409)도 함께 제거 - 이 엔드포인트만 낼 수 있던 코드다
 
 **2026-08-15 갱신분 2** (직전 집계는 54/3/2였다. 현황표가 실제 구현보다 뒤처져 있던 것을 정정)
 

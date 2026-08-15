@@ -2,21 +2,23 @@ package com.mugunghwa.goodquestion.story.mission;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
 import com.mugunghwa.goodquestion.story.mission.dto.CurrentMissionResponse;
-import com.mugunghwa.goodquestion.story.mission.dto.MissionResultRequest;
-import com.mugunghwa.goodquestion.story.mission.dto.MissionResultResponse;
 import com.mugunghwa.goodquestion.story.session.SessionService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
 /**
- * 미션 조회·결과 제출(미션-02~09).
+ * 미션 조회(미션-02~09).
  *
- * <p>노출 판정 자체는 턴 처리 중 서버가 수행하므로 여기서는 노출된 미션을 읽고 결과만 받는다.
- * TODO: 결과 제출(MissionResult 저장 + 다음 턴 대사 반영) 구현.
+ * <p>노출 판정은 턴 처리 중 서버가 수행하므로 여기서는 노출된 미션을 읽기만 한다.
+ * 수행 결과 제출은 별도 API가 아니다 - 아이가 미션에 대해 말한 발화를
+ * {@code POST /utterances}에 {@code missionId}를 실어 보내면 턴 파이프라인이
+ * 완료 표시와 분석을 함께 처리한다(이야기_전개_가이드.md 3.5). 한때 있던
+ * {@code POST /{missionId}/result} 계약은 2026-08-15에 제거했다.
  */
 @RestController
 @RequestMapping("/api/sessions/{sessionId}/missions")
@@ -24,20 +26,10 @@ import java.util.UUID;
 public class MissionController {
 
     private final SessionService sessionService;
-    private final MissionService missionService;
 
     @GetMapping("/current")
     public CurrentMissionResponse getCurrentMission(@CurrentParentId UUID parentId,
                                                     @PathVariable UUID sessionId) {
         return new CurrentMissionResponse(sessionService.currentMission(parentId, sessionId));
-    }
-
-    @PostMapping("/{missionId}/result")
-    @ResponseStatus(HttpStatus.CREATED)
-    public MissionResultResponse submitResult(@CurrentParentId UUID parentId,
-                                              @PathVariable UUID sessionId,
-                                              @PathVariable String missionId,
-                                              @Valid @RequestBody MissionResultRequest request) {
-        throw new UnsupportedOperationException("미구현: 미션 결과 제출");
     }
 }
