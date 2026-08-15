@@ -118,7 +118,13 @@ external:
     low-confidence-threshold: ${STT_LOW_CONFIDENCE_THRESHOLD:0.5}
     # 오인식이 잦은 이야기 어휘(시드 proper_nouns의 합집합). 실측에서 "방귀"가 "방비"로
     # 인식됐다. 장면별 힌트가 정석이지만 /api/stt 계약에 장면 정보가 없어 전체를 준다.
+    # 이 값은 에코 판정(isVocabularyEcho)의 어휘 목록으로도 쓰인다.
     vocabulary-hint: "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장"
+    # 벤더에 실어 보내는 프롬프트. 어휘를 쉼표 나열로 주면 무음/뭉개진 오디오에서
+    # 모델이 목록을 그대로 복창하는 환각을 잘 유발한다 - 같은 어휘를 이야기 문장에
+    # 녹여 주면 힌트 효과는 유지하면서 목록 반복 환각이 줄어든다. 비워 두면
+    # vocabulary-hint를 그대로 보낸다(기존 동작).
+    prompt: ${STT_PROMPT:며느리가 시아버지 앞에서 방귀를 참는 옛이야기예요. 며느리는 친정 가는 길에 갓을 쓴 이장을 만나고, 장대로 배나무의 배를 따요. 방귀에 기왓장이 들썩여요.}
   tts:
     api-key: ${TTS_API_KEY:${LLM_API_KEY}}
     model: ${TTS_MODEL:gpt-4o-mini-tts}
