@@ -77,4 +77,17 @@ public class SceneAudio {
     /** 한 문장의 실측 구간. 자막과 화면 전환이 이 값에 붙는다. */
     public record SentenceTiming(int index, String text, double start, double end) {
     }
+
+    /**
+     * 재생 가능한 URL.
+     *
+     * <p>{@code storage_path}는 앞 슬래시 없는 상대 경로로 심겨 있고(예: {@code tts/banggui/...}),
+     * 정적 리소스는 루트에서 서빙된다. 이미지가 {@code /stories/...}로 저장돼 있는 것과 모양을 맞춘다.
+     *
+     * <p>조립 규칙을 쓰는 곳이 셋(장면 콘텐츠·캐릭터 메시지·해석기)이라 여기 하나만 둔다.
+     */
+    public String url() {
+        return storagePath.startsWith("/") || storagePath.startsWith("http")
+                ? storagePath : "/" + storagePath;
+    }
 }

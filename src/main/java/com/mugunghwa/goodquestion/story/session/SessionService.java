@@ -295,6 +295,7 @@ public class SessionService {
      */
     private CharacterMessageResponse toMessage(Message message) {
         return CharacterMessageResponse.from(message,
-                sceneAudioResolver.urlFor(message.getScene().getId(), message.getText()));
+                sceneAudioResolver.forText(message.getScene().getId(), message.getText())
+                        .orElse(null));
     }
 }

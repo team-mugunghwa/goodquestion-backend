@@ -50,16 +50,11 @@ public record SceneContentResponse(
         return new SceneContentResponse(
                 s.getId(), s.getSceneOrder(), s.getSceneType(),
                 dialogue ? List.of() : splitSentences(s.getSceneDescription()),
-                narration == null ? null : toUrl(narration),
+                narration == null ? null : narration.url(),
                 narration == null ? List.of() : toTimings(narration),
                 s.getImageUrl(),
                 s.getCharacterName(),
                 dialogue ? s.getMaxTurns() : null);
-    }
-
-    private static String toUrl(SceneAudio narration) {
-        String path = narration.getStoragePath();
-        return path.startsWith("/") || path.startsWith("http") ? path : "/" + path;
     }
 
     private static List<NarrationTiming> toTimings(SceneAudio narration) {
