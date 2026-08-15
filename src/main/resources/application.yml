@@ -96,6 +96,13 @@ kakao:
   client-id: ${KAKAO_CLIENT_ID:}          # 카카오 REST API 키 - 인가 코드 교환에 필요
   client-secret: ${KAKAO_CLIENT_SECRET:}  # 카카오 콘솔에서 사용함으로 설정한 경우에만
 
+# 비밀번호 재설정 메일 발송(HTTP API, 계정-06). Railway가 아웃바운드 SMTP 포트(587)를
+# 막아 smtp.resend.com 연결이 타임아웃 나서, SMTP 대신 Resend HTTP API(443)로 전환했다.
+# 전용 RESEND_API_KEY가 없으면 기존 SMTP_PASSWORD 값을 그대로 쓴다 - 그 자리에 이미
+# 같은 Resend API 키가 들어있다(SMTP 연동 당시부터). 둘 다 없으면 기동을 막는다.
+resend:
+  api-key: ${RESEND_API_KEY:${SMTP_PASSWORD}}
+
 external:
   # 외부 API 호출 상한. 벤더가 응답하지 않을 때 호출 스레드와 DB 커넥션이 함께 묶이는 것을 막는다.
   # 응답 타임아웃은 LLM 두 번을 순차로 부르는 것을 감안해 정한다 - 이 값의 두 배가 턴 하나의
