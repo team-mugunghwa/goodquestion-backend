@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -48,6 +49,21 @@ public class SessionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다."));
         if (story.getStatus() != StoryStatus.PUBLISHED) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다.");
+        }
+
+        // 같은 이야기를 진행 중이면 새로 만들지 않고 그 세션을 돌려준다.
+        // 매번 새 세션을 만들면 버려진 IN_PROGRESS 세션이 쌓이고, 홈의 이어하기
+        // 카드가 완주한 세션이 아니라 그 찌꺼기를 가리키게 된다.
+        Optional<StorySession> resumable = sessionRepository
+                .findFirstByChildIdAndStoryIdAndStatusOrderByLastActivityAtDesc(
+                        childId, story.getId(), SessionStatus.IN_PROGRESS);
+        if (resumable.isPresent()) {
+            StorySession session = resumable.get();
+            StoryScene scene = session.getCurrentScene();
+            return new SessionStartResponse(
+                    session.getId(), session.getStatus(),
+                    scene == null ? null : SceneContentResponse.from(scene),
+                    session.resolvePhase());
         }
 
         StoryScene firstScene = sceneService.getFirstScene(story.getId());
