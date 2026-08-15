@@ -33,10 +33,16 @@ class WordbookServiceTest {
     private static final UUID SCENE_ID = UUID.fromString("33333333-3333-3333-3333-000000000001");
     private static final UUID SEEDED_WORD_ID = UUID.fromString("17770000-0000-0000-0000-000000000001");
 
-    /** SCENE_ID(R__1_seed_content.sql 장면 1)의 scene_description 원문. */
+    /**
+     * SCENE_ID(R__1_seed_content.sql 장면 1)의 scene_description 원문.
+     *
+     * <p>문장 구분이 줄바꿈이다 — 화면이 한 문장씩 순차로 보여 주고(장면-05),
+     * 사전 렌더 음성의 문장별 타이밍도 이 구분을 따른다.
+     */
     private static final String SCENE_DESCRIPTION =
-            "옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다. 며느리는 시집에 온 뒤로 늘 얌전하고 "
-                    + "예의 바르게 보이고 싶었습니다. 시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.";
+            "옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다.\n"
+                    + "며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다.\n"
+                    + "시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.";
 
     @Autowired
     private WordbookService wordbookService;

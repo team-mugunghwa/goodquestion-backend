@@ -25,20 +25,20 @@ public final class RewardFixtures {
     public static final UUID COMPLETED_SESSION_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-000000000001");
     public static final UUID IN_PROGRESS_SESSION_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-000000000002");
 
-    /** 돌 - 항상 열림, 1 */
+    /** 작은 돌 - 항상 열림, 1 (진열 1번) */
     public static final UUID ROCK_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000001");
-    /** 집 - 누적 3으로 해금, 3 */
+    /** 우리 집 - 누적 9로 해금, 2 */
     public static final UUID HOUSE_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000d");
-    /** 강아지 - 방귀 이야기 완주로 해금, 3 */
-    public static final UUID DOG_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000e");
-    /** 토끼 - 누적 4로 해금, 3 */
-    public static final UUID RABBIT_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000f");
-    /** 거북이 - 누적 5로 해금, 3 */
-    public static final UUID TURTLE_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000010");
+    /** 토끼 - 방귀 이야기 완주로 해금, 2 */
+    public static final UUID BUNNY_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000e");
+    /** 고양이 - 누적 5로 해금, 2 */
+    public static final UUID CAT_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-00000000000f");
+    /** 여우 - 누적 11로 해금, 2 */
+    public static final UUID FOX_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000010");
 
     /** 풀 - 지우의 보관함에 있는 보유 아이템 */
     public static final UUID STORED_CHILD_ITEM_ID = UUID.fromString("b2220000-0000-0000-0000-000000000002");
-    /** 돌 - 지우가 (0,0)에 놓아 둔 배치 */
+    /** 작은 돌 - 지우가 (0,0)에 놓아 둔 배치 */
     public static final UUID PLACED_AT_ORIGIN_ID = UUID.fromString("c3330000-0000-0000-0000-000000000001");
 
     private RewardFixtures() {
