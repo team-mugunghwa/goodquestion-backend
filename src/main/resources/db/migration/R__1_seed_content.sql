@@ -40,12 +40,26 @@ on conflict (id) do update set
 
 -- ------------------------------------------------------------
 -- 2. stories - 방귀 뀌는 며느리 (원본 ID: s_banggui_daughter_in_law_001)
+--
+-- child_role / intro 는 상세 화면(선택-03)이 쓰는 값이다. MVP 요건의
+-- "상세 화면에 이야기 도입, 상황, 아이 역할 표시"가 데이터베이스_설계 3.1 에서
+-- 이 두 컬럼으로 내려온 것이다. 그동안 비어 있어서 상세 화면의 역할·도입이
+-- 통째로 안 보였다 (장면 9개가 다 있는 이야기인데도).
+--   - intro : 콘텐츠 문서 1절 '도입' 단락을 아이 눈높이 두 문장으로 줄였다.
+--             앞 문장이 도입(누가), 뒤 문장이 상황(지금 무슨 일)이다.
+--   - child_role : **콘텐츠팀 검수 필요.** 문서에 아이 역할을 명시한 곳이 없어
+--             대화 4장면에서 역산한 제안값이다. 아이는 며느리(대화1·4)뿐 아니라
+--             시아버지(대화2)·마을 이장(대화3)과도 이야기하므로 한 인물의 친구가
+--             아니라 '마을 사람들의 고민을 듣는 상대'로 잡았다.
 -- ------------------------------------------------------------
-insert into stories (id, title, summary, image_url, difficulty, estimated_minutes, post_activity_config, status) values
+insert into stories (id, title, summary, child_role, intro, image_url, difficulty,
+                     estimated_minutes, post_activity_config, status) values
 (
     '11111111-1111-1111-1111-111111111111',
     '방귀 뀌는 며느리',
     '큰 방귀를 부끄러워하던 며느리가 자신의 다름을 장점으로 바꾸는 이야기',
+    '마을 사람들의 고민을 들어주는 아이',
+    '옛날 어느 마을에, 방귀를 아주 크게 뀌는 며느리가 살았어요. 이상하게 볼까 봐 걱정이 되어서, 며느리는 방귀를 꾹꾹 참고 있어요.',
     '/stories/banggui/cover.jpg',
     '보통',
     20,
@@ -64,6 +78,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
 on conflict (id) do update set
     title = excluded.title,
     summary = excluded.summary,
+    child_role = excluded.child_role,
+    intro = excluded.intro,
     image_url = excluded.image_url,
     difficulty = excluded.difficulty,
     estimated_minutes = excluded.estimated_minutes,

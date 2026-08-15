@@ -5,8 +5,9 @@
 -- 목록이 사실상 비어 보인다. 이 파일은 그 간극을 메우려고 **목록에 뜨는 데
 -- 필요한 최소한**만 넣는다.
 --
--- 담는 것   : topics 5종 추가 / stories 6편(카드 정보만) / story_topics 연결
--- 안 담는 것: story_scenes, post_activity_config, child_role, intro
+-- 담는 것   : topics 5종 추가 / stories 6편(카드 + 상세 화면용 child_role · intro)
+--             / story_topics 연결
+-- 안 담는 것: story_scenes, post_activity_config
 --
 -- 즉 **아직 플레이할 수 없는 이야기들이다.** 목록에는 뜨고 상세도 열리지만
 -- sceneCount 가 0이라 세션 시작은 안 된다. 장면·대사가 준비되면 그때
@@ -55,12 +56,22 @@ on conflict (id) do update set
 -- summary 와 difficulty 는 스키마상 not null 인데 프런트 더미에 없어서 여기서
 -- 새로 적었다. **콘텐츠팀 검수가 필요한 값이다.** difficulty 는 더미의
 -- estimated_minutes 를 그대로 따랐다 (15분=쉬움, 20분=보통).
+--
+-- child_role / intro 도 마찬가지로 **콘텐츠팀 검수가 필요한 제안값이다.**
+-- 이 값이 없으면 상세 화면의 역할 카드와 도입문이 통째로 비어서, 아이가
+-- 표지만 보고 들어왔다가 아무 안내 없이 되돌아 나가게 된다. 원문 대본이
+-- 없는 6편이라 널리 알려진 줄거리에서 두 문장으로 뽑았다 - 앞 문장이
+-- 도입(누가·어디), 뒤 문장이 상황(지금 무슨 일)이다. 장면 대본이 준비되면
+-- 대본의 도입 장면에 맞춰 다시 손보는 것을 전제로 한다.
 -- ------------------------------------------------------------
-insert into stories (id, title, summary, image_url, difficulty, estimated_minutes, status) values
+insert into stories (id, title, summary, child_role, intro, image_url, difficulty,
+                     estimated_minutes, status) values
 (
     '11111111-1111-1111-1111-000000000021',
     '해와 달이 된 오누이',
     '호랑이를 피해 달아나던 오누이가 서로를 붙잡고 하늘로 올라가 해와 달이 되는 이야기',
+    '오누이와 함께 있는 친구',
+    '깊은 산속 오두막에 오누이 둘만 남아 있어요. 그런데 문 밖에서 누군가 엄마 목소리를 흉내 내며 문을 열어 달라고 해요.',
     '/stories/haewadal/cover.jpg',
     '쉬움',
     15,
@@ -70,6 +81,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-000000000022',
     '의좋은 형제',
     '형과 아우가 서로 모르게 밤마다 볏단을 옮겨다 주며 마음을 나누는 이야기',
+    '형과 아우를 모두 아는 이웃 친구',
+    '가을걷이가 끝난 들판에 형과 아우의 볏단이 나란히 쌓여 있어요. 두 사람은 서로 모르게 밤마다 자기 볏단을 옮기고 있어요.',
     '/stories/uijoheun/cover.jpg',
     '보통',
     20,
@@ -79,6 +92,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-000000000023',
     '흥부와 놀부',
     '다친 제비를 돌본 흥부와 욕심을 부린 놀부가 서로 다른 박을 타게 되는 이야기',
+    '흥부네 집에 놀러 온 친구',
+    '흥부가 다리를 다친 제비를 정성껏 돌봐 주었어요. 봄이 되어 제비가 물어다 준 씨앗에서 커다란 박이 열렸어요.',
     '/stories/heungbu/cover.jpg',
     '쉬움',
     15,
@@ -88,6 +103,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-000000000031',
     '토끼와 거북이',
     '빠른 토끼와 느린 거북이가 산길을 겨루며 꾸준함이 무엇인지 알게 되는 이야기',
+    '둘을 지켜보는 숲속 친구',
+    '토끼와 거북이가 산꼭대기까지 달리기 시합을 하기로 했어요. 빠른 토끼는 벌써 저만치 앞서가고, 거북이는 이제 막 출발했어요.',
     '/stories/tokki/cover.jpg',
     '쉬움',
     15,
@@ -97,6 +114,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-000000000032',
     '호랑이와 곶감',
     '울던 아이가 곶감 소리에 뚝 그치자 호랑이가 곶감을 저보다 무서운 것으로 오해하는 이야기',
+    '마을에서 호랑이를 만난 친구',
+    '깜깜한 밤, 아이가 울음을 그치지 않자 호랑이가 마당까지 내려왔어요. 그때 누군가 "곶감이다!" 하고 말하자 아이가 울음을 뚝 그쳤어요.',
     '/stories/horangi/cover.jpg',
     '보통',
     20,
@@ -106,6 +125,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
     '11111111-1111-1111-1111-000000000041',
     '학교 가는 길',
     '처음 혼자 학교에 가는 아이가 길에서 만난 것들과 인사하며 용기를 내는 이야기',
+    '같이 학교에 가는 짝꿍',
+    '오늘은 혼자서 학교에 가는 첫날이에요. 골목을 나서니 낯선 길과 처음 보는 것들이 기다리고 있어요.',
     '/stories/hakgyo/cover.jpg',
     '쉬움',
     15,
@@ -114,6 +135,8 @@ insert into stories (id, title, summary, image_url, difficulty, estimated_minute
 on conflict (id) do update set
     title = excluded.title,
     summary = excluded.summary,
+    child_role = excluded.child_role,
+    intro = excluded.intro,
     image_url = excluded.image_url,
     difficulty = excluded.difficulty,
     estimated_minutes = excluded.estimated_minutes,
