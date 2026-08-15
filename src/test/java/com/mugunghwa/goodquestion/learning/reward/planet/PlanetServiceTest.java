@@ -56,9 +56,9 @@ class PlanetServiceTest {
         PlanetResponse.NextUnlock nextUnlock = planetService.getPlanet(PARENT_ID, SIBLING_ID)
                 .progress().nextUnlock();
 
-        // 하준은 누적 0이라 진열 순서상 집(누적 3)이 가장 앞선 잠금이다.
-        assertThat(nextUnlock.itemName()).isEqualTo("집");
-        assertThat(nextUnlock.conditionText()).isEqualTo("별가루를 모두 3개 모으면 열려요");
+        // 하준은 누적 0이라 진열 순서상 모닥불(누적 4)이 가장 앞선 잠금이다.
+        assertThat(nextUnlock.itemName()).isEqualTo("모닥불");
+        assertThat(nextUnlock.conditionText()).isEqualTo("별가루를 모두 4개 모으면 열려요");
     }
 
     @Test

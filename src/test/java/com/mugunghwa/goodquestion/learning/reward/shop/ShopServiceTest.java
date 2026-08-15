@@ -32,7 +32,7 @@ class ShopServiceTest {
     void 상점은_진열_순서대로_전체를_돌려준다() {
         List<ShopItemResponse> items = shopService.getShopItems(PARENT_ID, CHILD_ID);
 
-        assertThat(items).hasSize(16);
+        assertThat(items).hasSize(45);
         assertThat(items.getFirst().itemId()).isEqualTo(ROCK_ITEM_ID);
     }
 
@@ -47,53 +47,53 @@ class ShopServiceTest {
 
     @Test
     void 누적_획득량이_기준을_넘으면_해금된다() {
-        // 지우는 누적 25 - 집(3)도 거북이(5)도 열린다. 하준은 누적 0 - 잠기고 실루엣이다
+        // 지우는 누적 25 - 우리 집(9)도 여우(11)도 열린다. 하준은 누적 0 - 잠기고 실루엣이다
         List<ShopItemResponse> items = shopService.getShopItems(PARENT_ID, CHILD_ID);
         assertThat(find(items, HOUSE_ITEM_ID).unlocked()).isTrue();
-        assertThat(find(items, TURTLE_ITEM_ID).unlocked()).isTrue();
+        assertThat(find(items, FOX_ITEM_ID).unlocked()).isTrue();
 
         List<ShopItemResponse> siblingItems = shopService.getShopItems(PARENT_ID, SIBLING_ID);
-        assertThat(find(siblingItems, TURTLE_ITEM_ID).unlocked()).isFalse();
-        assertThat(find(siblingItems, TURTLE_ITEM_ID).silhouette()).isTrue();
+        assertThat(find(siblingItems, FOX_ITEM_ID).unlocked()).isFalse();
+        assertThat(find(siblingItems, FOX_ITEM_ID).silhouette()).isTrue();
     }
 
     @Test
     void 잔액이_아니라_누적_획득량으로_판정한다() {
-        // 지우의 잔액을 거북이 해금 기준(5) 아래로 써 버려도 누적(25) 기반 해금은 유지된다
+        // 지우의 잔액(14)을 여우 해금 기준(11) 아래로 써 버려도 누적(25) 기반 해금은 유지된다
         shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(HOUSE_ITEM_ID));
-        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(DOG_ITEM_ID));
-        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(RABBIT_ITEM_ID));
-        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(TURTLE_ITEM_ID));
-        assertThat(walletRepository.findByChildId(CHILD_ID).orElseThrow().getBalance()).isLessThan(5);
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(BUNNY_ITEM_ID));
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(CAT_ITEM_ID));
+        shopService.purchase(PARENT_ID, CHILD_ID, new ItemPurchaseRequest(FOX_ITEM_ID));
+        assertThat(walletRepository.findByChildId(CHILD_ID).orElseThrow().getBalance()).isLessThan(11);
 
-        assertThat(find(shopService.getShopItems(PARENT_ID, CHILD_ID), TURTLE_ITEM_ID).unlocked()).isTrue();
+        assertThat(find(shopService.getShopItems(PARENT_ID, CHILD_ID), FOX_ITEM_ID).unlocked()).isTrue();
     }
 
     @Test
     void 이야기_완주로_열리는_아이템은_안내를_함께_준다() {
-        ShopItemResponse dog = find(shopService.getShopItems(PARENT_ID, CHILD_ID), DOG_ITEM_ID);
+        ShopItemResponse bunny = find(shopService.getShopItems(PARENT_ID, CHILD_ID), BUNNY_ITEM_ID);
 
-        assertThat(dog.unlocked()).isTrue();   // 지우는 방귀 이야기를 완주했다
-        assertThat(dog.unlockGuide()).isNotNull();
-        assertThat(dog.unlockGuide().storyTitle()).isEqualTo("방귀 뀌는 며느리");
+        assertThat(bunny.unlocked()).isTrue();   // 지우는 방귀 이야기를 완주했다
+        assertThat(bunny.unlockGuide()).isNotNull();
+        assertThat(bunny.unlockGuide().storyTitle()).isEqualTo("방귀 뀌는 며느리");
     }
 
     @Test
     void 완주하지_않은_아이에게는_동물이_잠겨_있다() {
-        ShopItemResponse dog = find(shopService.getShopItems(PARENT_ID, SIBLING_ID), DOG_ITEM_ID);
+        ShopItemResponse bunny = find(shopService.getShopItems(PARENT_ID, SIBLING_ID), BUNNY_ITEM_ID);
 
-        assertThat(dog.unlocked()).isFalse();
-        assertThat(dog.unlockGuide()).isNotNull();
+        assertThat(bunny.unlocked()).isFalse();
+        assertThat(bunny.unlockGuide()).isNotNull();
     }
 
     @Test
     void 부족한_별가루를_계산해_내려준다() {
-        // 지우 잔액 14, 집 가격 3 - 살 수 있다
+        // 지우 잔액 14, 우리 집 가격 2 - 살 수 있다
         ShopItemResponse house = find(shopService.getShopItems(PARENT_ID, CHILD_ID), HOUSE_ITEM_ID);
         assertThat(house.purchasable()).isTrue();
         assertThat(house.shortfall()).isZero();
 
-        // 하준 잔액 0, 돌 가격 1
+        // 하준 잔액 0, 작은 돌 가격 1
         ShopItemResponse rock = find(shopService.getShopItems(PARENT_ID, SIBLING_ID), ROCK_ITEM_ID);
         assertThat(rock.purchasable()).isFalse();
         assertThat(rock.shortfall()).isEqualTo(1);
@@ -136,9 +136,9 @@ class ShopServiceTest {
 
     @Test
     void 잠긴_아이템은_살_수_없다() {
-        // 하준은 누적 0이라 거북이(누적 5)가 잠겨 있다. 해금 검증이 잔액 검증보다 먼저다.
+        // 하준은 누적 0이라 여우(누적 11)가 잠겨 있다. 해금 검증이 잔액 검증보다 먼저다.
         assertThatThrownBy(() ->
-                shopService.purchase(PARENT_ID, SIBLING_ID, new ItemPurchaseRequest(TURTLE_ITEM_ID)))
+                shopService.purchase(PARENT_ID, SIBLING_ID, new ItemPurchaseRequest(FOX_ITEM_ID)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ITEM_LOCKED);
     }
