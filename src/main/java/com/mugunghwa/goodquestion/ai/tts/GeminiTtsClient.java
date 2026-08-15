@@ -89,7 +89,11 @@ public class GeminiTtsClient implements TtsClient {
         String prompt = voices.instructionsFor(characterName) + "\n\n" + text;
 
         JsonNode response = webClient.post()
-                .uri(baseUrl + "/models/" + model + ":generateContent?key=" + apiKey)
+                // 키는 쿼리스트링이 아니라 헤더로 보낸다. URL은 요청 로깅 필터(WebClientConfig
+                // logRequest)와 WebClient 예외 메시지에 그대로 실리므로, 쿼리에 실으면 벤더
+                // 장애가 나는 순간 키가 ERROR 로그로 샌다.
+                .uri(baseUrl + "/models/" + model + ":generateContent")
+                .header("x-goog-api-key", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 // 긴 내레이션은 공용 10초를 넘길 수 있다. 대화 턴은 짧아야 하므로 여기만 늘린다.
                 .httpRequest(request -> {
