@@ -11,6 +11,7 @@ import com.mugunghwa.goodquestion.story.content.Story;
 import com.mugunghwa.goodquestion.story.content.StoryRepository;
 import com.mugunghwa.goodquestion.story.content.StoryStatus;
 import com.mugunghwa.goodquestion.story.mission.MissionService;
+import com.mugunghwa.goodquestion.story.mission.dto.MissionResponse;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import com.mugunghwa.goodquestion.user.consent.ConsentService;
@@ -91,6 +92,18 @@ public class SessionService {
         return new CurrentSceneResponse(
                 scene == null ? null : SceneContentResponse.from(scene),
                 session.resolvePhase());
+    }
+
+    /**
+     * 노출 중인 미션 조회(미션-02). 미노출이면 null이다.
+     *
+     * <p>컨트롤러가 세션을 직접 꺼내 MissionService에 넘기면 두 호출이 서로 다른 트랜잭션이
+     * 되어, 준영속 상태가 된 세션의 currentScene(LAZY)을 건드리는 순간
+     * LazyInitializationException이 난다(application.yml의 open-in-view: false).
+     * 소유권 검증과 미션 조회를 한 트랜잭션 안에서 끝내야 한다 - resume이 멀쩡한 것과 같은 이유다.
+     */
+    public MissionResponse currentMission(UUID parentId, UUID sessionId) {
+        return missionService.exposedMissionOf(getOwnedSession(parentId, sessionId));
     }
 
     /**
