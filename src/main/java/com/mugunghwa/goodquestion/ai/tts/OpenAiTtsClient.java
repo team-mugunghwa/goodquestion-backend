@@ -1,14 +1,18 @@
 package com.mugunghwa.goodquestion.ai.tts;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClientRequest;
 
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * OpenAI 음성 합성 (gpt-4o-mini-tts).
@@ -23,6 +27,9 @@ import java.util.Map;
  * data URL은 응답 자체가 오디오라 만료 개념이 없다.
  */
 @Component
+// 벤더가 둘이 되면서 스위치가 필요해졌다. 미설정이면 지금까지처럼 OpenAI를 쓴다 —
+// 설정 파일을 안 고친 환경(로컬·CI)에서 앱이 안 뜨는 일이 없어야 한다.
+@ConditionalOnProperty(name = "external.tts.vendor", havingValue = "openai", matchIfMissing = true)
 public class OpenAiTtsClient implements TtsClient {
 
     private final WebClient webClient;
@@ -30,25 +37,57 @@ public class OpenAiTtsClient implements TtsClient {
     private final String apiKey;
     private final String model;
     private final VoiceProperties voices;
+    private final Duration timeout;
 
     public OpenAiTtsClient(WebClient webClient,
                            @Value("${external.llm.base-url:https://api.openai.com/v1}") String baseUrl,
                            @Value("${external.tts.api-key}") String apiKey,
                            @Value("${external.tts.model:gpt-4o-mini-tts}") String model,
+                           @Value("${external.tts.timeout-ms:30000}") long timeoutMs,
                            VoiceProperties voices) {
         this.webClient = webClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.model = model;
         this.voices = voices;
+        this.timeout = Duration.ofMillis(timeoutMs);
     }
+
+    /**
+     * 같은 (보이스, 문장) 합성 결과 캐시. 이야기 고정 대사가 20개뿐인데 재생마다
+     * 벤더 과금 + 왕복 지연이 나가던 것을 막는다(08-15 감사). scene_audio 사전 렌더가
+     * 연결되면 이 캐시는 자연히 한산해진다 — 그 전까지의 최소 방어층이다.
+     * 상한을 두는 이유: 아이 이름이 들어간 문장 등 비고정 입력이 무한히 쌓이면 안 된다.
+     */
+    private static final int CACHE_MAX_ENTRIES = 512;
+    private final ConcurrentHashMap<String, SynthesizedAudio> cache = new ConcurrentHashMap<>();
 
     @Override
     public SynthesizedAudio synthesize(String text, String characterName) {
+        String key = voices.voiceFor(characterName) + " " + text;
+        SynthesizedAudio cached = cache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        SynthesizedAudio fresh = callVendor(text, characterName);
+        if (cache.size() >= CACHE_MAX_ENTRIES) {
+            cache.clear(); // 단순 정책. LRU가 필요할 규모면 scene_audio를 연결할 때다
+        }
+        cache.put(key, fresh);
+        return fresh;
+    }
+
+    private SynthesizedAudio callVendor(String text, String characterName) {
         byte[] audio = webClient.post()
                 .uri(baseUrl + "/audio/speech")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
+                // 긴 내레이션 합성은 공용 10초를 넘길 수 있다. 대화 턴은 아이가 마이크
+                // 앞에서 기다리는 시간이라 공용 값은 짧게 두고 여기만 늘린다.
+                .httpRequest(request -> {
+                    HttpClientRequest nettyRequest = request.getNativeRequest();
+                    nettyRequest.responseTimeout(timeout);
+                })
                 .bodyValue(Map.of(
                         "model", model,
                         "voice", voices.voiceFor(characterName),
