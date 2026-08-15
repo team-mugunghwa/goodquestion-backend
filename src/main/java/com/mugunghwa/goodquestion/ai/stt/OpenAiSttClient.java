@@ -35,17 +35,20 @@ public class OpenAiSttClient implements SttClient {
     private final String apiKey;
     private final String model;
     private final String vocabularyHint;
+    private final String prompt;
 
     public OpenAiSttClient(WebClient webClient,
                            @Value("${external.llm.base-url:https://api.openai.com/v1}") String baseUrl,
                            @Value("${external.stt.api-key}") String apiKey,
                            @Value("${external.stt.model:gpt-4o-mini-transcribe}") String model,
-                           @Value("${external.stt.vocabulary-hint:}") String vocabularyHint) {
+                           @Value("${external.stt.vocabulary-hint:}") String vocabularyHint,
+                           @Value("${external.stt.prompt:}") String prompt) {
         this.webClient = webClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.model = model;
         this.vocabularyHint = vocabularyHint;
+        this.prompt = prompt;
     }
 
     @Override
@@ -65,8 +68,14 @@ public class OpenAiSttClient implements SttClient {
         // 흔치 않은 단어일수록 힌트 효과가 크다. 장면별 proper_nouns를 요청에 실어 보내는
         // 구조가 정석이지만 /api/stt 계약에 장면 정보가 없어, 우선 서비스 전체 어휘를
         // 설정으로 준다(이야기가 1편이라 가능한 타협이다).
-        if (!vocabularyHint.isBlank()) {
-            body.part("prompt", vocabularyHint);
+        //
+        // 어휘를 쉼표 나열로 보내면 무음/뭉개진 오디오에서 모델이 목록을 그대로 복창하는
+        // 환각을 잘 유발한다 - 같은 어휘를 이야기 문장에 녹인 prompt가 있으면 그쪽을
+        // 우선한다. 에코 판정(isVocabularyEcho)은 계속 vocabularyHint의 어휘 목록으로
+        // 한다 - 문장형 프롬프트를 복창해도 어휘 등장 비율(재조합 판정)에 걸린다.
+        String promptHint = !prompt.isBlank() ? prompt : vocabularyHint;
+        if (!promptHint.isBlank()) {
+            body.part("prompt", promptHint);
         }
 
         JsonNode response = webClient.post()

@@ -17,7 +17,7 @@ class VocabularyEchoTest {
     private static final String HINT = "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장";
 
     private OpenAiSttClient client(String hint) {
-        return new OpenAiSttClient(null, "http://unused", "unused-key", "unused-model", hint);
+        return new OpenAiSttClient(null, "http://unused", "unused-key", "unused-model", hint, "");
     }
 
     @Test
@@ -62,6 +62,19 @@ class VocabularyEchoTest {
     @Test
     void 힌트_단어_두어_개에_실제_내용이_붙으면_에코가_아니다() {
         assertThat(client(HINT).isVocabularyEcho("방귀 뀌는 며느리가 계속 참았어요")).isFalse();
+    }
+
+    /**
+     * 문장형 프롬프트(external.stt.prompt) 실측 사례. 무음이 들어오면 모델이 프롬프트
+     * 문장을 그대로 복창하는데, 문장에 힌트 어휘가 전부 녹아 있어 등장 비율 판정에
+     * 걸린다 - 프롬프트를 문장형으로 바꿔도 에코 방어가 뚫리지 않는 근거다.
+     */
+    @Test
+    void 문장형_프롬프트를_복창해도_에코다() {
+        assertThat(client(HINT).isVocabularyEcho(
+                "며느리가 시아버지 앞에서 방귀를 참는 옛이야기예요. 며느리는 친정 가는 길에 "
+                        + "갓을 쓴 이장을 만나고, 장대로 배나무의 배를 따요. 방귀에 기왓장이 들썩여요."))
+                .isTrue();
     }
 
     @Test
