@@ -64,7 +64,7 @@ class ProgressionEngineTest {
     }
 
     @Test
-    void 필수_요소를_다_채우면_목표_달성으로_끝낸다() {
+    void 필수_요소를_다_채우고_최소_대화량을_넘기면_목표_달성으로_끝낸다() {
         StorySession session = session();
         session.applyTurn(List.of("SOLUTION"), false);
         session.applyTurn(List.of("REASON"), false);
@@ -75,22 +75,14 @@ class ProgressionEngineTest {
         assertThat(decision.closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
     }
 
-    /**
-     * preferred_turns는 최소 턴이 아니라 권장 길이다(대화1~4_충족조건.md 확정).
-     *
-     * <p>예전에는 이 값이 종료 게이트여서 1턴에 요소를 다 채워도 한 턴을 더 돌았다.
-     * 그 턴에 캐릭터는 물을 것이 없다 — 남은 요소가 없어 유도 대상 선정이 비고,
-     * 아이는 이미 다 말했는데 대화가 늘어진다. 확정 문서의 "3개 모두 충족: 즉시 종료"에 맞춘다.
-     */
     @Test
-    void 요소를_다_채우면_최소_대화량_전이어도_끝낸다() {
+    void 요소를_다_채워도_최소_대화량_전이면_끝내지_않는다() {
         StorySession session = session();
         session.applyTurn(List.of("SOLUTION", "REASON"), false);
 
         ProgressionDecision decision = engine.decide(session, scene(), null, opinion());
 
-        assertThat(decision.mode()).isEqualTo(ResponseMode.CLOSING);
-        assertThat(decision.closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
+        assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
     }
 
     @Test
@@ -237,12 +229,11 @@ class ProgressionEngineTest {
     @Test
     void 필수_요소를_다_채운_턴에는_약한_유도가_없다() {
         StorySession session = session();
-        session.applyTurn(List.of("SOLUTION", "REASON"), false);   // missing 없음 -> 바로 종료
+        session.applyTurn(List.of("SOLUTION", "REASON"), false);   // missing 없음, 최소 턴 전
 
         ProgressionDecision decision = engine.decide(session, scene(), null, opinion());
 
-        // 요소를 다 채우면 종료가 먼저다. 끝내는 턴에 유도를 얹으면 마무리 대사와 겹친다.
-        assertThat(decision.mode()).isEqualTo(ResponseMode.CLOSING);
+        assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
         assertThat(decision.softCue()).isFalse();
     }
 
