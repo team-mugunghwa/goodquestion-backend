@@ -38,15 +38,24 @@ public class SceneAudioResolver {
      */
     @Transactional(readOnly = true)
     public String urlFor(UUID sceneId, String text) {
+        return forText(sceneId, text).map(SceneAudio::url).orElse(null);
+    }
+
+    /**
+     * 이 문장으로 렌더된 공용 음성. 없으면 비어 있다.
+     *
+     * <p>URL만으로는 부족한 호출자가 있다 - 캐릭터 메시지는 문장별 실측 시각까지 실어야
+     * 클라이언트가 파일 하나를 재생하면서 자막을 문장 단위로 넘길 수 있다.
+     */
+    @Transactional(readOnly = true)
+    public Optional<SceneAudio> forText(UUID sceneId, String text) {
         if (sceneId == null || text == null || text.isBlank()) {
-            return null;
+            return Optional.empty();
         }
         String hash = sha256Hex(text);
         return repository.findAllBySceneIdAndChildIdIsNull(sceneId).stream()
                 .filter(audio -> matches(hash, audio))
-                .findFirst()
-                .map(SceneAudioResolver::toUrl)
-                .orElse(null);
+                .findFirst();
     }
 
     /** 장면의 내레이션 음성. 문장별 실측 시각이 필요해 URL만으로는 부족하다. */
@@ -58,17 +67,6 @@ public class SceneAudioResolver {
         String hash = sha256Hex(narrationText);
         return repository.findBySceneIdAndSlotAndChildIdIsNull(sceneId, SceneAudioSlot.NARRATION)
                 .filter(audio -> matches(hash, audio));
-    }
-
-    /**
-     * 저장 경로를 재생 가능한 URL로.
-     *
-     * <p>{@code storage_path}는 앞 슬래시 없는 상대 경로로 심겨 있고(예: {@code tts/banggui/...}),
-     * 정적 리소스는 루트에서 서빙된다. 이미지가 {@code /stories/...}로 저장돼 있는 것과 모양을 맞춘다.
-     */
-    private static String toUrl(SceneAudio audio) {
-        String path = audio.getStoragePath();
-        return path.startsWith("/") || path.startsWith("http") ? path : "/" + path;
     }
 
     /** text_hash는 char(64)라 값이 짧으면 공백이 붙어 온다. 해시는 정확히 64자지만 방어해 둔다. */
