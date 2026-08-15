@@ -41,7 +41,6 @@ public enum ErrorCode {
     CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
     MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
-    MISSION_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 미션입니다."),
     RETELLING_BEFORE_ORDER(HttpStatus.CONFLICT, "카드 순서를 맞춘 뒤에 이야기를 다시 들려줄 수 있습니다."),
 
     NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "아직 구현되지 않은 기능입니다."),
