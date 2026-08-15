@@ -9,6 +9,7 @@ import com.mugunghwa.goodquestion.learning.reward.stardust.dto.StardustTransacti
 import com.mugunghwa.goodquestion.learning.reward.stardust.dto.StardustWalletResponse;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.session.StorySession;
+import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,13 @@ public class StardustService {
     /** 이야기 완주 보상(보상-04). */
     private static final int STORY_COMPLETED_AWARD = 3;
     /** 유도 없이 목표를 통과한 장면당 보너스. */
+    /**
+     * 아이 생성 시 1회 지급(환영). 소품이 1~2라 한둘을 바로 사서 놓아 볼 수 있는 양이고,
+     * 첫 완주 지급(3)과 같아 학습 보상보다 커지지 않는다. totalEarned에도 잡히지만
+     * 가장 낮은 누적 해금 기준(4)에는 못 미쳐 해금 진행은 여전히 학습으로만 연다.
+     */
+    private static final int WELCOME_AWARD = 3;
+
     private static final int SCENE_BONUS_AWARD = 1;
     /** 세션 합계를 3~5로 묶기 위한 상한. 유니크로는 표현할 수 없어 세어서 막는다. */
     private static final int SCENE_BONUS_MAX_PER_SESSION = 2;
@@ -71,6 +79,17 @@ public class StardustService {
         pending.forEach(StardustTransaction::acknowledge);
 
         return new StardustAcknowledgeResponse(pending.size());
+    }
+
+    /**
+     * 환영 지급. 아이 생성과 같은 트랜잭션에서 지갑을 만든 직후 불린다.
+     *
+     * <p>멱등을 따로 걸지 않는다 — 아이 생성이 유일한 호출처이고 지갑과 같은 트랜잭션이라
+     * 두 번 지급되려면 아이가 두 명 만들어져야 한다.
+     */
+    @Transactional
+    public StardustTransaction awardWelcome(Child child) {
+        return earn(child.getId(), WELCOME_AWARD, StardustReason.WELCOME, null, null, null);
     }
 
     /**

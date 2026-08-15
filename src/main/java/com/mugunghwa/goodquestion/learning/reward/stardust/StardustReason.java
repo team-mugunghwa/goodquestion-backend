@@ -1,9 +1,12 @@
 package com.mugunghwa.goodquestion.learning.reward.stardust;
 
 /**
- * 별가루 증감 사유 — 지급 2종, 사용 1종, 운영 보정 1종.
+ * 별가루 증감 사유 — 지급 3종, 사용 1종, 운영 보정 1종.
+ *
+ * <p>WELCOME은 아이 생성 시 1회 지급이다. 첫 완주 전에는 상점에서 아무것도 살 수 없어
+ * 행성 탭을 먼저 연 아이가 빈 화면만 만난다 — 사이클을 시작 전에 한 바퀴 맛보게 한다.
  *
  * <p>ADMIN_ADJUST는 시연·장애 보정용이다. 지급 경로가 세션 완료 하나뿐이라
  * 이게 없으면 운영 중 보정을 DB에 직접 넣어야 한다.
  */
-public enum StardustReason { STORY_COMPLETED, SCENE_BONUS, ITEM_PURCHASE, ADMIN_ADJUST }
+public enum StardustReason { STORY_COMPLETED, SCENE_BONUS, ITEM_PURCHASE, WELCOME, ADMIN_ADJUST }
