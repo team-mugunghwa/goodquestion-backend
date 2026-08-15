@@ -48,7 +48,7 @@ class SpeechSmokeTest {
     @Test
     void 합성한_음성을_되읽으면_원문이_나온다() {
         OpenAiTtsClient tts = new OpenAiTtsClient(webClient(), "https://api.openai.com/v1",
-                apiKey, "gpt-4o-mini-tts",
+                apiKey, "gpt-4o-mini-tts", Duration.ofSeconds(30).toMillis(),
                 new OpenAiTtsClient.VoiceProperties(null, null, Map.of(), Map.of()));
         OpenAiSttClient stt = new OpenAiSttClient(webClient(), "https://api.openai.com/v1",
                 apiKey, "gpt-4o-mini-transcribe",
