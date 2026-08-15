@@ -27,6 +27,9 @@ spring:
 app:
   mail-from: no-reply@test.goodquestion.local
 
+resend:
+  api-key: test-resend-api-key
+
 # PasswordResetServiceTest가 JavaMailSender를 @MockitoBean으로 대체하는 컨텍스트에서는
 # MailHealthContributorAutoConfiguration이 빈 Map을 만나 'beans' must not be empty로
 # 컨텍스트 로딩 자체가 실패한다. 테스트 환경엔 애초에 진짜 SMTP 연결이 없으니 꺼둔다.
