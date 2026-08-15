@@ -807,7 +807,14 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 
 > **사용처** — `POST /api/children/{childId}/words` · `GET /api/children/{childId}/words` · `PATCH /api/children/{childId}/words/{wordId}/favorite` 응답
 
-`id` · `word` · `meaning` · `exampleSentence` · `entryType` · `sourceSceneId` · `createdAt`
+`id` · `word` · `meaning` · `exampleSentence` · `entryType` · `sourceSceneId` · `storyId` · `storyTitle` · `storyImageUrl` · `createdAt`
+
+이야기 3필드는 단어장 화면이 단어를 **이야기별로 묶어** 보여주기 때문에 담는다. 장면 조회가
+`GET /api/stories/{storyId}/scenes` 뿐이라 `sourceSceneId`만으로는 클라이언트가 이야기를 되짚을
+수 없다. 이름은 이야기를 참조하는 다른 DTO(`ShopItemResponse.UnlockGuide` · `ReportListResponse`)와
+맞췄다. 장면 없이 저장된 단어는 세 값이 모두 null이다.
+
+목록은 평면 유지다 — 그룹핑은 클라이언트가 한다.
 
 ---
 
