@@ -161,9 +161,9 @@ class PostActivityServiceTest {
         RetellingResponse response = activityService.submitRetelling(
                 PARENT_ID, sessionId, new RetellingRequest("며느리 이야기예요", null));
 
-        // 하준은 이 완주로 강아지(방귀 이야기 완주 해금)가 열린다
+        // 하준은 이 완주로 토끼(방귀 이야기 완주 해금)가 열린다
         assertThat(response.unlockedItems()).extracting(RetellingResponse.UnlockedItem::itemId)
-                .contains(DOG_ITEM_ID);
+                .contains(BUNNY_ITEM_ID);
     }
 
     @Test
