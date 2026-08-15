@@ -6,6 +6,8 @@ import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceRequest;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
 import com.mugunghwa.goodquestion.user.auth.AuthService;
 import com.mugunghwa.goodquestion.user.auth.dto.LoginRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -64,6 +66,9 @@ class TurnConnectionExhaustionTest {
             UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-000000000002"));
 
     @Autowired
+    private StorySessionRepository storySessionRepositoryForIsolation;
+
+    @Autowired
     private TurnOrchestrator orchestrator;
 
     @Autowired
@@ -84,6 +89,8 @@ class TurnConnectionExhaustionTest {
      */
     @BeforeEach
     void 대화_장면까지_진행한다() {
+        // 세션 시작이 진행 중 세션을 이어받으므로(#70) 시드/앞 테스트의 잔여 세션을 치운다.
+        TestSessions.stopAllInProgress(storySessionRepositoryForIsolation);
         executor = Executors.newFixedThreadPool(CONCURRENT_TURNS);
         sessionIds = CHILD_IDS.stream().map(childId -> {
             UUID sessionId = sessionService.start(PARENT_ID, childId, new SessionStartRequest(STORY_ID))

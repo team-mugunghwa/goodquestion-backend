@@ -1,11 +1,18 @@
 package com.mugunghwa.goodquestion.global.error;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -46,9 +53,48 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(ErrorCode.NOT_IMPLEMENTED, message));
     }
 
+    /**
+     * AI 벤더가 4xx/5xx를 돌려준 경우. 쿼터 소진(429)과 키 문제와 우리 요청 버그는
+     * 대응이 완전히 다른데 전부 500으로 나가면 현장에서 원인을 가릴 수 없다.
+     * 벤더 응답 본문은 클라이언트에 싣지 않는다 — 조직명·키 힌트가 실려 올 수 있어
+     * 로그에만 남긴다.
+     */
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ErrorResponse> handleVendorResponse(WebClientResponseException e) {
+        log.error("AI 벤더 응답 오류 status={}", e.getStatusCode());
+        ErrorCode code = e.getStatusCode().value() == 429
+                ? ErrorCode.AI_RATE_LIMITED : ErrorCode.AI_UPSTREAM_ERROR;
+        return ResponseEntity.status(code.getStatus())
+                .body(ErrorResponse.of(code, code.getDefaultMessage()));
+    }
+
+    /** 벤더 연결 실패·타임아웃. 재시도하면 되는 부류라 503으로 내린다. */
+    @ExceptionHandler(WebClientRequestException.class)
+    public ResponseEntity<ErrorResponse> handleVendorUnreachable(WebClientRequestException e) {
+        log.error("AI 벤더 연결 실패: {}", e.getMessage());
+        return ResponseEntity.status(ErrorCode.AI_UNAVAILABLE.getStatus())
+                .body(ErrorResponse.of(ErrorCode.AI_UNAVAILABLE,
+                        ErrorCode.AI_UNAVAILABLE.getDefaultMessage()));
+    }
+
+    /** 업로드 한도 초과. 500이 아니라 413 — 프론트가 "짧게 말해요"를 띄울 수 있어야 한다. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(ErrorCode.AUDIO_TOO_LARGE.getStatus())
+                .body(ErrorResponse.of(ErrorCode.AUDIO_TOO_LARGE,
+                        ErrorCode.AUDIO_TOO_LARGE.getDefaultMessage()));
+    }
+
+    /** 본문 파싱 실패는 클라이언트 버그다. 500으로 뭉개지 않고 400으로 알린다. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_REQUEST", "요청 본문을 읽을 수 없습니다."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e) {
-        // TODO: 로깅
+        log.error("처리되지 않은 예외", e);
         return ResponseEntity.status(ErrorCode.INTERNAL_ERROR.getStatus())
                 .body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.getDefaultMessage()));
     }

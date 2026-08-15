@@ -32,7 +32,8 @@ public class AnalysisPostProcessor {
      */
     private static final Set<String> VAGUE_SOLUTION_PHRASES = Set.of(
             "잘하면돼요", "잘하면된다", "열심히하면돼요", "열심히하면된다",
-            "어떻게든해요", "어떻게든하면돼요", "알아서해요", "그냥하면돼요");
+            "어떻게든해요", "어떻게든하면돼요", "어떻게든해봐요", "어떻게든해볼게요",
+            "알아서해요", "그냥하면돼요");
 
     /**
      * 분석 LLM이 제안한 요소를 검증해 통과분과 폐기분으로 가른다.
