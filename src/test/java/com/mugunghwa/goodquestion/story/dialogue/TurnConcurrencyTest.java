@@ -8,6 +8,8 @@ import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceRequest;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,9 @@ class TurnConcurrencyTest {
     private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Autowired
+    private StorySessionRepository storySessionRepositoryForIsolation;
+
+    @Autowired
     private TurnOrchestrator orchestrator;
 
     @Autowired
@@ -65,6 +70,8 @@ class TurnConcurrencyTest {
 
     @BeforeEach
     void 대화_장면까지_진행한다() {
+        // 세션 시작이 진행 중 세션을 이어받으므로(#70) 시드/앞 테스트의 잔여 세션을 치운다.
+        TestSessions.stopAllInProgress(storySessionRepositoryForIsolation);
         executor = Executors.newFixedThreadPool(CONCURRENT_TURNS);
         analysisLlmClient.releaseTogether(CONCURRENT_TURNS);
         sessionId = sessionService.start(PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID))

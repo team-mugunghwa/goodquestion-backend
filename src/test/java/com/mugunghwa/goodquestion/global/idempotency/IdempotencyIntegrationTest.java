@@ -17,6 +17,8 @@ import com.mugunghwa.goodquestion.story.dialogue.dto.UtteranceResponse;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,9 @@ class IdempotencyIntegrationTest {
     private static final UUID ROCK_ITEM_ID = UUID.fromString("44444444-4444-4444-4444-000000000001");
 
     @Autowired
+    private StorySessionRepository storySessionRepositoryForIsolation;
+
+    @Autowired
     private IdempotencyService idempotencyService;
 
     @Autowired
@@ -75,6 +80,8 @@ class IdempotencyIntegrationTest {
 
     @BeforeEach
     void 대화_장면까지_진행한다() {
+        // 세션 시작이 진행 중 세션을 이어받으므로(#70) 시드/앞 테스트의 잔여 세션을 치운다.
+        TestSessions.stopAllInProgress(storySessionRepositoryForIsolation);
         analysisLlmClient.reset();
         sessionId = sessionService.start(PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID))
                 .sessionId();
