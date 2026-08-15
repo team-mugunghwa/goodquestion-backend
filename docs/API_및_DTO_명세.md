@@ -167,10 +167,10 @@
 |---|---|---|---|---|---|
 | GET | `/api/children/{childId}/reports` | 아이의 리포트 목록을 조회한다 | — | `List<ReportListResponse>` | ✅ |
 | GET | `/api/sessions/{sessionId}/report` | 세션 한 건의 리포트를 조회한다. 아직 생성 전이면 409 | — | `ReportDetailResponse` | ✅ |
-| POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ⛔ |
+| POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ✅ |
 
-조회 2건은 저장된 리포트를 읽는다. 생성은 LLM이 필요해 아직 열리지 않았고, 지금은 시드 데모
-데이터의 리포트만 조회된다.
+조회 2건은 저장된 리포트를 읽는다. 생성은 `ReportService.generateNow`가 세션의 대화와
+분석을 모아 LLM으로 요약한다.
 
 **대표 발화는 조회할 때마다 만든다.** `utterance_analyses`의 근거에서 구성하며 요소당 가장
 이른 턴 하나만 남긴다. `sttLowConfidence=true`인 발화는 후보에서 빠진다 - 저장된 원문이 아이가
@@ -180,7 +180,7 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⚠️ `meaning`을 함께 보내면 동작. 생략하면 501 |
+| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ✅ |
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
 | DELETE | `/api/children/{childId}/words/{wordId}` | 저장한 단어를 삭제한다 (2026-08 경로 확정) | — | 204 | ✅ |
@@ -995,15 +995,27 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 세션·장면 | 8 | 8 | 0 | 0 |
 | 대화·미션 | 4 | 3 | 0 | 1 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
-| 리포트 | 3 | 2 | 0 | 1 |
-| 단어장 | 4 | 3 | 1 | 0 |
+| 리포트 | 3 | 3 | 0 | 0 |
+| 단어장 | 4 | 4 | 0 | 0 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **59** | **54** | **3** | **2** |
+| **합계** | **59** | **56** | **2** | **1** |
 
-⛔ 2건(미션 결과 제출, 리포트 생성)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 1건(미션 결과 제출)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
 
-⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-15 갱신분 2** (직전 집계는 54/3/2였다. 현황표가 실제 구현보다 뒤처져 있던 것을 정정)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/report` | ⛔ | ✅ | `ReportService.generateNow`가 대화와 분석을 모아 LLM으로 요약한다. 구현은 2026-08-14에 들어왔는데 표에 반영되지 않았다 |
+| `POST /api/children/{childId}/words` | ⚠️ | ✅ | `meaning`을 생략하면 `WordMeaningLlmClient`가 아이 눈높이의 뜻을 만든다. 단어-02 구현분이 표에 반영되지 않았다 |
+
+남은 ⛔는 미션 결과 제출 1건이다. 코드로 확인한 결과 `MissionController.submitResult`만
+`UnsupportedOperationException`을 던진다. ⚠️ 2건(소셜 로그인 공급자 범위, 비밀번호 변경)도
+코드에서 확인했다 - `AuthController`의 provider 분기 default와 `ParentService`의 비밀번호
+변경 경로가 각각 501이다.
 
 **2026-08-15 갱신분** (집계 변동 없음 - API 계약도 그대로, 서버 동작만 바뀜)
 
