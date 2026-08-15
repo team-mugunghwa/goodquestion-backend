@@ -2,6 +2,7 @@ package com.mugunghwa.goodquestion.learning.reward;
 
 import com.mugunghwa.goodquestion.learning.reward.planet.Planet;
 import com.mugunghwa.goodquestion.learning.reward.planet.PlanetRepository;
+import com.mugunghwa.goodquestion.learning.reward.stardust.StardustService;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
 import com.mugunghwa.goodquestion.user.child.Child;
@@ -24,11 +25,15 @@ public class RewardProvisioningListener {
     private final ChildRepository childRepository;
     private final PlanetRepository planetRepository;
     private final StardustWalletRepository walletRepository;
+    private final StardustService stardustService;
 
     @EventListener
     public void provision(ChildCreatedEvent event) {
         Child child = childRepository.getReferenceById(event.childId());
         planetRepository.save(Planet.builder().child(child).build());
         walletRepository.save(StardustWallet.builder().child(child).build());
+        // 환영 별가루. 지갑을 만든 직후라 같은 트랜잭션에서 지급까지 끝난다 —
+        // 첫 완주 전에도 소품 한둘을 사서 사이클을 맛볼 수 있다.
+        stardustService.awardWelcome(child);
     }
 }
