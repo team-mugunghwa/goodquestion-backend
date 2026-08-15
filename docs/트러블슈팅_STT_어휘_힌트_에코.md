@@ -142,8 +142,8 @@ STT 결과를 받자마자 제출하지 않고 "이렇게 들었어요" 확인 �
 ## 5. 남은 것
 
 - **아동 실녹음 검증(미결-01)**: 지금까지의 실측은 전부 성인 톤 합성음이다
-- **이미 저장된 에코 발화**: 필터 배포 전에 저장된 것은 세션을 다시 열면
-  말풍선에 복원되고 리포트 후보에도 남는다. 해당 `messages` 행 정리가 필요하다
+- **이미 저장된 에코 발화**: 필터 배포 전에 저장된 것은 그대로 남아 있다.
+  정리 절차는 7절에 있다(운영 DB 접근이 필요해 아직 실행 전이다)
 - **장면별 힌트**: 장면별 proper_nouns를 실어 보내는 구조가 정석이지만
   /api/stt 계약에 장면 정보가 없어 보류 상태다. 계약 변경이 필요하면 함께
   정한다(API 명세 6절 미결)
@@ -160,3 +160,119 @@ STT 결과를 받자마자 제출하지 않고 "이렇게 들었어요" 확인 �
 - **헤더와 데이터가 따로 놀 수 있는 포맷은 만든 쪽이 검증해야 한다.** WAV
   헤더를 손으로 만들면 그 값이 데이터의 실제 속성과 일치하는지는 아무도
   검사해 주지 않는다
+
+## 7. 이미 저장된 에코 발화 정리 절차
+
+필터 배포 전에 저장된 에코는 그대로 남아 있다. 아래 SQL은 `isVocabularyEcho`와
+같은 판정을 옮긴 것이고, 로컬 DB에서 에코 3종(전체 나열, 재조합 문장, 부분 나열)과
+정상 발화 4종(정상 문장 2, 한 단어 답변 1, 힌트 단어가 섞인 정상 발화 1)으로
+검증했다. 검증에서 에코 3건만 잡히고 정상 발화와 캐릭터 대사는 걸리지 않았다.
+
+**힌트 목록은 `external.stt.vocabulary-hint` 설정과 같아야 한다.** 설정을 바꿨으면
+아래 배열도 함께 바꾼다.
+
+### 7-1. 판정 뷰
+
+```sql
+create or replace view v_stt_hint_echo as
+with hint as (
+    select array['며느리','시아버지','방귀','친정','갓','이장','배나무','장대','기왓장']::text[] as words
+),
+child as (
+    select m.id, m.session_id, m.turn_order, m.text, m.stt_low_confidence,
+           m.stt_confidence, m.created_at,
+           regexp_replace(m.text, '[[:space:],.·!?''"]', '', 'g') as normalized
+    from messages m
+    where m.speaker_type = 'CHILD'
+),
+scored as (
+    select c.*,
+           (select count(*) from unnest(h.words) w where position(w in c.normalized) > 0) as matched,
+           (select regexp_replace(
+                       c.normalized,
+                       array_to_string(array(select w from unnest(h.words) w order by length(w) desc), '|'),
+                       '', 'g')) as remainder,
+           array_length(h.words, 1) as hint_size
+    from child c, hint h
+)
+select id, session_id, turn_order, text, stt_low_confidence, stt_confidence, created_at, matched,
+       case when matched >= 2 and remainder = '' then '나열' else '재조합' end as echo_kind
+from scored
+where (matched >= 2 and remainder = '')
+   or (hint_size >= 3 and matched >= ceil(hint_size * 2.0 / 3));
+```
+
+긴 단어부터 지우는 것이 중요하다. 짧은 단어가 긴 단어의 일부면 조각이 남아
+나열 판정이 어긋난다(자바 구현이 `length desc`로 정렬하는 이유와 같다).
+
+### 7-2. 대상 확인 (읽기만 한다)
+
+```sql
+-- 종류별 건수
+select echo_kind, count(*), min(created_at), max(created_at)
+from v_stt_hint_echo group by echo_kind;
+
+-- 세션 상태별. 진행 중 세션은 아이가 다시 들어오면 말풍선에 복원된다
+select s.status, count(*) as 발화수, count(distinct e.session_id) as 세션수
+from v_stt_hint_echo e join story_sessions s on s.id = e.session_id
+group by s.status;
+
+-- 이미 생성된 리포트에 섞였는지. 있으면 리포트 재생성을 검토한다
+select r.id, r.session_id, count(*) from v_stt_hint_echo e
+join reports r on r.session_id = e.session_id group by r.id, r.session_id;
+
+-- 전문
+select id, session_id, turn_order, echo_kind, stt_confidence, created_at, text
+from v_stt_hint_echo order by created_at;
+```
+
+### 7-3. 백업
+
+```sql
+create table if not exists messages_hint_echo_backup as
+select m.*, now() as backed_up_at
+from messages m where m.id in (select id from v_stt_hint_echo);
+```
+
+### 7-4. 정리 - 행을 지우지 않고 저신뢰로 표시한다
+
+```sql
+begin;
+update messages set stt_low_confidence = true
+where id in (select id from v_stt_hint_echo) and stt_low_confidence = false;
+-- 건수가 7-2에서 본 것과 맞으면 commit, 아니면 rollback
+```
+
+`stt_low_confidence = true`면 `ReportService`가 대표 발화 후보(`ReportService.java:100`)와
+요소 근거(`:181`)에서 제외한다. 보호자에게 아이가 하지 않은 말이 실리는 문제,
+즉 이 사고의 실질적 피해가 이것으로 막힌다.
+
+**사유 컬럼을 따로 두지 않기로 했다(2026-08-15).** 이 표시의 원래 뜻은 "신뢰도가
+기준값 0.5 미만"인데, 여기에 "신뢰도는 높지만 힌트 복창이라 믿을 수 없음"이 같은
+값으로 섞인다. 그래도 나누지 않은 이유는 에코가 더 쌓이지 않기 때문이다 - 에코는
+`/api/stt`에서 422로 끊겨 `messages`에 도달할 경로가 없으므로, 이 사유로 표시되는
+행은 아래 백업에 담긴 과거 데이터가 전부다. 개수가 정해진 일회성 집합을 구분하려고
+마이그레이션과 엔티티 필드를 늘리는 것은 값에 비해 비싸다. 구분이 필요하면
+`messages_hint_echo_backup`과 조인하면 된다 - 그 테이블이 곧 에코로 표시된 행의
+명단이다.
+
+나중에 설계를 바꿔 **에코도 일단 저장하고 뒤에서 걸러내는** 쪽으로 간다면 그때는
+사유 컬럼이 필요하다. 지금은 아예 받지 않는 쪽이라 해당되지 않는다.
+
+**행을 지우지 않는 이유가 셋이다.**
+
+1. `utterance_analyses.message_id`가 `on delete cascade`라 분석 기록이 함께 사라진다
+2. `story_sessions.current_child_turn_count`는 메시지에서 세는 값이 아니라 별도
+   저장 컬럼이다. 메시지만 지우면 턴 수가 어긋나고, 진행 판단과 최대 턴 종료가
+   그 값을 본다
+3. 그 발화에 대답한 캐릭터 대사가 남아 대화가 앞뒤로 안 맞게 된다
+
+진행 중 세션의 말풍선 복원까지 없애야 한다면, 행을 지우는 대신 그 세션을
+그만하기(`POST /api/sessions/{id}/stop`)로 종료시키는 편이 정합성이 깨지지 않는다.
+
+### 7-5. 되돌리기
+
+```sql
+update messages m set stt_low_confidence = b.stt_low_confidence
+from messages_hint_echo_backup b where m.id = b.id;
+```
