@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClientRequest;
 
 import java.time.Duration;
 import java.util.List;
@@ -70,6 +71,17 @@ public class OpenAiLlmClient implements LlmClient {
                 .uri(baseUrl + "/chat/completions")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
+                // 요청 단위로 Netty 응답 타임아웃을 덮어쓴다.
+                //
+                // **reactive .timeout()만으로는 부족하다.** 그것은 HTTP 계층 위에서 도는
+                // 상위 타이머라, 공용 responseTimeout(10초)이 더 짧으면 Netty가 먼저 끊는다.
+                // 리포트에 30초를 넘겨도 10초에 잘리던 것이 이 때문이었다(08-15 실측).
+                .httpRequest(request -> {
+                    if (timeout != null) {
+                        HttpClientRequest nettyRequest = request.getNativeRequest();
+                        nettyRequest.responseTimeout(timeout);
+                    }
+                })
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class);
