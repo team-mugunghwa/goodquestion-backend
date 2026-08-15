@@ -51,6 +51,12 @@ public class ProgressionEngine {
         int turnCount = session.getCurrentChildTurnCount();
 
         // 1. 종료 판단이 가장 먼저다. 끝낼 턴에 유도를 붙이면 마무리 대사와 겹친다.
+        //
+        // 최소 대화량 게이트는 원 자료의 요건이다 - 발화_분석_및_진행_판단_연동_기준.md
+        // 10.3("최소한의 대화 과정이 진행되고 필수 사고 요소가 충족됨")과 11절 판단 순서
+        // ("필수 요소 충족 및 최소 대화량 충족")가 둘의 AND를 종료 조건으로 명시한다.
+        // 한때 충족조건 문서를 근거로 게이트를 제거했다가(#68 커밋 8) 원 자료 요건 우선
+        // 원칙에 따라 복원했다(2026-08-16). 수치(전 장면 2)만 운영 위임분이다.
         if (missing.isEmpty() && turnCount >= preferredTurns(scene)) {
             return ProgressionDecision.closing(SceneEndReason.GOAL_MET);
         }
