@@ -5,6 +5,7 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.vocab.ThinkingElement;
 import com.mugunghwa.goodquestion.story.content.dto.SceneContentResponse;
 import com.mugunghwa.goodquestion.story.session.dto.*;
+import com.mugunghwa.goodquestion.story.content.SceneAudioResolver;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.content.Story;
@@ -37,6 +38,7 @@ public class SessionService {
     private final MessageRepository messageRepository;
     private final MissionService missionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final SceneAudioResolver sceneAudioResolver;
 
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
@@ -67,7 +69,7 @@ public class SessionService {
 
         return new SessionStartResponse(
                 session.getId(), session.getStatus(),
-                SceneContentResponse.from(firstScene),
+                toContent(firstScene),
                 session.resolvePhase());
     }
 
@@ -90,7 +92,7 @@ public class SessionService {
         StoryScene scene = session.getCurrentScene();
 
         return new CurrentSceneResponse(
-                scene == null ? null : SceneContentResponse.from(scene),
+                scene == null ? null : toContent(scene),
                 session.resolvePhase());
     }
 
@@ -123,9 +125,9 @@ public class SessionService {
         return messageRepository
                 .findFirstBySessionIdAndSceneIdAndSpeakerTypeOrderByTurnOrderAsc(
                         session.getId(), scene.getId(), SpeakerType.CHARACTER)
-                .map(existing -> new SceneOpeningResponse(CharacterMessageResponse.from(existing), true))
+                .map(existing -> new SceneOpeningResponse(toMessage(existing), true))
                 .orElseGet(() -> new SceneOpeningResponse(
-                        CharacterMessageResponse.from(appendOpening(session, scene)), false));
+                        toMessage(appendOpening(session, scene)), false));
     }
 
     /** 부족 요소는 저장하지 않고 (장면 목표 요소 − 누적 요소)로 매번 계산한다(진행-04). */
@@ -182,7 +184,7 @@ public class SessionService {
         CharacterMessageResponse openingMessage = advanceTo(session, nextScene);
 
         return new SceneAdvanceResponse(
-                session.resolvePhase(), SceneContentResponse.from(nextScene), openingMessage);
+                session.resolvePhase(), toContent(nextScene), openingMessage);
     }
 
     /**
@@ -196,7 +198,7 @@ public class SessionService {
     public CharacterMessageResponse advanceTo(StorySession session, StoryScene nextScene) {
         session.moveToScene(nextScene);
         return nextScene.isDialogue()
-                ? CharacterMessageResponse.from(appendOpening(session, nextScene)) : null;
+                ? toMessage(appendOpening(session, nextScene)) : null;
     }
 
     @Transactional
@@ -236,14 +238,35 @@ public class SessionService {
         CharacterMessageResponse lastCharacterMessage = messageRepository
                 .findFirstBySessionIdAndSpeakerTypeOrderByTurnOrderDesc(
                         sessionId, SpeakerType.CHARACTER)
-                .map(CharacterMessageResponse::from)
+                .map(this::toMessage)
                 .orElse(null);
 
         return new SessionResumeResponse(
                 getSession(parentId, sessionId),
-                scene == null ? null : SceneContentResponse.from(scene),
+                scene == null ? null : toContent(scene),
                 messageService.getMessages(sessionId, null),
                 lastCharacterMessage,
                 missionService.exposedMissionOf(session));
+    }
+
+    /**
+     * 장면 콘텐츠 + 사전 렌더 내레이션.
+     *
+     * <p>STORY 장면만 내레이션이 있다. 음성이 없으면 null이 나가 지금처럼 음성 없이 진행한다.
+     */
+    private SceneContentResponse toContent(StoryScene scene) {
+        return SceneContentResponse.from(scene, scene.isDialogue() ? null
+                : sceneAudioResolver.narrationOf(scene.getId(), scene.getSceneDescription()).orElse(null));
+    }
+
+    /**
+     * 캐릭터 메시지 + 사전 렌더 음성.
+     *
+     * <p>고정 첫/마지막 대사만 미리 렌더돼 있다. LLM이 만든 대사나 아이 이름이 치환된 문장은
+     * 문장 해시가 달라 자연히 걸러지고, 클라이언트가 /api/tts로 합성한다.
+     */
+    private CharacterMessageResponse toMessage(Message message) {
+        return CharacterMessageResponse.from(message,
+                sceneAudioResolver.urlFor(message.getScene().getId(), message.getText()));
     }
 }
