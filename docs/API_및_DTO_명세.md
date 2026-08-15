@@ -1016,8 +1016,9 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
   문장 SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로 LLM 생성
   대사와 아이 이름 치환 문장은 자동으로 null(기존 합성 경로). 클라이언트 분기
   (`audioUrl ?? 합성`)는 변경 불필요
-- 대화1 필수 요소 확정 반영(#45): `REASON` 제외 3종(PERSPECTIVE, EMOTION,
-  SOLUTION). `progress.missingElements` 등에 REASON이 더는 나타나지 않는다
+- 대화1 필수 요소: #45가 검수 의견으로 `REASON`을 제외했으나 **2026-08-15
+  회의에서 REASON 포함(4종)으로 재확정되어 같은 날 복원했다.** 이야기 문서
+  3절 표와 같다. `progress` 응답의 요소 목록에 REASON이 그대로 나타난다
 - 대화 장면 종료가 요소 충족 즉시로 변경(#68). preferred_turns는 종료 게이트가
   아니라 권장 길이다(충족조건 확정) - 1턴에 요소를 다 채우면 그 턴에 닫힌다
 - AI 실패 상태코드 세분화(#68): 벤더 429 -> 503 `AI_RATE_LIMITED`, 그 외 벤더
