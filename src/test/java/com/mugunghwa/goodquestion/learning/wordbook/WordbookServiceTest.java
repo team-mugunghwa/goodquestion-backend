@@ -33,6 +33,11 @@ class WordbookServiceTest {
     private static final UUID SCENE_ID = UUID.fromString("33333333-3333-3333-3333-000000000001");
     private static final UUID SEEDED_WORD_ID = UUID.fromString("17770000-0000-0000-0000-000000000001");
 
+    /** SCENE_ID가 속한 이야기 (R__1_seed_content.sql). 단어장 화면이 이 값으로 묶음을 그린다. */
+    private static final UUID STORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final String STORY_TITLE = "방귀 뀌는 며느리";
+    private static final String STORY_IMAGE_URL = "/stories/banggui/cover.jpg";
+
     /**
      * SCENE_ID(R__1_seed_content.sql 장면 1)의 scene_description 원문.
      *
@@ -71,6 +76,31 @@ class WordbookServiceTest {
 
         assertThat(saved.sourceSceneId()).isNull();
         assertThat(saved.entryType()).isEqualTo(WordEntryType.FAVORITE);
+        // 장면이 없으면 이야기도 없다 — 화면은 이 단어를 "이야기 없음" 묶음으로 그린다.
+        assertThat(saved.storyId()).isNull();
+        assertThat(saved.storyTitle()).isNull();
+        assertThat(saved.storyImageUrl()).isNull();
+    }
+
+    @Test
+    void 장면과_함께_저장하면_이야기_정보가_따라온다() {
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "가마솥", WordEntryType.UNKNOWN, SCENE_ID, "밥을 짓는 아주 큰 솥이에요.", null));
+
+        assertThat(saved.storyId()).isEqualTo(STORY_ID);
+        assertThat(saved.storyTitle()).isEqualTo(STORY_TITLE);
+        assertThat(saved.storyImageUrl()).isEqualTo(STORY_IMAGE_URL);
+    }
+
+    @Test
+    void 목록에도_이야기_정보가_함께_나온다() {
+        WordResponse seeded = wordbookService.getWords(PARENT_ID, CHILD_ID, null).stream()
+                .filter(w -> SEEDED_WORD_ID.equals(w.id()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(seeded.storyId()).isEqualTo(STORY_ID);
+        assertThat(seeded.storyTitle()).isEqualTo(STORY_TITLE);
     }
 
     @Test
