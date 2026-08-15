@@ -74,12 +74,38 @@ public class OpenAiSttClient implements SttClient {
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
-
+/*
         if (response == null) {
             return new SttResult(null, null);
         }
         return new SttResult(response.path("text").asText(null),
                 confidenceFrom(response.path("logprobs")));
+
+ */
+        if (response == null) {
+            return new SttResult(null, null);
+        }
+
+        String text = response.path("text").asText(null);
+        // 무음이거나 인식할 발화가 없으면 모델이 prompt로 준 어휘 힌트를 그대로 돌려준다.
+        // 그대로 통과시키면 아이 말로 저장되고 캐릭터가 엉뚱하게 반응한다 - 빈 결과로 돌려
+        // SpeechService의 STT_EMPTY_TEXT(422) 경로를 타게 한다.
+        if (isVocabularyEcho(text)) {
+            return new SttResult(null, null);
+        }
+        return new SttResult(text, confidenceFrom(response.path("logprobs")));
+    }
+
+    /** 결과가 어휘 힌트와 같은지. 공백·쉼표·마침표 차이는 무시한다. */
+    private boolean isVocabularyEcho(String text) {
+        if (text == null || vocabularyHint.isBlank()) {
+            return false;
+        }
+        return normalize(text).equals(normalize(vocabularyHint));
+    }
+
+    private static String normalize(String value) {
+        return value.replaceAll("[\\s,.·]", "");
     }
 
     /**
