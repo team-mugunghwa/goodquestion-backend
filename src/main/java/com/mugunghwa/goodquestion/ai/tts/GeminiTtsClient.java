@@ -1,9 +1,9 @@
 package com.mugunghwa.goodquestion.ai.tts;
 
-import com.mugunghwa.goodquestion.ai.tts.OpenAiTtsClient.VoiceProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,8 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 128Hz(남성)로도 나온다(2026-08-08 F0 실측). 그래서 {@code instructions}에 <b>성별과 연령을
  * 반드시 넣는다.</b> 이 값은 사전 렌더에 쓴 것과 같은 문구를 설정으로 준다.
  *
- * <p>OpenAI 구현과 같은 {@link VoiceProperties}를 읽는다 — 캐릭터 매핑 규칙이 갈리면
- * 어느 쪽이 맞는지 알 수 없게 된다. 벤더 전환은 {@code external.tts.vendor}로만 한다.
+ * <p>보이스 맵은 {@code external.tts.gemini} 아래에 따로 둔다. OpenAI와 이름 체계가 달라
+ * (nova/onyx/echo vs Leda/Puck/Charon) 한 맵을 공유할 수 없다 — 공유하면 벤더만 바꿨을 때
+ * Gemini가 "nova"를 보이스 이름으로 받는다. 벤더 전환은 {@code external.tts.vendor}로만 한다.
  */
 @Slf4j
 @Component
@@ -50,7 +51,7 @@ public class GeminiTtsClient implements TtsClient {
     private final String baseUrl;
     private final String apiKey;
     private final String model;
-    private final VoiceProperties voices;
+    private final GeminiVoiceProperties voices;
     private final Duration timeout;
     private final ConcurrentHashMap<String, SynthesizedAudio> cache = new ConcurrentHashMap<>();
 
@@ -60,7 +61,7 @@ public class GeminiTtsClient implements TtsClient {
             @Value("${external.tts.gemini.api-key}") String apiKey,
             @Value("${external.tts.gemini.model:gemini-2.5-flash-preview-tts}") String model,
             @Value("${external.tts.timeout-ms:30000}") long timeoutMs,
-            VoiceProperties voices) {
+            GeminiVoiceProperties voices) {
         this.webClient = webClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
@@ -172,5 +173,40 @@ public class GeminiTtsClient implements TtsClient {
     private static void writeShortLe(ByteArrayOutputStream out, int value) {
         out.write(value & 0xFF);
         out.write((value >> 8) & 0xFF);
+    }
+
+    /**
+     * Gemini 전용 캐릭터명 -> 보이스·연기 지시 매핑.
+     *
+     * <p>api-key·model은 여기 두지 않는다. 이 레코드는 벤더와 무관하게 바인딩되는데,
+     * 기본값 없는 {@code ${GEMINI_API_KEY}}를 컴포넌트로 넣으면 OpenAI로 돌리는 환경에서도
+     * 플레이스홀더를 풀지 못해 앱이 뜨지 않는다. 키는 조건부 빈의 {@code @Value}로 받는다.
+     *
+     * @param defaultVoice        매핑에 없는 캐릭터와 내레이션의 보이스
+     * @param defaultInstructions 공통 연기 지시. 캐릭터별 지시가 있으면 그것을 쓴다
+     */
+    @ConfigurationProperties(prefix = "external.tts.gemini")
+    public record GeminiVoiceProperties(String defaultVoice, String defaultInstructions,
+                                        Map<String, String> voices,
+                                        Map<String, String> instructions) {
+
+        public GeminiVoiceProperties {
+            // 사전 렌더 내레이션에 쓴 보이스다. 바꾸면 내레이션과 실시간 합성이 갈린다.
+            if (defaultVoice == null || defaultVoice.isBlank()) defaultVoice = "Kore";
+            if (defaultInstructions == null || defaultInstructions.isBlank()) {
+                defaultInstructions = "한국 전래동화를 5~9세 아이에게 들려주듯 따뜻하고 또렷하게 말해줘:";
+            }
+            if (voices == null) voices = Map.of();
+            if (instructions == null) instructions = Map.of();
+        }
+
+        String voiceFor(String characterName) {
+            return characterName != null ? voices.getOrDefault(characterName, defaultVoice) : defaultVoice;
+        }
+
+        String instructionsFor(String characterName) {
+            return characterName != null
+                    ? instructions.getOrDefault(characterName, defaultInstructions) : defaultInstructions;
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.story.dialogue;
 
+import com.mugunghwa.goodquestion.story.content.SceneAudio;
 import com.mugunghwa.goodquestion.story.content.SceneAudioResolver;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
@@ -84,7 +85,7 @@ public class SceneClosingHandler {
         sessionService.advanceTo(session, nextScene);
 
         return new TurnClosure(
-                CharacterMessageResponse.from(closingMessage, closingAudioUrl(closingMessage)),
+                CharacterMessageResponse.from(closingMessage, closingAudio(closingMessage)),
                 // 반응은 LLM이 그때그때 만든 문장이라 사전 렌더 대상이 아니다
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
@@ -112,7 +113,7 @@ public class SceneClosingHandler {
         }
 
         return new TurnClosure(
-                CharacterMessageResponse.from(closingMessage, closingAudioUrl(closingMessage)),
+                CharacterMessageResponse.from(closingMessage, closingAudio(closingMessage)),
                 // 반응은 LLM이 그때그때 만든 문장이라 사전 렌더 대상이 아니다
                 reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
@@ -121,8 +122,8 @@ public class SceneClosingHandler {
     }
 
     /** 고정 마지막 대사의 사전 렌더 음성. 대사를 고쳤으면 해시가 어긋나 null이 나간다. */
-    private String closingAudioUrl(Message closingMessage) {
-        return sceneAudioResolver.urlFor(
-                closingMessage.getScene().getId(), closingMessage.getText());
+    private SceneAudio closingAudio(Message closingMessage) {
+        return sceneAudioResolver.forText(
+                closingMessage.getScene().getId(), closingMessage.getText()).orElse(null);
     }
 }
