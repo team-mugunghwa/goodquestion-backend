@@ -68,14 +68,14 @@ class ReportServiceTest {
     }
 
     @Test
-    void 대표_발화는_분석_근거에서_구성한다() {
+    void 요소별_근거_발화는_분석에서_구성한다() {
         ReportDetailResponse report = reportService.getReport(PARENT_ID, COMPLETED_SESSION_ID);
 
-        assertThat(report.representativeUtterances()).isNotEmpty();
-        assertThat(report.representativeUtterances())
-                .allSatisfy(utterance -> {
-                    assertThat(utterance.text()).isNotBlank();
-                    assertThat(utterance.element()).isNotNull();
+        assertThat(report.elementEvidences()).isNotEmpty();
+        assertThat(report.elementEvidences())
+                .allSatisfy(evidence -> {
+                    assertThat(evidence.text()).isNotBlank();
+                    assertThat(evidence.element()).isNotNull();
                 });
     }
 
@@ -84,20 +84,20 @@ class ReportServiceTest {
         // 세션 A의 분석에는 PERSPECTIVE가 두 턴에 걸쳐 들어 있다.
         ReportDetailResponse report = reportService.getReport(PARENT_ID, COMPLETED_SESSION_ID);
 
-        List<ThinkingElement> elements = report.representativeUtterances().stream()
-                .map(ReportDetailResponse.RepresentativeUtterance::element)
+        List<ThinkingElement> elements = report.elementEvidences().stream()
+                .map(ReportDetailResponse.ElementEvidence::element)
                 .toList();
 
         assertThat(elements).doesNotHaveDuplicates();
-        assertThat(report.representativeUtterances().stream()
-                .filter(u -> u.element() == ThinkingElement.PERSPECTIVE)
+        assertThat(report.elementEvidences().stream()
+                .filter(e -> e.element() == ThinkingElement.PERSPECTIVE)
                 .findFirst())
                 .isPresent()
-                .hasValueSatisfying(u -> assertThat(u.text()).isEqualTo("가족이니까 이해해 줄 거예요"));
+                .hasValueSatisfying(e -> assertThat(e.text()).isEqualTo("가족이니까 이해해 줄 거예요"));
     }
 
     @Test
-    void 인식이_미덥지_않은_발화는_대표_발화에서_빠진다() {
+    void 인식이_미덥지_않은_발화는_근거에서_빠진다() {
         // 세션 B의 유일한 분석은 stt_low_confidence=true인 발화에 붙어 있다.
         StorySession session = sessionRepository.findById(IN_PROGRESS_SESSION_ID).orElseThrow();
         reportRepository.save(Report.builder()
@@ -109,7 +109,7 @@ class ReportServiceTest {
 
         ReportDetailResponse report = reportService.getReport(PARENT_ID, IN_PROGRESS_SESSION_ID);
 
-        assertThat(report.representativeUtterances()).isEmpty();
+        assertThat(report.elementEvidences()).isEmpty();
     }
 
     @Test

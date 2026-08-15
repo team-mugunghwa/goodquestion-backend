@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public record CharacterMessageResponse(UUID messageId, String text, String audioUrl) {
 
-    /** audioUrl은 TTS 미구현이라 null - 클라이언트가 /api/tts로 합성한다. */
+    /** audioUrl은 설계상 null - 사전 렌더(scene_audio) 도입 전까지 클라이언트가 /api/tts로 합성한다. */
     public static CharacterMessageResponse from(Message message) {
         return new CharacterMessageResponse(message.getId(), message.getText(), null);
     }

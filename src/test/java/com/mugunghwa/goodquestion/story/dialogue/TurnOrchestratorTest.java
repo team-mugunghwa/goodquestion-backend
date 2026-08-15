@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @IntegrationTest
 @Transactional
-class TurnOrchestratorTest {
+public class TurnOrchestratorTest {
 
     /** R__2_seed_demo_data.sql의 데모 계정. 보호자 "김보호" / 아이 "지우". */
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
@@ -55,7 +55,7 @@ class TurnOrchestratorTest {
 
     private UUID sessionId;
 
-    /** 장면 3(대화1)까지 진행해 둔다. 필수 요소 PERSPECTIVE·EMOTION·SOLUTION, 최소 2턴, 최대 4턴. */
+    /** 장면 3(대화1)까지 진행해 둔다. 필수 요소 PERSPECTIVE, EMOTION, REASON, SOLUTION / 최소 2턴, 최대 4턴. */
     @BeforeEach
     void 대화_장면까지_진행한다() {
         analysisLlmClient.reset();
@@ -80,7 +80,8 @@ class TurnOrchestratorTest {
         assertThat(response.progress().turnCount()).isEqualTo(1);
         assertThat(response.progress().accumulatedElements()).containsExactly(ThinkingElement.EMOTION);
         assertThat(response.progress().missingElements())
-                .containsExactly(ThinkingElement.PERSPECTIVE, ThinkingElement.SOLUTION);
+                .containsExactly(ThinkingElement.PERSPECTIVE, ThinkingElement.REASON,
+                        ThinkingElement.SOLUTION);
         assertThat(response.characterMessage().text()).isNotBlank();
         assertThat(response.sceneTransition()).isNull();
         assertThat(response.mission()).isNull();
@@ -92,18 +93,22 @@ class TurnOrchestratorTest {
         submit("며느리가 많이 힘들 것 같아요");
 
         analysisLlmClient.willDetect(UtteranceValidity.VALID,
-                ThinkingElement.PERSPECTIVE, ThinkingElement.SOLUTION);
-        UtteranceResponse response = submit("가족들도 이해해 줄 테니 솔직하게 말해 보세요");
+                ThinkingElement.PERSPECTIVE, ThinkingElement.REASON, ThinkingElement.SOLUTION);
+        UtteranceResponse response = submit("가족들도 이해해 줄 테니, 계속 참으면 아프니까 솔직하게 말해 보세요");
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.progress().missingElements()).isEmpty();
         // 마무리 대사는 콘텐츠의 고정 대사다. 어떻게 끝났든 이야기는 같은 자리로 돌아온다.
         assertThat(response.characterMessage().text()).isEqualTo("그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.");
+        // 목표 달성 종료에는 짧은 반응이 없다 - 마무리 대사가 자연스러운 연결이다.
+        assertThat(response.closingReaction()).isNull();
 
         assertThat(response.sceneTransition().next()).isEqualTo(SceneTransitionTarget.SCENE);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.GOAL_MET);
         assertThat(response.sceneTransition().nextSceneOrder()).isEqualTo(4);
         assertThat(response.sceneTransition().nextSceneType()).isEqualTo(SceneType.STORY);
+        // 결과 연출은 대화3에만 있다. 대화1이 닫힐 때는 내려가지 않는다.
+        assertThat(response.sceneTransition().resultImageUrl()).isNull();
 
         // 세션은 이미 다음 장면에 있고 장면 단위 누적은 초기화됐다.
         assertThat(sessionService.getSession(PARENT_ID, sessionId).currentScene().sceneOrder())
@@ -135,6 +140,11 @@ class TurnOrchestratorTest {
 
         assertThat(response.progress().mode()).isEqualTo(ResponseMode.CLOSING);
         assertThat(response.sceneTransition().closingReason()).isEqualTo(SceneEndReason.MAX_TURNS);
+        // 최대 턴 종료는 아이의 마지막 말에 대한 짧은 반응이 마무리 대사 앞에 붙는다
+        // (콘텐츠 문서 "짧게 반응 -> 마지막 대사", 2026-08 확정).
+        assertThat(response.closingReaction()).isNotNull();
+        assertThat(response.closingReaction().text()).isEqualTo("그렇구나, 조금 더 듣고 싶어.");
+        assertThat(response.characterMessage().text()).isEqualTo("그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.");
     }
 
     @Test
@@ -151,7 +161,7 @@ class TurnOrchestratorTest {
     // ----- LLM 대역 -----
 
     @TestConfiguration
-    static class StubLlmConfig {
+    public static class StubLlmConfig {
 
         @Bean
         @Primary
@@ -175,7 +185,7 @@ class TurnOrchestratorTest {
      * 턴마다 어떤 요소가 확인될지 테스트가 미리 정해 두는 분석 대역.
      * 근거는 아이 발화 원문을 그대로 쓴다 - 후처리의 근거 검증을 통과시키기 위해서다.
      */
-    static class ScriptedAnalysisLlmClient extends AnalysisLlmClient {
+    public static class ScriptedAnalysisLlmClient extends AnalysisLlmClient {
 
         ScriptedAnalysisLlmClient() {
             super(null, null);
@@ -185,11 +195,11 @@ class TurnOrchestratorTest {
 
         private final Deque<Script> scripts = new ArrayDeque<>();
 
-        void reset() {
+        public void reset() {
             scripts.clear();
         }
 
-        void willDetect(UtteranceValidity validity, ThinkingElement... elements) {
+        public void willDetect(UtteranceValidity validity, ThinkingElement... elements) {
             scripts.add(new Script(validity, List.of(elements)));
         }
 

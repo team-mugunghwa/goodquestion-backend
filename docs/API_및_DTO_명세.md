@@ -9,7 +9,7 @@
 
 ### 1.1 인증
 
-- `/api/auth/**` 와 `/actuator/health` 만 인증 없이 접근한다. 나머지는 전부 Bearer 토큰이 필요하다.
+- `/api/auth/**`, `/actuator/health`, 그리고 이야기 정적 에셋 `/stories/**`(장면/미션 이미지)만 인증 없이 접근한다. 나머지는 전부 Bearer 토큰이 필요하다.
 - **보호자 식별자는 요청에 담지 않는다.** `@CurrentParentId`가 JWT에서 꺼내 주입한다. 아래 표의 요청 필드에 `parentId`가 없는 이유다.
 - 아이·세션 리소스는 컨트롤러 진입 시 **소유권을 검증**한다. 남의 아이면 403.
 
@@ -23,20 +23,24 @@
 
 | 상황 | 상태 | `code` |
 |---|---|---|
-| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유` |
-| 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED` |
+| 검증 실패(`@Valid`) | 400 | `INVALID_REQUEST` — message는 `필드명: 사유`. `INVALID_IDEMPOTENCY_KEY`(키 64자 초과), `INVALID_PASSWORD_RESET_TOKEN`(재설정 링크 무효/만료) |
+| 토큰 없음·위조·**만료** | 401 | `UNAUTHORIZED`. 인증 시도 실패는 세분 코드: `INVALID_CREDENTIALS`(로그인), `INVALID_REFRESH_TOKEN`(재발급), `KAKAO_AUTH_FAILED`/`GOOGLE_AUTH_FAILED`(소셜) |
 | 남의 리소스 | 403 | `FORBIDDEN` |
 | 없는 리소스 | 404 | `NOT_FOUND` |
 | 상태 충돌 | 409 | 아래 목록 |
 | 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
+| 로그인 시도 초과 잠금 | 423 | `ACCOUNT_LOCKED` |
+| 메일 발송 실패 | 503 | `EMAIL_DELIVERY_FAILED` |
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
+
+**멱등키(2026-08 확정)** — 발화 제출과 아이템 구매는 `Idempotency-Key` 헤더(선택, UUID 권장, 64자 이하)를 받는다. 클라이언트가 작업마다 새로 만들고 **재시도 사이에만 유지**한다. 같은 키의 재전송은 완료된 요청이면 저장된 응답을 그대로 재생하고, 처리 중이면 409 `REQUEST_IN_PROGRESS`를 돌려준다. 키가 없으면 기존 동작 그대로다. 기록은 24시간 보관 후 청소된다.
 
 **501을 쓰는 이유** — 컨트롤러 골격만 있고 로직이 없는 엔드포인트가 200에 빈 본문을 돌려주면 프론트가 구현된 것으로 오해한다. 명시적으로 알린다.
 
-**401과 403은 반드시 갈라 처리한다.** 리프레시 토큰이 없어 만료 복구 경로가 재로그인 하나뿐이므로, 클라이언트는 **401을 받으면 로그인 화면으로** 보내야 하고 403은 그냥 오류로 표시하면 된다. 스프링 시큐리티 기본값은 둘 다 403 + 빈 본문이라 `RestAuthenticationEntryPoint`·`RestAccessDeniedHandler`로 갈라 두었고, 두 응답 모두 위의 `{code, message}` 형태를 지킨다.
+**401과 403은 반드시 갈라 처리한다.** 클라이언트는 **401을 받으면 `/refresh`로 재발급을 시도**하고, 리프레시까지 만료(`INVALID_REFRESH_TOKEN`)면 로그인 화면으로 보낸다. 403은 그냥 오류로 표시하면 된다. 스프링 시큐리티 기본값은 둘 다 403 + 빈 본문이라 `RestAuthenticationEntryPoint`·`RestAccessDeniedHandler`로 갈라 두었고, 두 응답 모두 위의 `{code, message}` 형태를 지킨다.
 
 ### 1.3 구현 상태 표기
 
@@ -56,9 +60,12 @@
 |---|---|---|---|---|---|
 | POST | `/signup` | 이메일과 비밀번호로 계정을 만들고 토큰까지 바로 발급한다 | `SignUpRequest` | 201 `AuthResponse` | ✅ |
 | POST | `/login` | 이메일과 비밀번호를 확인하고 토큰을 발급한다 | `LoginRequest` | 200 `AuthResponse` | ✅ |
-| POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`만. 그 외 501 |
+| POST | `/social/{provider}` | 인가 코드를 서버가 제공자 토큰으로 교환해 가입 또는 로그인 처리한다 | `SocialLoginRequest` | 200 `SocialAuthResponse` | ⚠️ `kakao`, `google`만. 그 외 501 |
 | POST | `/refresh` | 리프레시 토큰으로 액세스 토큰을 다시 받는다 | `TokenRefreshRequest` | 200 `TokenResponse` | ✅ |
 | POST | `/logout` | 리프레시 토큰을 무효화한다 | `LogoutRequest` | 204 (본문 없음) | ✅ |
+| POST | `/password-reset/request` | 비밀번호 재설정 메일을 보낸다. 계정 존재 여부와 무관하게 202 | `PasswordResetRequest` | 202 (본문 없음) | ✅ |
+| POST | `/password-reset/confirm` | 메일의 토큰으로 새 비밀번호를 확정한다. 토큰은 1회용 | `PasswordResetConfirmRequest` | 204 (본문 없음) | ✅ |
+| POST | `/find-email` | 이름/아이 정보 대조로 이메일을 찾는다. 매치가 없어도 200과 빈 배열 | `FindEmailRequest` | 200 `FindEmailResponse` | ✅ |
 
 ### 2.2 보호자 — `/api/parents`
 
@@ -121,7 +128,7 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API | `UtteranceRequest` | `UtteranceResponse` | ⚠️ 파이프라인 구현. 분석·캐릭터 LLM 클라이언트가 비어 있어 호출하면 501 |
+| POST | `/utterances` | 아이 발화를 제출한다. 분석과 진행 판단, 캐릭터 응답까지 한 번에 처리하는 핵심 API. `Idempotency-Key` 헤더(선택)로 재전송 중복 방지 | `UtteranceRequest` | `UtteranceResponse` | ✅ |
 | GET | `/turn-state` | 현재 장면의 턴 누적 상태를 조회한다 | — | `TurnStateResponse` | ✅ |
 
 **턴 처리 중 발생하는 충돌**
@@ -135,6 +142,8 @@
 한 턴 처리는 수 초가 걸리므로 **전송 중에는 발화 버튼을 잠가야 한다.** 겹친 요청은 409로 돌아온다.
 
 `CONCURRENT_TURN`은 **다시 보내도 되는 실패**다. 겹친 요청 중 진 쪽이 아이 발화만 남기고 끝날 수 있으므로, 재전송 전에 `GET /turn-state`나 이어하기로 현재 상태를 다시 읽는 것이 안전하다.
+
+**타임아웃 후 재전송은 `Idempotency-Key`가 정석이다.** 같은 키로 다시 보내면 서버가 처리를 이미 마쳤어도 저장된 응답이 재생되어 중복 턴이 되지 않는다. 키를 쓰지 않는 클라이언트만 turn-state 판정이 필요하다.
 
 ### 2.9 미션 — `/api/sessions/{sessionId}/missions`
 
@@ -174,7 +183,7 @@
 | POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⚠️ `meaning`을 함께 보내면 동작. 생략하면 501 |
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
-| DELETE | `/api/words/{wordId}` | 저장한 단어를 삭제한다 | — | 204 | ⛔ |
+| DELETE | `/api/children/{childId}/words/{wordId}` | 저장한 단어를 삭제한다 (2026-08 경로 확정) | — | 204 | ✅ |
 
 아이가 이야기를 듣다 모르는 단어를 누르는 경로에서는 뜻이 올 수 없어 LLM을 타므로, 벤더 선정
 전까지 그 경로만 501이다. 클라이언트가 뜻을 담아 보내면 지금도 저장된다.
@@ -187,7 +196,7 @@
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
 | GET | `/api/children/{childId}/shop/items` | 상점 목록을 조회한다. 해금과 구매 가능 여부를 서버가 계산해 함께 준다 | — | `List<ShopItemResponse>` | ✅ |
-| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ✅ |
+| POST | `/api/children/{childId}/items` | 아이템을 구매한다. 별가루를 차감한다. `Idempotency-Key` 헤더(선택)로 재전송 이중 차감 방지 | `ItemPurchaseRequest` | 201 `ItemPurchaseResponse` | ✅ |
 | GET | `/api/children/{childId}/items` | 보유 아이템(보관함)을 조회한다 | `?placed=` (선택) | `List<ChildItemResponse>` | ✅ |
 
 ### 2.14 보상 — 별가루
@@ -227,7 +236,7 @@
 
 각 DTO 아래의 **사용처**가 그 DTO를 주고받는 엔드포인트다. `X에 중첩`은 단독 응답이 아니라 다른 DTO의 필드로만 실려 나간다는 뜻이고, 그때는 최종적으로 어느 엔드포인트가 전달하는지도 함께 적었다.
 
-여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/words/{wordId}`(204).
+여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/children/{childId}/words/{wordId}`(204).
 
 ### 3.1 공통
 
@@ -290,7 +299,25 @@
 |---|---|---|
 | `accessToken` | String | 이후 요청의 `Authorization: Bearer` 헤더에 담는다 |
 | `refreshToken` | String | 회전(rotate)된 새 리프레시 토큰. 기존 토큰은 이 값 발급과 동시에 무효화된다 |
-| `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 7일 |
+| `accessTokenExpiresIn` | long | 액세스 토큰 유효 기간(초). 기본 30분(1800). 만료 시 리프레시 토큰(기본 14일, 1회 사용 회전)으로 재발급한다 |
+
+#### `PasswordResetRequest` / `PasswordResetConfirmRequest`
+
+> **사용처** — `POST /api/auth/password-reset/request` / `POST /api/auth/password-reset/confirm` 요청
+
+- `PasswordResetRequest`: `email`(`@NotBlank @Email`, 255자 이하)
+- `PasswordResetConfirmRequest`: `token`(`@NotBlank`, 메일 링크의 1회용 토큰) · `newPassword`(`@NotBlank`, 8~64자)
+
+계정 존재 여부를 응답으로 구분하지 않는다 — 요청은 항상 202, 무효/만료 토큰은 400 `INVALID_PASSWORD_RESET_TOKEN`, 메일 발송 실패만 503.
+
+#### `FindEmailRequest` / `FindEmailResponse`
+
+> **사용처** — `POST /api/auth/find-email` 요청 / 응답
+
+- `FindEmailRequest`: `parentName`(`@NotBlank`) · `childName`(선택) · `childBirthYear`(선택)
+- `FindEmailResponse`: `emails`(`List<String>`, 마스킹된 이메일 목록)
+
+매치가 없어도 200과 빈 배열이다 — 존재 여부를 에러로 구분하지 않는다.
 
 #### `AuthResponse` / `SocialAuthResponse`
 
@@ -445,7 +472,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 **내레이션 분리는 서버가 한다.** 줄바꿈 기준으로 자른다 — 마침표로 자르면 `1.5km` 같은 표현이 깨진다.
 
-**서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`·`character_persona`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
+**서버 내부 설정은 담지 않는다.** `element_criteria`·`remaining_worries`·`mission_config`·`scene_stance`·`proper_nouns`는 전부 LLM·STT 입력이라 클라이언트가 알 필요가 없다.
 
 #### `TopicResponse`
 
@@ -505,7 +532,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `session`(`SessionResponse`) · `currentScene`(`SceneContentResponse`) · `messages`(`List<MessageResponse>`) · `lastCharacterMessage`(`CharacterMessageResponse`) · `exposedMission`(`MissionResponse`)
 
-`messages`는 세션 전체 내역이고 `lastCharacterMessage`는 마지막 캐릭터 발화다. `exposedMission`은 노출 판정이 `story.mission`에 있어 지금은 항상 null이다. 미션 구현 후 채워지며 응답 스키마는 바뀌지 않는다.
+`messages`는 세션 전체 내역이고 `lastCharacterMessage`는 마지막 캐릭터 발화다. `exposedMission`에는 노출 중이던 미션이 실제로 담긴다 - 미노출이면 null이고, 완료 여부는 구분하지 않는다.
 
 #### `SessionSummaryResponse` — 홈 이어하기 카드
 
@@ -551,13 +578,15 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `phase`(`PlayPhase`) · `currentScene`(`SceneContentResponse`) · `openingMessage`(`CharacterMessageResponse`)
 
-다음 장면이 DIALOGUE면 고정 첫 대사를 함께 저장·반환한다. 마지막 장면이 STORY로 끝났다면 `phase=POST_ACTIVITY`이고 `currentScene`은 null이다.
+다음 장면이 DIALOGUE면 고정 첫 대사를 함께 저장·반환한다. 마지막 장면이 STORY로 끝났다면 `phase=POST_ACTIVITY`이고 `currentScene`은 null이다. 후속 활동 config가 없는 이야기는 건너뛰고 즉시 완료되어 `phase=ENDED`다(2026-08 확정, 완주 별가루 포함).
 
 #### `SceneTransitionResponse`
 
 > **사용처** — `UtteranceResponse`에 중첩 — 장면 종료 턴에만 → 최종 전달: `POST /api/sessions/{sessionId}/utterances`
 
-`next`(`SceneTransitionTarget`) · `nextSceneId` · `nextSceneOrder`(Integer) · `nextSceneType` · `closingReason`(`SceneEndReason`)
+`next`(`SceneTransitionTarget`) · `nextSceneId` · `nextSceneOrder`(Integer) · `nextSceneType` · `closingReason`(`SceneEndReason`) · `resultImageUrl`(String, nullable)
+
+`resultImageUrl`(2026-08 확정) — 끝난 장면의 결과 연출 이미지. 값이 있으면 마지막 대사 재생 뒤, 다음 장면을 그리기 전에 연출로 끼워 넣는다. 대화3의 "배가 떨어지는" 연출이 해당하며, 종료 사유나 미션 노출 여부와 무관하게 장면이 닫히면 항상 내려간다. 값의 원천은 `mission_config.result_image_url`이다.
 
 #### `CurrentSceneResponse` / `TurnStateResponse`
 
@@ -581,7 +610,9 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `sttRetryCount` | Short | `@PositiveOrZero` | 선택, 기본 0 |
 | `missionId` | String | | 이 발화가 미션 수행 결과일 때 |
 
-**`sttLowConfidence`는 요청에 없다.** 기준값 판정은 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. (기준값 자체는 아직 미정이라 지금은 저장만 한다.)
+헤더 `Idempotency-Key`(선택) — 발화마다 새 UUID를 만들고 재시도 사이에만 유지한다(1장 멱등키 참고).
+
+**`sttLowConfidence`는 요청에 없다.** 기준값(0.5, 2026-08 확정) 판정은 저장 시 서버가 한다 — 클라이언트마다 기준이 갈리면 리포트 필터링이 흔들린다. `sttConfidence`는 `/api/stt` 응답의 `confidence`를 그대로 되올린다.
 
 #### `UtteranceResponse` — 단일 스키마, null 여부로 분기
 
@@ -593,6 +624,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `analysis` | `AnalysisResponse` | 항상 |
 | `progress` | `ProgressResponse` | 항상 |
 | `characterMessage` | `CharacterMessageResponse` | 항상 (종료 시엔 고정 마지막 대사) |
+| `closingReaction` | `CharacterMessageResponse` | **최대 턴 종료 턴** - 아이의 마지막 발화에 대한 짧은 반응. `characterMessage`보다 먼저 재생한다 |
 | `mission` | `MissionResponse` | **미션 노출 턴** |
 | `sceneTransition` | `SceneTransitionResponse` | **장면 종료 턴** (`progress.mode=CLOSING`) |
 | `safety` | `SafetyResponse` | **위험 신호로 대사 생성이 중단된 턴** |
@@ -639,7 +671,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `title` `description` | String | 미션 오버레이에 띄우는 제목과 안내 문구 |
 | `payload` | `Payload` | `{questions, cards}` — **유형에 따라 한쪽만 값이 있다** |
 
-- `Question`: `key`(`tool`/`safety`/`request`/`expectedResult`로 고정) · `label`
+- `Question`: `key`(`tool`/`reason`/`request`/`expectedResult`로 고정) · `label`
 - `Card`: `key` · `label` · `imageUrl` · `template`
 
 #### `CurrentMissionResponse`
@@ -882,7 +914,11 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 > **사용처** — `POST /api/stt` 응답
 
-`text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`.
+- `text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`
+- `confidence`(BigDecimal, 0~1, nullable) — exp(토큰 logprob 평균). 클라이언트는 이 값을
+  발화 제출의 `sttConfidence`에 그대로 되올린다. 벤더가 logprob을 못 주면 null
+- `lowConfidence`(boolean) — 기준값(0.5) 미만 여부. 판정은 서버가 한다. true면 제출 전에
+  "잘 못 알아들었을 수 있어요" 다시 말하기 안내를 띄운다 (비차단 - 아이가 그대로 제출해도 된다)
 
 #### `SynthesisRequest` / `SynthesisResponse`
 
@@ -922,7 +958,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 **2. 파생값은 저장하지 않고 응답에서 계산한다.** `age`, `missingElements`, `phase`, `placed`, 보관함, 대표 발화.
 
-**3. 서버 내부 설정은 내리지 않는다.** LLM·STT 입력(`element_criteria`, `remaining_worries`, `character_persona`, `scene_stance`, `proper_nouns`), 추적용 메타(`analysisVersion`, `modelId`, `droppedEvidence`), 멱등 키(`card_order_seed`, 거래의 `sessionId`/`sceneId`).
+**3. 서버 내부 설정은 내리지 않는다.** LLM·STT 입력(`element_criteria`, `remaining_worries`, `scene_stance`, `proper_nouns`), 추적용 메타(`analysisVersion`, `modelId`, `droppedEvidence`), 멱등 키(`card_order_seed`, 거래의 `sessionId`/`sceneId`).
 
 **4. 분기는 필드 null로 표현한다.** 응답 스키마를 유형별로 나누지 않는다 — `UtteranceResponse` 하나로 대화 계속·미션 노출·장면 종료·안전 개입을 모두 표현한다.
 
@@ -936,14 +972,14 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | # | 항목 | 현재 | 조치 |
 |---|---|---|---|
-| 1 | **`TokenResponse.refreshToken`이 항상 null** | 저장소(`refresh_tokens` 테이블·`RefreshToken` 엔티티)는 준비됐고 발급·회전·무효화 로직만 없다 | 그때까지 **Access 토큰 단일 전략으로 완결 동작한다**(→ §8). 도입해도 응답 스키마는 그대로라 클라이언트 변경이 없다 |
-| 2 | **멀티파트 1MB 한도** | `application.yml`에 `spring.servlet.multipart` 설정 없음 → Boot 기본 1MB | 30초 WAV ≈ 960KB라 아슬아슬하다. 10MB로 올린다 |
-| 3 | **STT 신뢰도 기준값** | 미정이라 `sttLowConfidence`가 항상 false | 기준값 확정 후 서버 판정 |
 | 4 | **`SafetyResponse` 감지 로직** | 계약 자리만 확정. 항상 null | AI 파이프라인 연동 시 |
 | 5 | **`CharacterEmotion` 고정 6종** | 응답 enum이 고정인데 DB는 CHECK를 풀었다 | 캐릭터별 `expression_keys`로 옮기면 문자열 키 + fallback으로 바꾼다 |
-| 6 | **`DELETE /api/words/{wordId}`** | 경로에 `childId`가 없어 소유권 검증 경로가 애매. `WordbookService.delete`는 소유 검증까지 구현돼 있고 컨트롤러만 501이다 | 경로를 `/api/children/{childId}/words/{wordId}`로 맞추면 컨트롤러만 바꾸면 된다 |
-| 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
 | 7 | **`SynthesisRequest.characterName`이 이름 문자열** | `characters` 테이블이 생겼으니 키로 지정하는 편이 안전 | `characterKey` 또는 `sceneId`+`slot`으로 전환 검토 |
+| 8 | **아이템 발판(footprint)** | 카탈로그 정의가 없어 모든 아이템을 1칸으로 보고 배치 검증을 한다 | 2x2 아이템의 비앵커 칸이 겹칠 수 있다. 카탈로그가 나오면 `PlanetService`의 빈 칸 검사에 점유 칸 계산을 더한다 |
+| 미결-01 | **STT/TTS 벤더 확정** | OpenAI 실측 구성(gpt-4o-mini)으로 동작 중. 비교용이지 최종 선정이 아니다 | 아동 실녹음 인식률 검증 후 최종 확정. 신뢰도 컷(0.5)도 그때 함께 보정 |
+| 미결-02 | **네이버 소셜 로그인** | kakao/google만 지원, 그 외 501 | 도입 여부 결정 |
+
+(결번 1, 2, 3, 6은 해소된 항목이다: 리프레시 토큰, 멀티파트 한도, STT 신뢰도 기준값, 단어 삭제 경로)
 
 ---
 
@@ -951,7 +987,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 영역 | 엔드포인트 | ✅ | ⚠️ | ⛔ |
 |---|---|---|---|---|
-| 인증 | 5 | 2 | 1 | 2 |
+| 인증 | 8 | 7 | 1 | 0 |
 | 보호자 | 2 | 1 | 1 | 0 |
 | 아이·동의 | 8 | 8 | 0 | 0 |
 | 홈 | 1 | 1 | 0 | 0 |
@@ -960,14 +996,49 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 대화·미션 | 4 | 3 | 0 | 1 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
 | 리포트 | 3 | 2 | 0 | 1 |
-| 단어장 | 4 | 2 | 1 | 1 |
+| 단어장 | 4 | 3 | 1 | 0 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **56** | **48** | **3** | **5** |
+| **합계** | **59** | **54** | **3** | **2** |
 
-⛔ 5건은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔ 2건(미션 결과 제출, 리포트 생성)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
 
-⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+
+**2026-08-15 갱신분** (집계 변동 없음 - API 계약도 그대로, 서버 동작만 바뀜)
+
+- STT 어휘 힌트 에코 차단 확장: 무음이나 뭉개진 오디오에서 모델이 prompt의
+  어휘 힌트를 복창하는 환각이 있는데, 기존 필터(완전 일치)를 재조합 문장이
+  통과하는 것이 실측됐다. 판정을 나열 에코(힌트 단어를 지우면 아무것도 안
+  남음)와 재조합 에코(힌트 어휘 등장 비율 2/3 이상)로 확장했다. 에코는 기존
+  `STT_EMPTY_TEXT`(422) 경로를 탄다 - 응답 계약 변화 없음
+- 벤더 프롬프트를 나열형에서 문장형으로 변경(`external.stt.prompt`, 서버 내부
+  설정). 나열형이 복창 환각을 가장 잘 유발해서다. 문장형을 복창해도 재조합
+  판정에 걸리는 것을 테스트로 고정했다
+- 웹 녹음 상한 안내: 웹은 48kHz로 녹음하므로(샘플레이트 불일치 수정의 결과)
+  109초부터 멀티파트 한도 10MB를 넘는다. 프론트가 60초에서 자동 종료한다
+- 배경과 실측 전체는 `트러블슈팅_STT_어휘_힌트_에코.md` 참고
+
+**2026-08-14 갱신분** (직전 집계는 48/3/5였다. 인증 3건 추가로 분모도 56 -> 59)
+
+- 상태 변화: 리프레시 토큰 발급/회전/무효화 구현(refresh, logout 미구현 -> 동작),
+  비밀번호 재설정 2건과 이메일 찾기 추가(전부 동작), 단어 삭제 구현(경로를
+  `/api/children/{childId}/words/{wordId}`로 확정). 남은 501은 미션 결과 제출과
+  리포트 생성 2건뿐이다
+- 계약 추가: 발화 제출/아이템 구매의 `Idempotency-Key` 헤더(1장), `/api/stt` 응답의
+  `confidence`/`lowConfidence`, 발화 응답의 `closingReaction`(최대 턴 종료)과
+  `sceneTransition.resultImageUrl`(결과 연출), `sceneTransition.next`의 `COMPLETED`
+  (후속 활동 무설정 이야기 즉시 완료), 인증 DTO 4종
+- 확정값 반영: 미션1 질문 key safety -> reason, preferred_turns 전 장면 2,
+  STT 저신뢰 기준 0.5, 아이템 가격 1/2/3과 누적 해금 3/4/5 인하
+- 에러 표에 세분 코드 보강(401 계열 4종, 423, 503, 400 재설정 토큰), 8절을
+  시점 기록으로 강등(현행은 액세스 30분 + 리프레시 14일)
+
+**2026-08-13 갱신분 5** (집계 변동 없음 - ⚠️ 범위만 넓어짐)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/auth/social/{provider}` | ⚠️ kakao만 | ⚠️ kakao, google | 구글 OAuth 인가 코드 교환 추가(PR #17). 그 외 공급자는 여전히 501 |
 
 **2026-08-13 갱신분 4** (직전 집계는 46/3/7이었다)
 
@@ -1006,7 +1077,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utterances`는 코드상 전
 구간이 이어졌고, 실호출 검증(LlmSmokeTest, .env에 LLM_API_KEY 필요)까지 통과했다.
 
-근거 문서 6종(통합 명세서, 발화 분석 연동 기준, 대화 작동 규칙, 콘텐츠, 캐릭터 성격,
+근거 문서 6종(통합 명세서 - 저장소 밖 팀 공유 문서, 발화 분석 연동 기준, 대화 작동 규칙, 콘텐츠, 캐릭터 성격,
 요구사항 목록)을 전수 대조하면서 규칙 세 가지를 문서 확정값에 맞췄다.
 
 - 유도 판단의 남은 턴 기준을 "미충족 요소 수"에서 문서 확정값 "남은 턴 <= 2"로 정정
@@ -1017,9 +1088,10 @@ LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utte
   "강한 유도 대상"이 아니라 "직전 유도 또는 soft-cue 대상"이다**
 - 반응 원칙 키 7종(reactionKey)을 서버가 계산해 캐릭터 프롬프트에 전달 (대화 작동 규칙 3.1)
 
-**미결(팀 확정 필요)**: 콘텐츠 문서의 "최대 턴 도달 시 짧게 반응 후 마지막 대사" 흐름은
-캐릭터 메시지가 2건이 되는데 `UtteranceResponse.characterMessage`는 1건이다. 응답 계약
-변경이 필요해 미구현으로 두었다 (통합 명세서 D-1도 확정 필요로 분류).
+**확정(2026-08)**: 콘텐츠 문서의 "최대 턴 도달 시 짧게 반응 후 마지막 대사" 흐름을
+MAX_TURNS 종료에 한정해 구현했다. 응답의 `closingReaction`(별도 메시지)이 짧은 반응이고
+`characterMessage`(고정 마무리 대사)보다 먼저 재생한다. 목표 달성(GOAL_MET) 종료는 문서
+요구가 없고 마무리 대사가 자연스러운 연결이라 현행(마무리 대사만)을 유지한다.
 
 **2026-08-13 갱신분** (직전 집계는 42/4/10이었다)
 
@@ -1082,7 +1154,11 @@ LLM 어댑터 2건(분석, 캐릭터)을 gpt-5-mini로 구현했다. `POST /utte
 
 ---
 
-## 8. Access 토큰 단일 전략 — 동작 확인
+## 8. Access 토큰 단일 전략 — 동작 확인 (2026-08-10 시점 기록)
+
+> **주의**: 이 절은 리프레시 토큰 도입 전의 검증 기록이다. 현재는 리프레시 발급/회전/무효화가
+> 구현되어 액세스 30분 + 리프레시 14일로 운영한다(2.1절, 3.2절이 현행). 당시 검증한
+> 무상태 구조(재로그인해도 진행 상태가 이어진다)는 지금도 유효하다.
 
 리프레시 토큰 없이도 인증이 완결되는지 실제로 앱을 띄워 확인했다(2026-08-10).
 
