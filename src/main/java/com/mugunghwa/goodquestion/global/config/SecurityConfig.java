@@ -47,6 +47,10 @@ public class SecurityConfig {
                         // 이야기 정적 에셋(장면/미션 이미지). 개인정보가 없는 공개 콘텐츠라
                         // 인증 없이 연다 - 이미지 태그가 Authorization 헤더를 못 싣는 환경도 있다.
                         .requestMatchers("/stories/**").permitAll()
+                        // 사전 렌더 음성(장면 낭독·고정 대사·선택지)과 행성 아이템 모델도 같다.
+                        // <audio src>와 GLTF 로더는 이미지 태그와 마찬가지로 헤더를 못 싣고,
+                        // 행성은 별도 웹앱이라 토큰을 들고 있지도 않다. 둘 다 공개 콘텐츠다.
+                        .requestMatchers("/tts/**", "/items/**").permitAll()
                         .anyRequest().authenticated())
                 // 기본값은 401·403 모두 403 + 빈 본문이라 만료와 권한 없음을 구분할 수 없다.
                 // 리프레시 토큰이 없어 만료 복구가 재로그인뿐이므로 둘을 반드시 갈라야 한다.
