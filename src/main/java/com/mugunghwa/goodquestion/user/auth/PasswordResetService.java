@@ -5,6 +5,7 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -28,6 +29,7 @@ import java.util.HexFormat;
  * <p>RefreshTokenService와 같은 방식이다 — 원문은 저장하지 않고 해시만 남기고,
  * 소비하면 consumed_at을 찍어 재사용을 막는다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -76,6 +78,7 @@ public class PasswordResetService {
         try {
             mailSender.send(message);
         } catch (MailException e) {
+            log.error("메일 발송 실패: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.EMAIL_DELIVERY_FAILED);
         }
     }
