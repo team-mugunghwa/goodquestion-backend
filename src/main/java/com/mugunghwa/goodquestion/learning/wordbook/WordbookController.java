@@ -36,4 +36,15 @@ public class WordbookController {
                                        @PathVariable UUID wordId) {
         return wordbookService.toggleFavorite(parentId, childId, wordId);
     }
+
+    /**
+     * 단어 삭제(단어-05). 경로는 단어장 다른 엔드포인트와 같은 childId 기준으로
+     * 확정했다(2026-08) - childId 없는 경로는 소유권 검증이 애매해 501로 남아 있었다.
+     */
+    @DeleteMapping("/{wordId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@CurrentParentId UUID parentId, @PathVariable UUID childId,
+                       @PathVariable UUID wordId) {
+        wordbookService.delete(parentId, childId, wordId);
+    }
 }

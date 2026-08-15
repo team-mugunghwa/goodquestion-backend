@@ -62,19 +62,22 @@ public class AuthController {
     }
 
     /**
-     * 소셜 로그인. 현재 지원 공급자는 kakao 뿐이며 나머지는 501을 반환한다(미결-02).
+     * 소셜 로그인. 카카오와 구글을 지원한다.
      *
      * <p>서버가 인가 코드를 제공자 토큰으로 교환한 뒤 프로필을 조회한다(계정-04).
-     * 교환에 카카오 REST API 키가 필요하므로 {@code KAKAO_CLIENT_ID}를 설정해야 한다.
+     * 공급자별 client ID와 웹 클라이언트 secret을 환경 변수로 설정해야 한다.
      */
     @PostMapping("/social/{provider}")
     public SocialAuthResponse loginWithSocial(@PathVariable String provider,
                                               @Valid @RequestBody SocialLoginRequest request,
                                               HttpServletRequest servletRequest) {
-        if (!"kakao".equalsIgnoreCase(provider)) {
-            throw new UnsupportedOperationException("지원하지 않는 소셜 로그인 공급자입니다: " + provider);
-        }
-        return authService.loginWithKakao(request, ClientIpResolver.resolve(servletRequest));
+        String clientIp = ClientIpResolver.resolve(servletRequest);
+        return switch (provider.toLowerCase()) {
+            case "kakao" -> authService.loginWithKakao(request, clientIp);
+            case "google" -> authService.loginWithGoogle(request, clientIp);
+            default -> throw new UnsupportedOperationException(
+                    "지원하지 않는 소셜 로그인 공급자입니다: " + provider);
+        };
     }
 
     /** 리프레시 토큰 회전 재발급(계정-05). */

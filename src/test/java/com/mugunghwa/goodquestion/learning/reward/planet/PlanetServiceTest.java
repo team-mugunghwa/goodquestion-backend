@@ -43,14 +43,12 @@ class PlanetServiceTest {
     }
 
     @Test
-    void 다음_해금_목표는_잠긴_것_중_가장_앞선_하나다() {
-        // 지우는 누적 25 - 집(15)과 강아지(완주)는 열렸고 토끼(30)가 가장 앞선 잠금이다
+    void 모든_아이템이_열리면_다음_해금_목표가_없다() {
+        // 지우는 누적 25에 완주 이력이 있어 전 아이템이 열려 있다 (2026-08 해금 인하 이후)
         PlanetResponse.NextUnlock nextUnlock = planetService.getPlanet(PARENT_ID, CHILD_ID)
                 .progress().nextUnlock();
 
-        assertThat(nextUnlock).isNotNull();
-        assertThat(nextUnlock.itemName()).isEqualTo("토끼");
-        assertThat(nextUnlock.conditionText()).isEqualTo("별가루를 모두 30개 모으면 열려요");
+        assertThat(nextUnlock).isNull();
     }
 
     @Test
@@ -58,7 +56,9 @@ class PlanetServiceTest {
         PlanetResponse.NextUnlock nextUnlock = planetService.getPlanet(PARENT_ID, SIBLING_ID)
                 .progress().nextUnlock();
 
-        assertThat(nextUnlock.itemName()).isEqualTo("집");   // 하준은 누적 0이라 집(15)이 먼저 잠긴다
+        // 하준은 누적 0이라 진열 순서상 집(누적 3)이 가장 앞선 잠금이다.
+        assertThat(nextUnlock.itemName()).isEqualTo("집");
+        assertThat(nextUnlock.conditionText()).isEqualTo("별가루를 모두 3개 모으면 열려요");
     }
 
     @Test

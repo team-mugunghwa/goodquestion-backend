@@ -11,10 +11,12 @@ import com.mugunghwa.goodquestion.story.content.Story;
 import com.mugunghwa.goodquestion.story.content.StoryRepository;
 import com.mugunghwa.goodquestion.story.content.StoryStatus;
 import com.mugunghwa.goodquestion.story.mission.MissionService;
+import com.mugunghwa.goodquestion.story.mission.dto.MissionResponse;
 import com.mugunghwa.goodquestion.user.child.Child;
 import com.mugunghwa.goodquestion.user.child.ChildService;
 import com.mugunghwa.goodquestion.user.consent.ConsentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class SessionService {
     private final MessageService messageService;
     private final MessageRepository messageRepository;
     private final MissionService missionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
@@ -89,6 +92,18 @@ public class SessionService {
         return new CurrentSceneResponse(
                 scene == null ? null : SceneContentResponse.from(scene),
                 session.resolvePhase());
+    }
+
+    /**
+     * 노출 중인 미션 조회(미션-02). 미노출이면 null이다.
+     *
+     * <p>컨트롤러가 세션을 직접 꺼내 MissionService에 넘기면 두 호출이 서로 다른 트랜잭션이
+     * 되어, 준영속 상태가 된 세션의 currentScene(LAZY)을 건드리는 순간
+     * LazyInitializationException이 난다(application.yml의 open-in-view: false).
+     * 소유권 검증과 미션 조회를 한 트랜잭션 안에서 끝내야 한다 - resume이 멀쩡한 것과 같은 이유다.
+     */
+    public MissionResponse currentMission(UUID parentId, UUID sessionId) {
+        return missionService.exposedMissionOf(getOwnedSession(parentId, sessionId));
     }
 
     /**
@@ -151,9 +166,16 @@ public class SessionService {
         }
 
         // 마지막 장면이 STORY로 끝나는 경우 후속 활동으로 전환한다.
+        // 후속 활동 config가 없는 이야기는 건너뛰고 즉시 완료한다(2026-08 확정) -
+        // 전환해 두면 카드 시작이 404를 던져 세션이 빠져나갈 수 없다.
         StoryScene nextScene = sceneService.getNextScene(currentScene).orElse(null);
         if (nextScene == null) {
-            session.toPostActivity();
+            if (session.getStory().getPostActivityConfig() == null) {
+                session.complete();
+                eventPublisher.publishEvent(new SessionCompletedEvent(session.getId()));
+            } else {
+                session.toPostActivity();
+            }
             return new SceneAdvanceResponse(session.resolvePhase(), null, null);
         }
 

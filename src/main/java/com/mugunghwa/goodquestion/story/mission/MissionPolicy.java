@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class MissionPolicy {
 
     /** 아이가 자기 생각을 먼저 말해야 하는 최소 턴 수. */
-    private static final int MIN_TURNS_BEFORE_EXPOSURE = 1;
+    private static final int FALLBACK_TURNS_BEFORE_PROBLEM_SOLVING = 2;
     /** 미션2는 처음부터 보여주면 정해진 답을 찾으려 하므로 한 턴 더 기다린다. */
     private static final int MIN_TURNS_BEFORE_PERSPECTIVE_SHIFT = 2;
 
@@ -45,11 +45,16 @@ public class MissionPolicy {
             return false;
         }
         // 3) 아이가 자기 생각을 먼저 말했어야 한다.
-        return session.getCurrentChildTurnCount() >= minTurns(scene);
-    }
+        MissionType type = configReader.typeOf(scene);
+        if (type == MissionType.PERSPECTIVE_SHIFT) {
+            // 아이가 먼저 특징을 긍정하는 관점을 말한 뒤, 다른 사람에게 확장한다.
+            return session.getCurrentChildTurnCount() >= MIN_TURNS_BEFORE_PERSPECTIVE_SHIFT
+                    && session.getAccumulatedElements().contains("PERSPECTIVE");
+        }
 
-    private int minTurns(StoryScene scene) {
-        return configReader.typeOf(scene) == MissionType.PERSPECTIVE_SHIFT
-                ? MIN_TURNS_BEFORE_PERSPECTIVE_SHIFT : MIN_TURNS_BEFORE_EXPOSURE;
+        // 해결 방향이 나오면 구체화 미션을 보여 주고, 방향이 없더라도 두 번 대화한 뒤에는
+        // 캐릭터 질문만 반복하지 않도록 미션으로 안전한 실행 방법을 구성하게 한다.
+        return session.getAccumulatedElements().contains("SOLUTION")
+                || session.getCurrentChildTurnCount() >= FALLBACK_TURNS_BEFORE_PROBLEM_SOLVING;
     }
 }

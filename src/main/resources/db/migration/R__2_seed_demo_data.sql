@@ -186,7 +186,7 @@ insert into messages (id, session_id, scene_id, speaker_type, turn_order, text,
 ('cccccccc-cccc-cccc-cccc-00000000000a', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002',
  '33333333-3333-3333-3333-000000000005', 'CHILD', 2,
  '음... 며느리도 그러고 싶어서 그런 건 아닐 거예요.',
- '음 며느리도 그러고 시퍼서 그런건 아닐꺼예요', 0.520, true, 2,
+ '음 며느리도 그러고 시퍼서 그런건 아닐꺼예요', 0.420, true, 2,
  null, now() - interval '38 minutes'),
 ('cccccccc-cccc-cccc-cccc-00000000000b', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002',
  '33333333-3333-3333-3333-000000000005', 'CHARACTER', 3,
@@ -303,7 +303,7 @@ insert into mission_results (id, session_id, scene_id, mission_id, mission_type,
  '{"answers": {"who": "며느리가", "how": "방귀를 세게 뀌어서", "why": "장대로는 닿지 않으니까", "result": "배가 우수수 떨어졌어요"}}'::jsonb),
 ('d4440000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
  '33333333-3333-3333-3333-000000000009', 'mission_2', 'PERSPECTIVE_SHIFT',
- '{"cards": [{"trait": "목소리가 큰 친구", "strength": "멀리 있는 사람을 부를 수 있어요"}, {"trait": "질문이 많은 친구", "strength": "새로운 생각을 찾을 수 있어요"}]}'::jsonb)
+ '{"cards": [{"trait": "목소리가 큰 친구", "strength": "멀리 있는 사람을 부를 수 있어요"}, {"trait": "말이 많은 친구", "strength": "재미있는 이야기를 들려줄 수 있어요"}]}'::jsonb)
 on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
@@ -448,7 +448,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
 아침에 한 번, 저녁에 한 번씩요.
 어느 아침, 흙을 뚫고 초록 싹이 고개를 내밀었어요.',
  '/stories/seed/sc_03.png')
-on conflict (id) do nothing;
+on conflict do nothing;
 
 
 -- ============================================================

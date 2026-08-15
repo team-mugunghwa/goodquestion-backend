@@ -4,9 +4,11 @@ import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
 import com.mugunghwa.goodquestion.story.dialogue.engine.ProgressionDecision;
+import com.mugunghwa.goodquestion.story.mission.MissionConfigReader;
 import com.mugunghwa.goodquestion.story.session.Message;
 import com.mugunghwa.goodquestion.story.session.MessageService;
 import com.mugunghwa.goodquestion.story.session.SceneClosedEvent;
+import com.mugunghwa.goodquestion.story.session.SessionCompletedEvent;
 import com.mugunghwa.goodquestion.story.session.SceneTransitionTarget;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.SpeakerType;
@@ -36,12 +38,23 @@ public class SceneClosingHandler {
     private final SessionService sessionService;
     private final SceneService sceneService;
     private final MessageService messageService;
+    private final MissionConfigReader missionConfigReader;
     private final ApplicationEventPublisher eventPublisher;
 
     public TurnClosure close(StorySession session, StoryScene scene,
                              ProgressionDecision decision, CharacterReply reply) {
-        boolean goalMet = scene.missingElements(session.getAccumulatedElements()).isEmpty();
+        // 미션 필수 장면의 목표는 "요소 충족 && 미션 완료"다. 요소만 채운 채 최대 턴으로
+        // 닫힌 장면이 목표 달성(장면 보너스 자격)으로 기록되면 안 된다.
+        boolean goalMet = scene.missingElements(session.getAccumulatedElements()).isEmpty()
+                && (!scene.hasMission() || session.isMissionCompleted());
         session.closeScene(decision.closingReason(), goalMet);
+
+        // 최대 턴 종료의 짧은 반응. 마무리 대사보다 먼저 저장해 재생 순서가 기록 순서와 같다.
+        Message reactionMessage = reply.closingReaction() != null
+                ? messageService.append(session, scene, SpeakerType.CHARACTER,
+                        session.personalize(reply.closingReaction().text()), null,
+                        reply.closingReaction().emotion())
+                : null;
 
         Message closingMessage = messageService.append(session, scene, SpeakerType.CHARACTER,
                 session.personalize(reply.text()), null, reply.emotion());
@@ -49,9 +62,14 @@ public class SceneClosingHandler {
         eventPublisher.publishEvent(new SceneClosedEvent(
                 session.getId(), scene.getId(), session.isSceneBonusEligible()));
 
+        // 결과 연출(대화3의 배 떨어지는 이미지). 종료 사유와 무관하게 장면이 닫히면 내린다.
+        String resultImageUrl = missionConfigReader.resultImageUrlOf(scene);
+
         return sceneService.getNextScene(scene)
-                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage))
-                .orElseGet(() -> finish(session, decision, closingMessage));
+                .map(nextScene -> moveOn(session, nextScene, decision, closingMessage,
+                        reactionMessage, resultImageUrl))
+                .orElseGet(() -> finish(session, decision, closingMessage, reactionMessage,
+                        resultImageUrl));
     }
 
     /**
@@ -59,26 +77,42 @@ public class SceneClosingHandler {
      * 않는다 - 화면은 전환을 보고 첫 대사 재생 API(멱등)를 부른다.
      */
     private TurnClosure moveOn(StorySession session, StoryScene nextScene,
-                               ProgressionDecision decision, Message closingMessage) {
+                               ProgressionDecision decision, Message closingMessage,
+                               Message reactionMessage, String resultImageUrl) {
         sessionService.advanceTo(session, nextScene);
 
         return new TurnClosure(
                 CharacterMessageResponse.from(closingMessage),
+                reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
                         SceneTransitionTarget.SCENE, nextScene.getId(),
                         (int) nextScene.getSceneOrder(), nextScene.getSceneType(),
-                        decision.closingReason()));
+                        decision.closingReason(), resultImageUrl));
     }
 
-    /** 마지막 장면이 대화로 끝났다. 후속 활동으로 넘긴다. */
+    /**
+     * 마지막 장면이 대화로 끝났다. 후속 활동으로 넘기되, config가 없는 이야기는
+     * 건너뛰고 즉시 완료한다(2026-08 확정) - 전환해 두면 카드 시작이 404를 던져
+     * 세션이 빠져나갈 수 없다. 완주 별가루는 이벤트로 지급된다.
+     */
     private TurnClosure finish(StorySession session, ProgressionDecision decision,
-                               Message closingMessage) {
-        session.toPostActivity();
+                               Message closingMessage, Message reactionMessage,
+                               String resultImageUrl) {
+        SceneTransitionTarget target;
+        if (session.getStory().getPostActivityConfig() == null) {
+            session.complete();
+            eventPublisher.publishEvent(new SessionCompletedEvent(session.getId()));
+            target = SceneTransitionTarget.COMPLETED;
+        } else {
+            session.toPostActivity();
+            target = SceneTransitionTarget.POST_ACTIVITY;
+        }
 
         return new TurnClosure(
                 CharacterMessageResponse.from(closingMessage),
+                reactionMessage != null ? CharacterMessageResponse.from(reactionMessage) : null,
                 new SceneTransitionResponse(
-                        SceneTransitionTarget.POST_ACTIVITY, null, null, null,
-                        decision.closingReason()));
+                        target, null, null, null,
+                        decision.closingReason(), resultImageUrl));
     }
 }
