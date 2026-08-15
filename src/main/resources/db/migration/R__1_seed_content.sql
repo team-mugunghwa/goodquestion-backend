@@ -113,9 +113,11 @@ on conflict (id) do update set
     image_url = excluded.image_url;
 
 -- 장면 3. 대화1 (sc_banggui_03) - 방귀쟁이 며느리와의 대화
--- 요소는 문서 3절 표의 ["PERSPECTIVE", "EMOTION", "REASON", "SOLUTION"]을 채택했었으나,
--- 콘텐츠팀 검수 결과 REASON을 제외한 3종으로 확정했다 (충족요건/대화1_충족조건.md).
--- 5절의 'EXPRESSION'은 사고 요소 8종에 없는 미정의 값이라 제외했다.
+-- 요소는 문서 3절 표의 ["PERSPECTIVE", "EMOTION", "REASON", "SOLUTION"] 4종이다.
+-- 한때 검수 의견으로 REASON을 제외했었으나(#44, #45) 2026-08-15 회의에서 REASON
+-- 포함으로 재확정되어 복원했다. 문서 5절 상세의 'EXPRESSION'은 사고 요소 8종에
+-- 없는 미정의 값이라 계속 제외한다.
+-- REASON의 기준/걱정 문구는 확정 문구가 아직 없어 제안값이다 - 확정되면 교체한다.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -131,15 +133,17 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
     '그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.',
     '방귀를 숨기고 싶어하는 며느리의 입장을 이해하고, 공감해주며 문제를 숨기지 않고 솔직하게 말할 수 있는 용기를 준다.',
-    array['PERSPECTIVE', 'EMOTION', 'SOLUTION'],
+    array['PERSPECTIVE', 'EMOTION', 'REASON', 'SOLUTION'],
     '{
       "PERSPECTIVE": "며느리 또는 가족의 입장과 반응을 헤아려 말함. 충족 예: \"가족들도 처음에는 놀라지만 이해해 줄 거예요\". 미충족 예: \"방귀는 원래 나오는 거예요\". \"그냥 방귀 뀌어요\"처럼 가족의 입장을 고려하지 않은 말은 인정하지 않는다.",
       "EMOTION": "며느리의 감정이나 아이 자신의 감정을 직접 표현함. 충족 예: \"계속 참으면 많이 힘들 것 같아요\". 미충족 예: \"괜찮아요\". 놀리거나 비난하는 말은 감정 단어가 들어가더라도 인정하지 않는다.",
+      "REASON": "참지 말고 솔직하게 말해야 하는 까닭을 설명함 (예: 계속 참으면 몸이 아프니까요)",
       "SOLUTION": "현재의 어려움을 줄일 수 있는 구체적인 행동을 제안함. 충족 예: \"가족들에게 먼저 솔직하게 말해 보세요\". 미충족 예: \"어떻게든 해봐요\". \"계속 참아요\"는 행동이지만 현재 문제를 반복·악화시키므로 인정하지 않는다. \"그냥 방귀 뀌어요\"는 몸의 불편을 해소하는 구체적 행동이므로 인정한다."
     }'::jsonb,
     '{
       "PERSPECTIVE": "가족들이 나를 어떻게 생각할지 아직도 무서워.",
       "EMOTION": "참자니 몸이 힘들고, 말하자니 부끄러워서 마음이 복잡해.",
+      "REASON": "솔직하게 말하면 뭐가 좋아지는 걸까? 왜 말해야 하는지 아직 모르겠어.",
       "SOLUTION": "어떻게 하면 좋을지 도무지 방법을 모르겠어."
     }'::jsonb,
     2, 4
