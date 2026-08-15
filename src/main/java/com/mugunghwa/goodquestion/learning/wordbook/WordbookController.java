@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.learning.wordbook;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
+import com.mugunghwa.goodquestion.learning.wordbook.dto.WordPracticeRequest;
+import com.mugunghwa.goodquestion.learning.wordbook.dto.WordPracticeResponse;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordResponse;
 import jakarta.validation.Valid;
@@ -17,6 +19,7 @@ import java.util.UUID;
 public class WordbookController {
 
     private final WordbookService wordbookService;
+    private final WordPracticeService wordPracticeService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -41,6 +44,17 @@ public class WordbookController {
      * 단어 삭제(단어-05). 경로는 단어장 다른 엔드포인트와 같은 childId 기준으로
      * 확정했다(2026-08) - childId 없는 경로는 소유권 검증이 애매해 501로 남아 있었다.
      */
+    /**
+     * 단어 말하기 연습 제출. 음성 인식은 클라이언트가 /api/stt로 하고 여기는 텍스트만 받는다 —
+     * 아이 음성은 서버에 저장하지 않는다.
+     */
+    @PostMapping("/{wordId}/practice")
+    public WordPracticeResponse practice(@CurrentParentId UUID parentId, @PathVariable UUID childId,
+                                         @PathVariable UUID wordId,
+                                         @Valid @RequestBody WordPracticeRequest request) {
+        return wordPracticeService.practice(parentId, childId, wordId, request.spokenText());
+    }
+
     @DeleteMapping("/{wordId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@CurrentParentId UUID parentId, @PathVariable UUID childId,

@@ -41,6 +41,9 @@ public class StardustService {
      */
     private static final int WELCOME_AWARD = 3;
 
+    /** 단어 말하기 연습 1건. 소품 하나(1~2)에 못 미치는 잔돈이라 매일 해도 이야기 보상을 넘지 않는다. */
+    private static final int WORD_PRACTICED_AWARD = 1;
+
     private static final int SCENE_BONUS_AWARD = 1;
     /** 세션 합계를 3~5로 묶기 위한 상한. 유니크로는 표현할 수 없어 세어서 막는다. */
     private static final int SCENE_BONUS_MAX_PER_SESSION = 2;
@@ -90,6 +93,16 @@ public class StardustService {
     @Transactional
     public StardustTransaction awardWelcome(Child child) {
         return earn(child.getId(), WELCOME_AWARD, StardustReason.WELCOME, null, null, null);
+    }
+
+    /**
+     * 단어 말하기 연습 보상. 최초 1회·하루 상한 판정은 호출자(WordPracticeService)가 끝냈다 —
+     * 여기서는 지급만 한다. 판정까지 가져오면 word_practices를 이 서비스가 알아야 한다.
+     */
+    @Transactional
+    public StardustTransaction awardWordPracticed(Child child) {
+        return earn(child.getId(), WORD_PRACTICED_AWARD, StardustReason.WORD_PRACTICED,
+                null, null, null);
     }
 
     /**
