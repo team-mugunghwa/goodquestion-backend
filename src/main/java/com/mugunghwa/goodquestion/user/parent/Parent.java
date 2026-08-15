@@ -52,6 +52,22 @@ public class Parent {
     @Column(name = "last_login_ip", length = 45)
     private String lastLoginIp;
 
+    /**
+     * 계정 상태. 관리자 콘솔이 바꾼다(admin-goodquestion-backend).
+     *
+     * <p>여기서는 읽기만 한다. 정지된 계정은 로그인이 거부되고, 이미 발급된
+     * 리프레시 토큰도 관리자 쪽에서 함께 끊긴다. 액세스 토큰은 만료(30분)까지 남는다.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ParentStatus status;
+
+    @Column(name = "suspended_at")
+    private OffsetDateTime suspendedAt;
+
+    @Column(name = "suspended_reason", columnDefinition = "text")
+    private String suspendedReason;
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
@@ -62,6 +78,7 @@ public class Parent {
         this.provider = provider;
         this.providerId = providerId;
         this.name = name;
+        this.status = ParentStatus.ACTIVE;
     }
 
     public static Parent ofLocal(String email, String passwordHash, String name) {
@@ -93,6 +110,11 @@ public class Parent {
 
     public boolean isLocal() {
         return provider == AuthProvider.LOCAL;
+    }
+
+    /** 관리자가 막은 계정. 로그인 실패 잠금(lockedUntil)과는 다른 사유다. */
+    public boolean isSuspended() {
+        return status == ParentStatus.SUSPENDED;
     }
 
 
