@@ -1,5 +1,6 @@
 package com.mugunghwa.goodquestion.story.content.dto;
 
+import com.mugunghwa.goodquestion.story.content.SceneAudio;
 import com.mugunghwa.goodquestion.story.content.SceneType;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 
@@ -19,6 +20,15 @@ public record SceneContentResponse(
         SceneType sceneType,
         /** STORY: 한 문장씩 순차 표시용(장면-05) / DIALOGUE: 빈 배열 */
         List<String> narrationSentences,
+        /** STORY: 내레이션 사전 렌더 음성. null이면 음성 없이 진행한다 */
+        String narrationAudioUrl,
+        /**
+         * 문장별 실측 시작·끝(초). narrationAudioUrl이 있을 때만 값이 있다.
+         *
+         * <p>이게 없으면 클라이언트는 글자수 비례로 표시 시간을 추정할 수밖에 없는데,
+         * 그러면 문장 길이와 실제 낭독 길이가 어긋나 자막이 소리보다 먼저/늦게 넘어간다.
+         */
+        List<NarrationTiming> narrationTimings,
         String imageUrl,
         /** DIALOGUE만 값 */
         String characterName,
@@ -26,14 +36,37 @@ public record SceneContentResponse(
         Short maxTurns
 ) {
 
+    /** 문장 하나의 실측 구간. index는 narrationSentences의 순서와 같다. */
+    public record NarrationTiming(int index, double start, double end) {
+    }
+
+    /** 사전 렌더 음성 없이 — 대화 장면이거나 아직 음성이 없는 장면. */
     public static SceneContentResponse from(StoryScene s) {
+        return from(s, null);
+    }
+
+    public static SceneContentResponse from(StoryScene s, SceneAudio narration) {
         boolean dialogue = s.isDialogue();
         return new SceneContentResponse(
                 s.getId(), s.getSceneOrder(), s.getSceneType(),
                 dialogue ? List.of() : splitSentences(s.getSceneDescription()),
+                narration == null ? null : toUrl(narration),
+                narration == null ? List.of() : toTimings(narration),
                 s.getImageUrl(),
                 s.getCharacterName(),
                 dialogue ? s.getMaxTurns() : null);
+    }
+
+    private static String toUrl(SceneAudio narration) {
+        String path = narration.getStoragePath();
+        return path.startsWith("/") || path.startsWith("http") ? path : "/" + path;
+    }
+
+    private static List<NarrationTiming> toTimings(SceneAudio narration) {
+        List<SceneAudio.SentenceTiming> timings = narration.getSentenceTimings();
+        return timings == null ? List.of() : timings.stream()
+                .map(t -> new NarrationTiming(t.index(), t.start(), t.end()))
+                .toList();
     }
 
     /**

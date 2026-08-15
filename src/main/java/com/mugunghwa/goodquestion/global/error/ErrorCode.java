@@ -41,8 +41,13 @@ public enum ErrorCode {
     CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
     MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
-    MISSION_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 미션입니다."),
     RETELLING_BEFORE_ORDER(HttpStatus.CONFLICT, "카드 순서를 맞춘 뒤에 이야기를 다시 들려줄 수 있습니다."),
+
+    // ---- AI 벤더 연동 (08-15 감사: 전부 500으로 뭉개지던 것을 구분) ----
+    AI_RATE_LIMITED(HttpStatus.SERVICE_UNAVAILABLE, "AI 서비스가 혼잡합니다. 잠시 후 다시 시도해 주세요."),
+    AI_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "AI 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+    AI_UPSTREAM_ERROR(HttpStatus.BAD_GATEWAY, "AI 서비스 응답에 문제가 있습니다."),
+    AUDIO_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "녹음이 너무 깁니다. 짧게 나눠 말해 주세요."),
 
     NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "아직 구현되지 않은 기능입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");

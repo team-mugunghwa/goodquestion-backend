@@ -17,6 +17,7 @@ import java.util.UUID;
 public class SceneService {
 
     private final StorySceneRepository sceneRepository;
+    private final SceneAudioResolver sceneAudioResolver;
 
     /** getScenes의 PUBLISHED 검증을 위해 추가 */
     private final StoryRepository storyRepository;
@@ -37,7 +38,7 @@ public class SceneService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "이야기를 찾을 수 없습니다.");
         }
         return sceneRepository.findAllByStoryIdOrderBySceneOrderAsc(storyId).stream()
-                .map(SceneContentResponse::from)
+                .map(this::toContent)
                 .toList();
     }
 
@@ -52,5 +53,16 @@ public class SceneService {
     public Optional<StoryScene> getNextScene(StoryScene current) {
         return sceneRepository.findByStoryIdAndSceneOrder(
                 current.getStory().getId(), (short) (current.getSceneOrder() + 1));
+    }
+
+    /**
+     * 장면 콘텐츠에 사전 렌더 내레이션을 붙인다.
+     *
+     * <p>DIALOGUE 장면은 내레이션이 없고, STORY 장면도 음성이 아직 없으면 null이 나가
+     * 클라이언트가 지금처럼 음성 없이 진행한다.
+     */
+    private SceneContentResponse toContent(StoryScene scene) {
+        return SceneContentResponse.from(scene, scene.isDialogue() ? null
+                : sceneAudioResolver.narrationOf(scene.getId(), scene.getSceneDescription()).orElse(null));
     }
 }

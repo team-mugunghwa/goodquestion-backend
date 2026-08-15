@@ -86,7 +86,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '33333333-3333-3333-3333-000000000001',
     '11111111-1111-1111-1111-111111111111',
     1, 'STORY',
-    '옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다. 며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다. 시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.',
+    E'옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다.\n며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다.\n시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.',
     '/stories/banggui/scenes/01_intro.jpg'
 )
 on conflict (id) do update set
@@ -102,7 +102,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '33333333-3333-3333-3333-000000000002',
     '11111111-1111-1111-1111-111111111111',
     2, 'STORY',
-    '그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다. 하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다. 몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다.',
+    E'그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다.\n하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다.\n몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다.',
     '/stories/banggui/scenes/02_holding.jpg'
 )
 on conflict (id) do update set
@@ -128,7 +128,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '방귀를 뀌고 싶지만 가족들이 이상하게 생각할까 봐 솔직하게 말하지 못한다.',
     '/stories/banggui/scenes/03_dialogue1.jpg',
     '방귀쟁이 며느리',
-    'ㅇㅇ아, 내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
+    '내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
     '그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.',
     '방귀를 숨기고 싶어하는 며느리의 입장을 이해하고, 공감해주며 문제를 숨기지 않고 솔직하게 말할 수 있는 용기를 준다.',
     array['PERSPECTIVE', 'EMOTION', 'SOLUTION'],
@@ -167,7 +167,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '33333333-3333-3333-3333-000000000004',
     '11111111-1111-1111-1111-111111111111',
     4, 'STORY',
-    '며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다. 하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다. 마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다.',
+    E'며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다.\n하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다.\n마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다.',
     '/stories/banggui/scenes/04_bigfart.jpg'
 )
 on conflict (id) do update set
@@ -192,7 +192,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '시아버지는 창피한 며느리와 함께 살 수 없다고 생각하지만, 며느리는 일부러 그런 것이 아니다.',
     '/stories/banggui/scenes/05_dialogue2.jpg',
     '시아버지',
-    '아이고, 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못 살겠다! 그렇지 않니?',
+    '아이고 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못살겠다! 그렇지 않니?',
     '흥, 그래도 도저히 이런 며느리와는 함께 살 수 없으니 친정으로 데려다줘야겠다.',
     '시아버지가 놀란 마음을 이해하면서도, 며느리가 일부러 그런 것이 아니라 오래 참아서 힘들었던 것임을 말하고, 며느리를 따뜻하게 이해해 달라고 설득한다.',
     array['PERSPECTIVE', 'EMPATHY', 'REASON', 'REQUEST'],
@@ -233,7 +233,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '33333333-3333-3333-3333-000000000006',
     '11111111-1111-1111-1111-111111111111',
     6, 'STORY',
-    '한참 걷다 보니 아랫마을 길가에 아주 높은 배나무가 한 그루 서 있었습니다. 나무 꼭대기에는 노랗고 탐스러운 배들이 주렁주렁 매달려 있었습니다. 시아버지는 배를 보자 군침이 돌았습니다. 마침 아랫마을 사람들도 그 배를 먹고 싶어 했지만, 나무가 너무 높아 아무도 딸 수 없었습니다.',
+    E'한참 걷다 보니 아랫마을 길가에 아주 높은 배나무가 한 그루 서 있었습니다.\n나무 꼭대기에는 노랗고 탐스러운 배들이 주렁주렁 매달려 있었습니다.\n시아버지는 배를 보자 군침이 돌았습니다.\n마침 아랫마을 사람들도 그 배를 먹고 싶어 했지만, 나무가 너무 높아 아무도 딸 수 없었습니다.',
     '/stories/banggui/scenes/06_peartree.jpg'
 )
 on conflict (id) do update set
@@ -256,7 +256,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '탐스러운 배가 열렸지만 나무가 너무 높아 긴 장대로도 닿지 않고, 올라갈 수도 없다.',
     '/stories/banggui/scenes/07_dialogue3.jpg',
     '마을 이장',
-    '이 배나무는 해마다 탐스러운 배가 열리지만, 너무 높아서 아무도 딸 수가 없었단다. 무슨 뾰족한 방법이 없겠는가?',
+    '이 배나무는 해마다 탐스러운 배가 열리지만, 너무 높아서 아무도 딸 수가 없었소. 무슨 뾰족한 방법이 없겠는가?',
     '아이고, 방귀 뀌는 며느리 덕분에 온 마을이 배 잔치를 할 수 있겠구려, 고맙소!',
     '높은 배나무의 배를 떨어뜨릴 방법을 생각하고, 며느리의 큰 방귀를 안전하게 사용할 수 있는 해결책을 제안한다.',
     array['SOLUTION', 'REASON', 'REQUEST', 'RESULT'],
@@ -319,7 +319,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '33333333-3333-3333-3333-000000000008',
     '11111111-1111-1111-1111-111111111111',
     8, 'STORY',
-    '시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다. 자신이 며느리를 구박했던 일을 후회하고 사과합니다.',
+    E'시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다.\n자신이 며느리를 구박했던 일을 후회하고 사과합니다.',
     '/stories/banggui/scenes/08_apology.jpg'
 )
 on conflict (id) do update set
@@ -342,7 +342,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '자신의 특징이 도움이 된다는 것을 알았지만, 아직 부끄러운 마음이 남아 있다.',
     '/stories/banggui/scenes/09_dialogue4.jpg',
     '방귀쟁이 며느리',
-    'ㅇㅇ이 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어. 이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?',
+    '네 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어. 이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?',
     '이제는 부끄러워하며 숨기지 않고, 조심해서 좋은 일에 써 볼게.',
     '다름을 인정하고, 자신의 특징을 긍정적으로 받아들이는 태도를 말한다.',
     array['EMOTION', 'PERSPECTIVE', 'RESULT', 'SOLUTION'],
@@ -508,26 +508,51 @@ where id = '33333333-3333-3333-3333-000000000007';
 -- ------------------------------------------------------------
 insert into items (id, name, category, price, unlock_type, unlock_story_id, unlock_stardust_total,
                    model_url, thumbnail_url, display_order) values
--- 지형 소품 6종 (항상 열림, 1)
-('44444444-4444-4444-4444-000000000001', '돌',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/rock.glb',      '/items/thumbs/rock.png',       1),
-('44444444-4444-4444-4444-000000000002', '풀',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/grass.glb',     '/items/thumbs/grass.png',      2),
-('44444444-4444-4444-4444-000000000003', '꽃',       'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/flower.glb',    '/items/thumbs/flower.png',     3),
-('44444444-4444-4444-4444-000000000004', '버섯',     'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/mushroom.glb',  '/items/thumbs/mushroom.png',   4),
-('44444444-4444-4444-4444-000000000005', '바위',     'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/boulder.glb',   '/items/thumbs/boulder.png',    5),
-('44444444-4444-4444-4444-000000000006', '그루터기', 'TERRAIN_PROP',  1, 'ALWAYS', null, null, '/items/models/stump.glb',     '/items/thumbs/stump.png',      6),
--- 식물 4종 (항상 열림, 2)
-('44444444-4444-4444-4444-000000000007', '작은나무', 'PLANT',         2, 'ALWAYS', null, null, '/items/models/tree_small.glb','/items/thumbs/tree_small.png', 7),
-('44444444-4444-4444-4444-000000000008', '큰나무',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/tree_large.glb','/items/thumbs/tree_large.png', 8),
-('44444444-4444-4444-4444-000000000009', '꽃덤불',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/bush.glb',      '/items/thumbs/bush.png',       9),
-('44444444-4444-4444-4444-00000000000a', '야자수',   'PLANT',         2, 'ALWAYS', null, null, '/items/models/palm.glb',      '/items/thumbs/palm.png',      10),
--- 구조물 3종
-('44444444-4444-4444-4444-00000000000b', '울타리',   'STRUCTURE',     2, 'ALWAYS', null, null, '/items/models/fence.glb',     '/items/thumbs/fence.png',     11),
-('44444444-4444-4444-4444-00000000000c', '표지판',   'STRUCTURE',     2, 'ALWAYS', null, null, '/items/models/sign.glb',      '/items/thumbs/sign.png',      12),
-('44444444-4444-4444-4444-00000000000d', '집',       'STRUCTURE',     3, 'STARDUST_CUMULATIVE', null,  3, '/items/models/house.glb', '/items/thumbs/house.png', 13),
--- 동물 3종
-('44444444-4444-4444-4444-00000000000e', '강아지',   'ANIMAL',        3, 'STORY_COMPLETE', '11111111-1111-1111-1111-111111111111', null, '/items/models/dog.glb', '/items/thumbs/dog.png', 14),
-('44444444-4444-4444-4444-00000000000f', '토끼',     'ANIMAL',        3, 'STARDUST_CUMULATIVE', null,  4, '/items/models/rabbit.glb', '/items/thumbs/rabbit.png', 15),
-('44444444-4444-4444-4444-000000000010', '거북이',   'ANIMAL',        3, 'STARDUST_CUMULATIVE', null,  5, '/items/models/turtle.glb', '/items/thumbs/turtle.png', 16)
+('44444444-4444-4444-4444-000000000001', '작은 돌', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/rock_smallA.glb', null, 1),
+('44444444-4444-4444-4444-000000000003', '납작 돌', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/rock_smallFlatA.glb', null, 2),
+('44444444-4444-4444-4444-000000000004', '조약돌', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/stone_smallG.glb', null, 3),
+('44444444-4444-4444-4444-000000000005', '돌무더기', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/forest/stones.glb', null, 4),
+('44444444-4444-4444-4444-000000000006', '통나무', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/log.glb', null, 5),
+('44444444-4444-4444-4444-000000000008', '장작더미', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/log_stack.glb', null, 6),
+('44444444-4444-4444-4444-000000000009', '돌길', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/path_stone.glb', null, 7),
+('44444444-4444-4444-4444-000000000002', '풀', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/grass_large.glb', null, 8),
+('44444444-4444-4444-4444-00000000000a', '잔디밭', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/forest/patch-grass.glb', null, 9),
+('44444444-4444-4444-4444-00000000000b', '빨간 꽃', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/flower_redA.glb', null, 10),
+('44444444-4444-4444-4444-00000000000c', '노란 꽃', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/flower_yellowA.glb', null, 11),
+('aef875b6-9c7a-5d41-8724-f4715b13ae58', '버섯', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/mushroom_redGroup.glb', null, 12),
+('b1abdfdc-6565-5fc6-975d-12732df2663b', '덤불', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/plant_bushDetailed.glb', null, 13),
+('44444444-4444-4444-4444-000000000007', '작은 나무', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/forest/plant.glb', null, 14),
+('4ebfa1f3-70ff-5f92-87de-8e61eca016ea', '나무', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/tree_default.glb', null, 15),
+('e52adb24-0b4c-5925-8aa0-2fd57c169d89', '울타리', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/fence_simple.glb', null, 16),
+('86d95881-2e92-5a0e-a262-ad22a57bebd6', '가로등', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/town/lantern.glb', null, 17),
+('78de4d62-e656-5e98-960b-c596f4a5d964', '모닥불', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 4, '/items/models/campfire_stones.glb', null, 18),
+('158c687a-b363-5afe-94f1-8dbfc90e0551', '텐트', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 6, '/items/models/tent_smallOpen.glb', null, 19),
+('44444444-4444-4444-4444-00000000000d', '우리 집', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 9, '/items/models/city/building-type-a.glb', null, 20),
+('4bf48af0-5cef-56db-a507-90848e5b7668', '이웃 집', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 12, '/items/models/city/building-type-e.glb', null, 21),
+('2012eb9a-4d30-528a-84af-1b97d46e8b83', '분수대', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 16, '/items/models/town/fountain-round.glb', null, 22),
+('9e710e15-059c-5c38-962f-b6f5d7263eb2', '풍차', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 20, '/items/models/town/windmill.glb', null, 23),
+('7ee5477f-435b-52c0-8d9b-99be60551ff5', '당근', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/crop_carrot.glb', null, 24),
+('3c452708-e764-578d-a883-7eccd0dee5f5', '호박', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/crop_pumpkin.glb', null, 25),
+('3ee27e55-efae-5b97-8c2c-7c559c665b7d', '수박', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/crop_melon.glb', null, 26),
+('c315deea-a319-5dac-abc2-5ced933d8486', '참나무', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/tree_oak.glb', null, 27),
+('858c7f62-bd62-51a4-b5f5-f8a32d7263a1', '소나무', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/tree_pineRoundC.glb', null, 28),
+('89ad73a7-ed3d-5b8b-90ea-4e3dfcdd434d', '야자수', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/tree_palmDetailedTall.glb', null, 29),
+('a26ac50e-94cc-5445-9fed-4f1cf2991a4b', '단풍나무', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/tree_default_fall.glb', null, 30),
+('9e6b0b25-015e-59e1-a914-f4b9194d6346', '갈색 버섯', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/mushroom_tanGroup.glb', null, 31),
+('32239f1f-1f3c-501c-8c68-025366b56d9a', '선인장', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/cactus_tall.glb', null, 32),
+('914b3629-c913-54c1-a65d-dd7240334327', '나무 그루터기', 'TERRAIN_PROP', 1, 'ALWAYS', null, null, '/items/models/nature/stump_roundDetailed.glb', null, 33),
+('513723fe-3c47-59af-9182-b4c19666c799', '연꽃', 'PLANT', 1, 'ALWAYS', null, null, '/items/models/nature/lily_large.glb', null, 34),
+('0f045dcc-5f54-5ada-a44a-dfdbc7de2e14', '표지판', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/sign.glb', null, 35),
+('1bcd86b9-c047-56b7-b65f-3c9e2f80b7b9', '나룻배', 'STRUCTURE', 1, 'ALWAYS', null, null, '/items/models/nature/canoe.glb', null, 36),
+('3a89aa26-4182-5958-b039-0b59a78822f9', '돌 조각상', 'STRUCTURE', 2, 'STARDUST_CUMULATIVE', null, 8, '/items/models/nature/statue_head.glb', null, 37),
+('44444444-4444-4444-4444-00000000000e', '토끼', 'ANIMAL', 2, 'STORY_COMPLETE', '11111111-1111-1111-1111-111111111111', null, '/items/models/pets/animal-bunny.glb', null, 38),
+('44444444-4444-4444-4444-00000000000f', '고양이', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 5, '/items/models/pets/animal-cat.glb', null, 39),
+('059d3974-b8bd-52e4-a6d1-dd0114890baa', '강아지', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 8, '/items/models/pets/animal-dog.glb', null, 40),
+('44444444-4444-4444-4444-000000000010', '여우', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 11, '/items/models/pets/animal-fox.glb', null, 41),
+('873ccc94-dc7a-59c6-beca-4f0333f7e1ca', '사슴', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 14, '/items/models/pets/animal-deer.glb', null, 42),
+('d8e565b7-1efa-57d2-88af-68f49c9fde99', '돼지', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 18, '/items/models/pets/animal-pig.glb', null, 43),
+('e3230e20-b6e0-5a2b-9f4b-9ac3d5ccb62a', '펭귄', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 22, '/items/models/pets/animal-penguin.glb', null, 44),
+('50d78626-5754-5351-ba1b-c85793d80b0f', '판다', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 25, '/items/models/pets/animal-panda.glb', null, 45)
 on conflict (id) do update set
     name = excluded.name,
     category = excluded.category,
@@ -538,3 +563,258 @@ on conflict (id) do update set
     model_url = excluded.model_url,
     thumbnail_url = excluded.thumbnail_url,
     display_order = excluded.display_order;
+
+
+-- ------------------------------------------------------------
+-- scene_audio - 방귀 이야기 사전 렌더 음성 13건
+--   내레이션 5(도입/전개1~4) + 고정 첫/마지막 대사 8 = 13.
+--
+--   원래 R__2_seed_demo_data.sql 에 자리표시자로 있었는데 여기로 옮겼다.
+--   그 파일은 머리말이 "배포 전 삭제하거나 dev 프로파일로 옮긴다"고 적어 둔 데모 데이터인데,
+--   음성은 데모가 아니라 이야기 콘텐츠라 같이 사라지면 안 된다.
+--
+--   engine/voice/speaking_rate/duration_ms/sentence_timings 는 실제 렌더 산출물의
+--   메타데이터다(장면음성_교체본/manifest.json 실측). duration_ms 는 ffprobe 실측이고,
+--   sentence_timings 는 문장별로 따로 합성해 이어 붙이며 잰 실제 시각이라
+--   자막을 글자수 비례로 추정하지 않아도 된다.
+--
+--   text_hash 는 여기서 적지 않고 원문에서 계산한다 - 손으로 적으면 대사를 고쳤을 때
+--   같이 안 고쳐져서, 화면엔 새 문장 스피커엔 옛 문장인 상태를 오히려 못 잡는다.
+--
+--   충돌 대상은 부분 유니크 인덱스 idx_scene_audio_shared 라, ON CONFLICT 에
+--   predicate(where child_id is null)를 같이 적어야 그 인덱스로 잡힌다. 빼면 실패한다.
+-- ------------------------------------------------------------
+
+-- 장면1 도입 (NARRATION)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'NARRATION', null, 'tts/banggui/sc_banggui_01.mp3',
+       encode(digest(s.scene_description, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Kore', 0.95, 20011,
+       '[{"index": 0, "start": 0.0, "end": 6.291, "text": "옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다."}, {"index": 1, "start": 6.891, "end": 13.222, "text": "며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다."}, {"index": 2, "start": 13.822, "end": 19.793, "text": "시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 1
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면2 전개1 (NARRATION)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'NARRATION', null, 'tts/banggui/sc_banggui_02.mp3',
+       encode(digest(s.scene_description, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Kore', 0.95, 33731,
+       '[{"index": 0, "start": 0.0, "end": 7.331, "text": "그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다."}, {"index": 1, "start": 7.931, "end": 23.782, "text": "하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다."}, {"index": 2, "start": 24.382, "end": 33.513, "text": "몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 2
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면3 대화1 첫 대사 (OPENING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'OPENING', null, 'tts/banggui/sc_banggui_03_opening.mp3',
+       encode(digest(s.character_opening, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Leda', 0.95, 7491,
+       '[{"index": 0, "start": 0.0, "end": 7.491, "text": "내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?"}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 3
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면3 대화1 마지막 대사 (CLOSING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'CLOSING', null, 'tts/banggui/sc_banggui_03_closing.mp3',
+       encode(digest(s.character_closing, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Leda', 0.95, 7443,
+       '[{"index": 0, "start": 0.0, "end": 3.931, "text": "그래도 아직은 못 말하겠어."}, {"index": 1, "start": 4.531, "end": 7.342, "text": "조금만 더 참아 볼게."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 3
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면4 전개2 (NARRATION)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'NARRATION', null, 'tts/banggui/sc_banggui_04.mp3',
+       encode(digest(s.scene_description, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Kore', 0.95, 27323,
+       '[{"index": 0, "start": 0.0, "end": 8.051, "text": "며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다."}, {"index": 1, "start": 8.651, "end": 14.382, "text": "하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다."}, {"index": 2, "start": 14.982, "end": 27.113, "text": "마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 4
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면5 대화2 첫 대사 (OPENING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'OPENING', null, 'tts/banggui/sc_banggui_05_opening.mp3',
+       encode(digest(s.character_opening, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Puck', 1.02, 14859,
+       '[{"index": 0, "start": 0.0, "end": 3.211, "text": "아이고 이게 무슨 일이냐!"}, {"index": 1, "start": 3.811, "end": 7.222, "text": "우리 집안이 다 흔들리는구나!"}, {"index": 2, "start": 7.822, "end": 12.313, "text": "이렇게 창피한 며느리와 함께 못살겠다!"}, {"index": 3, "start": 12.913, "end": 14.524, "text": "그렇지 않니?"}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 5
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면5 대화2 마지막 대사 (CLOSING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'CLOSING', null, 'tts/banggui/sc_banggui_05_closing.mp3',
+       encode(digest(s.character_closing, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Puck', 1.02, 7811,
+       '[{"index": 0, "start": 0.0, "end": 7.811, "text": "흥, 그래도 도저히 이런 며느리와는 함께 살 수 없으니 친정으로 데려다줘야겠다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 5
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면6 전개3 (NARRATION)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'NARRATION', null, 'tts/banggui/sc_banggui_06.mp3',
+       encode(digest(s.scene_description, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Kore', 0.95, 34483,
+       '[{"index": 0, "start": 0.0, "end": 9.251, "text": "한참 걷다 보니 아랫마을 길가에 아주 높은 배나무가 한 그루 서 있었습니다."}, {"index": 1, "start": 9.851, "end": 17.542, "text": "나무 꼭대기에는 노랗고 탐스러운 배들이 주렁주렁 매달려 있었습니다."}, {"index": 2, "start": 18.142, "end": 23.153, "text": "시아버지는 배를 보자 군침이 돌았습니다."}, {"index": 3, "start": 23.753, "end": 34.164, "text": "마침 아랫마을 사람들도 그 배를 먹고 싶어 했지만, 나무가 너무 높아 아무도 딸 수 없었습니다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 6
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면7 대화3 첫 대사 (OPENING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'OPENING', null, 'tts/banggui/sc_banggui_07_opening.mp3',
+       encode(digest(s.character_opening, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Charon', 1.0, 11579,
+       '[{"index": 0, "start": 0.0, "end": 7.251, "text": "이 배나무는 해마다 탐스러운 배가 열리지만, 너무 높아서 아무도 딸 수가 없었소."}, {"index": 1, "start": 7.851, "end": 11.462, "text": "무슨 뾰족한 방법이 없겠는가?"}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 7
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면7 대화3 마지막 대사 (CLOSING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'CLOSING', null, 'tts/banggui/sc_banggui_07_closing.mp3',
+       encode(digest(s.character_closing, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Charon', 1.0, 6931,
+       '[{"index": 0, "start": 0.0, "end": 6.931, "text": "아이고, 방귀 뀌는 며느리 덕분에 온 마을이 배 잔치를 할 수 있겠구려, 고맙소!"}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 7
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면8 전개4 (NARRATION)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'NARRATION', null, 'tts/banggui/sc_banggui_08.mp3',
+       encode(digest(s.scene_description, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Kore', 0.95, 17899,
+       '[{"index": 0, "start": 0.0, "end": 11.091, "text": "시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다."}, {"index": 1, "start": 11.691, "end": 17.782, "text": "자신이 며느리를 구박했던 일을 후회하고 사과합니다."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 8
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면9 대화4 첫 대사 (OPENING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'OPENING', null, 'tts/banggui/sc_banggui_09_opening.mp3',
+       encode(digest(s.character_opening, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Leda', 0.95, 14259,
+       '[{"index": 0, "start": 0.0, "end": 8.211, "text": "네 덕분에 내 방귀가 누군가에게 도움이 될 수 있다는 걸 처음 알았어."}, {"index": 1, "start": 8.811, "end": 14.142, "text": "이제는 방귀 소리가 큰 걸 부끄러워하지 않아도 될까?"}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 9
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;
+
+-- 장면9 대화4 마지막 대사 (CLOSING)
+insert into scene_audio (scene_id, slot, child_id, storage_path, text_hash,
+                         engine, voice, speaking_rate, duration_ms, sentence_timings)
+select s.id, 'CLOSING', null, 'tts/banggui/sc_banggui_09_closing.mp3',
+       encode(digest(s.character_closing, 'sha256'), 'hex'),
+       'gemini-2.5-flash-preview-tts', 'Leda', 0.95, 7451,
+       '[{"index": 0, "start": 0.0, "end": 7.451, "text": "이제는 부끄러워하며 숨기지 않고, 조심해서 좋은 일에 써 볼게."}]'::jsonb
+from story_scenes s
+where s.story_id = '11111111-1111-1111-1111-111111111111' and s.scene_order = 9
+on conflict (scene_id, slot) where child_id is null do update set
+    storage_path     = excluded.storage_path,
+    text_hash        = excluded.text_hash,
+    engine           = excluded.engine,
+    voice            = excluded.voice,
+    speaking_rate    = excluded.speaking_rate,
+    duration_ms      = excluded.duration_ms,
+    sentence_timings = excluded.sentence_timings;

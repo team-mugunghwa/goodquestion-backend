@@ -46,6 +46,9 @@ public class WebClientConfig {
                 .responseTimeout(Duration.ofMillis(responseTimeoutMs));
 
         return WebClient.builder()
+                // TTS 응답은 MP3 본문 전체를 메모리로 받는다. Spring 기본 한도 256KB로는
+                // 긴 내레이션 한 문장도 넘겨 DataBufferLimitException이 난다.
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(logRequest())
                 .filter(logResponse())

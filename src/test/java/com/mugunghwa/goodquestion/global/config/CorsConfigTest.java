@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +49,25 @@ class CorsConfigTest {
                         .header("Access-Control-Request-Method", "GET")
                         .header("Access-Control-Request-Headers", "authorization"))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * 발화 제출과 아이템 구매는 Idempotency-Key 커스텀 헤더를 싣는다. 표준 안전
+     * 목록에 없는 헤더라 CorsConfig의 허용 목록에서 빠지면 브라우저가 preflight
+     * 단계에서 본 요청을 보내지도 않는다 - 실제로 허용 목록에 없어서 웹에서만
+     * 발화 제출이 전부 막혔던 회귀다. 이 테스트가 없으면 허용 목록에서 헤더를
+     * 다시 지워도 아무 테스트도 깨지지 않는다.
+     */
+    @Test
+    void Idempotency_Key_헤더를_실은_preflight를_통과시킨다() throws Exception {
+        mockMvc.perform(options("/api/sessions/session-1/utterances")
+                        .header("Origin", PROD)
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers",
+                                "authorization, content-type, idempotency-key"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Headers",
+                        containsStringIgnoringCase("idempotency-key")));
     }
 
     /** Vercel 프리뷰는 커밋마다 주소가 바뀌므로 와일드카드 패턴으로 잡아야 한다. */

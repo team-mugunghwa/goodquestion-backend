@@ -11,6 +11,8 @@ import com.mugunghwa.goodquestion.story.session.SceneEndReason;
 import com.mugunghwa.goodquestion.story.session.SessionService;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import com.mugunghwa.goodquestion.story.session.StorySessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,9 @@ class MissionSceneMaxTurnsTest {
     private static final String MISSION_ID = "mission_1";
 
     @Autowired
+    private StorySessionRepository storySessionRepositoryForIsolation;
+
+    @Autowired
     private TurnOrchestrator orchestrator;
 
     @Autowired
@@ -64,6 +69,8 @@ class MissionSceneMaxTurnsTest {
     /** 장면 7(대화3)까지 진행해 둔다. 앞의 대화 장면 둘은 목표 달성으로 통과한다. */
     @BeforeEach
     void 미션_장면까지_진행한다() {
+        // 세션 시작이 진행 중 세션을 이어받으므로(#70) 시드/앞 테스트의 잔여 세션을 치운다.
+        TestSessions.stopAllInProgress(storySessionRepositoryForIsolation);
         analysisLlmClient.reset();
         sessionId = sessionService.start(PARENT_ID, CHILD_ID, new SessionStartRequest(STORY_ID))
                 .sessionId();

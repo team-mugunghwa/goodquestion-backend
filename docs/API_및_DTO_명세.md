@@ -34,7 +34,7 @@
 | 미구현 스텁 | **501** | `NOT_IMPLEMENTED` |
 | 그 외 | 500 | `INTERNAL_ERROR` |
 
-409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `MISSION_ALREADY_SUBMITTED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
+409 코드: `CONSENT_REQUIRED` `SESSION_NOT_IN_PROGRESS` `SCENE_NOT_STORY` `SCENE_NOT_DIALOGUE` `REPORT_NOT_READY` `DUPLICATE_WORD` `DUPLICATE_EMAIL` `CELL_OCCUPIED` `ITEM_ALREADY_PLACED` `ITEM_LOCKED` `STARDUST_INSUFFICIENT` `MAX_TURNS_EXCEEDED` `MISSION_NOT_EXPOSED` `RETELLING_BEFORE_ORDER` `CONCURRENT_TURN` `REQUEST_IN_PROGRESS`
 
 **멱등키(2026-08 확정)** — 발화 제출과 아이템 구매는 `Idempotency-Key` 헤더(선택, UUID 권장, 64자 이하)를 받는다. 클라이언트가 작업마다 새로 만들고 **재시도 사이에만 유지**한다. 같은 키의 재전송은 완료된 요청이면 저장된 응답을 그대로 재생하고, 처리 중이면 409 `REQUEST_IN_PROGRESS`를 돌려준다. 키가 없으면 기존 동작 그대로다. 기록은 24시간 보관 후 청소된다.
 
@@ -150,7 +150,11 @@
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
 | GET | `/current` | 지금 노출된 미션을 조회한다. 노출 전이면 null이고 404가 아니다 | — | `CurrentMissionResponse` | ✅ |
-| POST | `/{missionId}/result` | 미션 수행 결과를 제출한다 | `MissionResultRequest` | 201 `MissionResultResponse` | ⛔ |
+
+**수행 결과 제출은 별도 API가 아니다.** 아이가 미션에 대해 말한 발화를 발화 제출
+(`POST /utterances`)에 `missionId`를 실어 보내면 서버가 완료 표시와 분석을 함께
+처리한다(이야기_전개_가이드.md 3.5). 한때 계약만 있던 `POST /{missionId}/result`는
+2026-08-15에 제거했다 - 구현도 호출처도 없었다.
 
 ### 2.10 말하기 후 활동 — `/api/sessions/{sessionId}/post-activity`
 
@@ -167,10 +171,10 @@
 |---|---|---|---|---|---|
 | GET | `/api/children/{childId}/reports` | 아이의 리포트 목록을 조회한다 | — | `List<ReportListResponse>` | ✅ |
 | GET | `/api/sessions/{sessionId}/report` | 세션 한 건의 리포트를 조회한다. 아직 생성 전이면 409 | — | `ReportDetailResponse` | ✅ |
-| POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ⛔ |
+| POST | `/api/sessions/{sessionId}/report` | 세션의 대화와 분석을 집계해 리포트를 생성한다 | — | 201 `ReportDetailResponse` | ✅ |
 
-조회 2건은 저장된 리포트를 읽는다. 생성은 LLM이 필요해 아직 열리지 않았고, 지금은 시드 데모
-데이터의 리포트만 조회된다.
+조회 2건은 저장된 리포트를 읽는다. 생성은 `ReportService.generateNow`가 세션의 대화와
+분석을 모아 LLM으로 요약한다.
 
 **대표 발화는 조회할 때마다 만든다.** `utterance_analyses`의 근거에서 구성하며 요소당 가장
 이른 턴 하나만 남긴다. `sttLowConfidence=true`인 발화는 후보에서 빠진다 - 저장된 원문이 아이가
@@ -180,7 +184,7 @@
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
 |---|---|---|---|---|---|
-| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ⚠️ `meaning`을 함께 보내면 동작. 생략하면 501 |
+| POST | `/api/children/{childId}/words` | 모르는 단어를 저장한다. 아이 눈높이의 뜻은 LLM이 만든다 | `WordCreateRequest` | 201 `WordResponse` | ✅ |
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
 | DELETE | `/api/children/{childId}/words/{wordId}` | 저장한 단어를 삭제한다 (2026-08 경로 확정) | — | 204 | ✅ |
@@ -680,21 +684,6 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 `mission`(`MissionResponse`) — **미노출 상태면 null이고 404가 아니다.** 노출 여부는 정상 상태이지 오류가 아니다.
 
-#### `MissionResultRequest`
-
-> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 요청
-
-| 필드 | 타입 | 설명 |
-|---|---|---|
-| `answers` | `Map<String,String>` | 미션1 — Question의 key별 답 |
-| `cards` | `List<CardAnswer>` | 미션2 — `{key, strengthText}` |
-
-#### `MissionResultResponse`
-
-> **사용처** — `POST /api/sessions/{sessionId}/missions/{missionId}/result` 응답
-
-`missionId` · `accepted`(boolean) — 결과는 다음 턴 캐릭터 대사에 반영된다.
-
 ---
 
 ### 3.9 말하기 후 활동
@@ -993,17 +982,56 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 홈 | 1 | 1 | 0 | 0 |
 | 콘텐츠 | 4 | 4 | 0 | 0 |
 | 세션·장면 | 8 | 8 | 0 | 0 |
-| 대화·미션 | 4 | 3 | 0 | 1 |
+| 대화·미션 | 3 | 3 | 0 | 0 |
 | 후속 활동 | 4 | 4 | 0 | 0 |
-| 리포트 | 3 | 2 | 0 | 1 |
-| 단어장 | 4 | 3 | 1 | 0 |
+| 리포트 | 3 | 3 | 0 | 0 |
+| 단어장 | 4 | 4 | 0 | 0 |
 | 보상 | 11 | 11 | 0 | 0 |
 | 음성 | 2 | 2 | 0 | 0 |
-| **합계** | **59** | **54** | **3** | **2** |
+| **합계** | **58** | **56** | **2** | **0** |
 
-⛔ 2건(미션 결과 제출, 리포트 생성)은 **DTO 계약이 확정된 상태**다. 프론트는 이 문서의 스키마대로 붙여 두면 서비스 구현 후 계약 변경 없이 동작한다.
+⛔는 0건이다. 명세에 있는 엔드포인트는 전부 동작한다.
 
-⚠️ 3건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만, 단어 저장은 `meaning`을 함께 보내면 동작.
+⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-15 갱신분 3** (미션 결과 제출 제거로 분모 59 -> 58. ⛔ 0건)
+
+- `POST /api/sessions/{sessionId}/missions/{missionId}/result` 계약 제거. 유일하게
+  남아 있던 미구현(501)이었는데, 구현도 호출처도 없었다 - 프론트는 처음부터 발화
+  제출(`POST /utterances` + `missionId`)로 미션을 냈고, 이야기_전개_가이드 3.5도
+  "별도 API가 아니다, 쓰지 않는다"로 확정돼 있었다. 명세만 "구현 예정"으로 남아
+  가이드와 모순되던 것을 해소했다
+- 발화 경로가 검증(409 MISSION_NOT_EXPOSED, 404), 완료 표시, 분석, 캐릭터 응답을
+  전부 처리하므로 기능 차이는 없다. 유일한 차이였던 질문별 구조화 저장은 소비처가
+  없고(리포트 미사용, 질문별 표시 계획 없음 확인), `mission_results` 테이블과
+  엔티티는 스키마 변경 리스크를 피해 휴면으로 남긴다
+- `MISSION_ALREADY_SUBMITTED`(409)도 함께 제거 - 이 엔드포인트만 낼 수 있던 코드다
+
+**2026-08-15 갱신분 2** (직전 집계는 54/3/2였다. 현황표가 실제 구현보다 뒤처져 있던 것을 정정)
+
+| 엔드포인트 | 이전 | 현재 | 근거 |
+|---|---|---|---|
+| `POST /api/sessions/{sessionId}/report` | ⛔ | ✅ | `ReportService.generateNow`가 대화와 분석을 모아 LLM으로 요약한다. 구현은 2026-08-14에 들어왔는데 표에 반영되지 않았다 |
+| `POST /api/children/{childId}/words` | ⚠️ | ✅ | `meaning`을 생략하면 `WordMeaningLlmClient`가 아이 눈높이의 뜻을 만든다. 단어-02 구현분이 표에 반영되지 않았다 |
+
+남은 ⛔는 미션 결과 제출 1건이다. 코드로 확인한 결과 `MissionController.submitResult`만
+`UnsupportedOperationException`을 던진다. ⚠️ 2건(소셜 로그인 공급자 범위, 비밀번호 변경)도
+코드에서 확인했다 - `AuthController`의 provider 분기 default와 `ParentService`의 비밀번호
+변경 경로가 각각 501이다.
+
+**2026-08-15 갱신분** (집계 변동 없음 - API 계약도 그대로, 서버 동작만 바뀜)
+
+- STT 어휘 힌트 에코 차단 확장: 무음이나 뭉개진 오디오에서 모델이 prompt의
+  어휘 힌트를 복창하는 환각이 있는데, 기존 필터(완전 일치)를 재조합 문장이
+  통과하는 것이 실측됐다. 판정을 나열 에코(힌트 단어를 지우면 아무것도 안
+  남음)와 재조합 에코(힌트 어휘 등장 비율 2/3 이상)로 확장했다. 에코는 기존
+  `STT_EMPTY_TEXT`(422) 경로를 탄다 - 응답 계약 변화 없음
+- 벤더 프롬프트를 나열형에서 문장형으로 변경(`external.stt.prompt`, 서버 내부
+  설정). 나열형이 복창 환각을 가장 잘 유발해서다. 문장형을 복창해도 재조합
+  판정에 걸리는 것을 테스트로 고정했다
+- 웹 녹음 상한 안내: 웹은 48kHz로 녹음하므로(샘플레이트 불일치 수정의 결과)
+  109초부터 멀티파트 한도 10MB를 넘는다. 프론트가 60초에서 자동 종료한다
+- 배경과 실측 전체는 `트러블슈팅_STT_어휘_힌트_에코.md` 참고
 
 **2026-08-14 갱신분** (직전 집계는 48/3/5였다. 인증 3건 추가로 분모도 56 -> 59)
 

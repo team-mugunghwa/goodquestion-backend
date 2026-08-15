@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/health/**").permitAll()
                         // 회원가입·로그인은 토큰 발급 이전 단계라 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
                         // 이야기 정적 에셋(장면/미션 이미지). 개인정보가 없는 공개 콘텐츠라
