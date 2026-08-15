@@ -52,7 +52,9 @@ class SpeechSmokeTest {
                 new OpenAiTtsClient.VoiceProperties(null, null, Map.of(), Map.of()));
         OpenAiSttClient stt = new OpenAiSttClient(webClient(), "https://api.openai.com/v1",
                 apiKey, "gpt-4o-mini-transcribe",
-                "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장");
+                "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+                "며느리가 시아버지 앞에서 방귀를 참는 옛이야기예요. 며느리는 친정 가는 길에 "
+                        + "갓을 쓴 이장을 만나고, 장대로 배나무의 배를 따요. 방귀에 기왓장이 들썩여요.");
 
         long ttsStart = System.nanoTime();
         SynthesizedAudio audio = tts.synthesize(SENTENCE, null);
