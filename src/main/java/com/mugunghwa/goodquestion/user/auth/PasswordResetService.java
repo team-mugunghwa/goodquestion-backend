@@ -7,12 +7,12 @@ import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -22,6 +22,8 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 비밀번호 재설정 (계정-06).
@@ -37,10 +39,16 @@ public class PasswordResetService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * Railway가 아웃바운드 SMTP 포트(587)를 막아 smtp.resend.com 연결이 타임아웃난다.
+     * SMTP 대신 Resend HTTP API(HTTPS, 443)로 우회한다.
+     */
+    private static final String RESEND_API_URL = "https://api.resend.com/emails";
+
     private final ParentRepository parentRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender;
+    private final WebClient webClient;
 
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
@@ -50,6 +58,13 @@ public class PasswordResetService {
 
     @Value("${app.auth.password-reset-token-ttl}")
     private Duration tokenTtl;
+
+    /**
+     * Resend API 키. 전용 RESEND_API_KEY가 없으면 기존 SMTP_PASSWORD 값을 그대로 쓴다 —
+     * 그 자리에 이미 같은 Resend API 키가 들어있다(SMTP 연동 당시부터).
+     */
+    @Value("${resend.api-key}")
+    private String resendApiKey;
 
     /** 계정 존재 여부를 응답으로 노출하지 않는다 — 없는 이메일이거나 소셜 계정이면 조용히 넘긴다. */
     @Transactional
@@ -68,16 +83,24 @@ public class PasswordResetService {
                 .expiresAt(OffsetDateTime.now().plus(tokenTtl))
                 .build());
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailFrom);
-        message.setTo(parent.getEmail());
-        message.setSubject("[GoodQuestion] 비밀번호 재설정");
-        message.setText("아래 링크에서 " + tokenTtl.toMinutes() + "분 이내에 새 비밀번호를 설정해 주세요.\n\n"
+        String text = "아래 링크에서 " + tokenTtl.toMinutes() + "분 이내에 새 비밀번호를 설정해 주세요.\n\n"
                 + frontendBaseUrl + "/auth/reset-password?token=" + rawToken
-                + "\n\n요청하지 않았다면 이 메일을 무시해 주세요.");
+                + "\n\n요청하지 않았다면 이 메일을 무시해 주세요.";
+        Map<String, Object> body = Map.of(
+                "from", mailFrom,
+                "to", List.of(parent.getEmail()),
+                "subject", "[GoodQuestion] 비밀번호 재설정",
+                "text", text);
         try {
-            mailSender.send(message);
-        } catch (MailException e) {
+            webClient.post()
+                    .uri(RESEND_API_URL)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + resendApiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(body)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+        } catch (Exception e) {
             log.error("메일 발송 실패: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.EMAIL_DELIVERY_FAILED);
         }
