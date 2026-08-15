@@ -88,6 +88,7 @@ public class PlanetService {
 
         short q = toCoordinate(request.placedQ());
         short r = toCoordinate(request.placedR());
+        requireInsideGrid(q, r);
         requireEmptyCell(planet, q, r);
 
         return toPlacement(planetItemRepository.save(PlanetItem.builder()
@@ -101,6 +102,7 @@ public class PlanetService {
 
         short q = toCoordinate(request.placedQ());
         short r = toCoordinate(request.placedR());
+        requireInsideGrid(q, r);
         if (placement.getPlacedQ() != q || placement.getPlacedR() != r) {
             requireEmptyCell(placement.getPlanet(), q, r);
         }
@@ -180,5 +182,26 @@ public class PlanetService {
         return new PlacementResponse(
                 placement.getId(), placement.getChildItem().getId(), item.getId(),
                 item.getModelUrl(), placement.getPlacedQ(), placement.getPlacedR());
+    }
+
+    /**
+     * 섬 격자 안인지 검사한다(08-15 요청 #1).
+     *
+     * <p>기존 {@code toCoordinate}는 short 범위만 봐서 (99,99)도 (32767,32767)도 통과했다.
+     * 그렇게 놓인 아이템은 화면에도 보관함에도 없고 {@code planet_items.child_item_id}가
+     * UNIQUE라 다시 놓을 수도 없다 — <b>별가루를 주고 산 것이 영구히 사라진다.</b>
+     *
+     * <p>섬은 원형으로 깎은 정사각 격자다. 클라이언트가 {@code hypot(q,r) <= 8 + 0.35}로
+     * 칸을 만들므로(221칸) 여기도 같은 원이어야 한다. 사각·육각식으로 막으면 클라이언트가
+     * 실제로 쓰는 칸이 거부되거나((6,3)) 섬 밖이 통과된다((8,-8)).
+     */
+    private static final int GRID_RADIUS = 8;
+    private static final double GRID_SLACK = 0.35;
+
+    private void requireInsideGrid(short q, short r) {
+        double limit = (GRID_RADIUS + GRID_SLACK) * (GRID_RADIUS + GRID_SLACK);
+        if ((double) q * q + (double) r * r > limit) {
+            throw new BusinessException(ErrorCode.GRID_OUT_OF_RANGE);
+        }
     }
 }
