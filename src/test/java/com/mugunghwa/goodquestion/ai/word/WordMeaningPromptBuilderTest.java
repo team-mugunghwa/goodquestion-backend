@@ -45,6 +45,17 @@ class WordMeaningPromptBuilderTest {
         assertThat(found).as("뜻 예시 개수").isGreaterThanOrEqualTo(3);
     }
 
+    /// 예문 문체 규칙이 없으면 뜻(-이에요체)과 예문(-ㄴ다체)의 톤이 어긋난다.
+    /// 실서버 생성 사례("...웃으며 걷는다.")로 확인된 문제라 규칙을 고정한다.
+    @Test
+    void 시스템_프롬프트는_예문도_어요체로_끝내라고_지시한다() {
+        String prompt = promptBuilder.buildSystemPrompt();
+
+        assertThat(prompt).contains("예문도 meaning처럼");
+        assertThat(prompt).contains("딱딱하게 끝맺지 않는다");
+        assertThat(prompt).contains("걷는다 (X) -> 걸어요 (O)");
+    }
+
     /// 유효성 관문이 실재하는 낱말을 막으면 아이가 궁금해한 말을 담지 못한다.
     /// 실서버에서 "아궁이"가 오거절된 사례가 있어 판정을 보수적으로 못 박는다.
     @Test
