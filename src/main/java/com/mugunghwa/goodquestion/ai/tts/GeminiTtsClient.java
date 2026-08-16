@@ -2,7 +2,6 @@ package com.mugunghwa.goodquestion.ai.tts;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -36,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "external.tts.vendor", havingValue = "gemini")
 public class GeminiTtsClient implements TtsClient {
 
     /** 응답은 헤더 없는 PCM이라 WAV 헤더를 직접 붙인다. Gemini가 이 규격으로 준다. */
@@ -58,7 +56,7 @@ public class GeminiTtsClient implements TtsClient {
     public GeminiTtsClient(
             WebClient webClient,
             @Value("${external.tts.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
-            @Value("${external.tts.gemini.api-key}") String apiKey,
+            @Value("${external.tts.gemini.api-key:}") String apiKey,
             @Value("${external.tts.gemini.model:gemini-2.5-flash-preview-tts}") String model,
             @Value("${external.tts.timeout-ms:30000}") long timeoutMs,
             GeminiVoiceProperties voices) {
@@ -68,6 +66,11 @@ public class GeminiTtsClient implements TtsClient {
         this.model = model;
         this.voices = voices;
         this.timeout = Duration.ofMillis(timeoutMs);
+    }
+
+    /** 키가 없으면 라우터가 이 벤더를 고를 수 없다고 안내한다. */
+    boolean isAvailable() {
+        return apiKey != null && !apiKey.isBlank();
     }
 
     @Override

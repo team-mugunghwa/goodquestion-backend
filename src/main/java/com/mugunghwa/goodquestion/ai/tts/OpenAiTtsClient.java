@@ -1,7 +1,6 @@
 package com.mugunghwa.goodquestion.ai.tts;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 // 벤더가 둘이 되면서 스위치가 필요해졌다. 미설정이면 지금까지처럼 OpenAI를 쓴다 —
 // 설정 파일을 안 고친 환경(로컬·CI)에서 앱이 안 뜨는 일이 없어야 한다.
-@ConditionalOnProperty(name = "external.tts.vendor", havingValue = "openai", matchIfMissing = true)
 public class OpenAiTtsClient implements TtsClient {
 
     private final WebClient webClient;
