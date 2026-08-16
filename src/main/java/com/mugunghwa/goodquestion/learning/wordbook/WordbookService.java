@@ -23,6 +23,8 @@ import java.util.UUID;
 public class WordbookService {
 
     private final WordbookRepository wordbookRepository;
+    private final StoryVocabularyRepository storyVocabularyRepository;
+    private final WordLemmatizer lemmatizer;
     private final WordMeaningLlmClient wordMeaningLlmClient;
     private final ChildService childService;
     private final StorySceneRepository sceneRepository;
@@ -31,16 +33,22 @@ public class WordbookService {
     @Transactional
     public WordResponse create(UUID parentId, UUID childId, WordCreateRequest request) {
         Child child = childService.getOwnedChild(parentId, childId);
-        if (wordbookRepository.existsByChildIdAndWord(childId, request.word())) {
+        // 표제어로 정규화해서 저장한다 - 아이는 대사 어절을 그대로 누르므로
+        // "기왓장이"처럼 조사가 붙어 온다. 정규화가 아래 중복 검사와 어휘 사전
+        // 조회의 키이기도 해서, 이 순서(정규화 -> 중복 -> 사전 -> LLM)가
+        // 같은 단어에 뜻 생성 LLM이 두 번 나가지 않게 하는 구조다.
+        // → 프론트 docs/단어_저장_비용_속도_설계_조사.md
+        String word = lemmatizer.lemmatize(request.word());
+        if (wordbookRepository.existsByChildIdAndWord(childId, word)) {
             throw new BusinessException(ErrorCode.DUPLICATE_WORD);
         }
 
         StoryScene sourceScene = findSourceScene(request.sourceSceneId());
-        Explanation explanation = explain(request, sourceScene);
+        Explanation explanation = explain(word, request, sourceScene);
 
         Wordbook saved = wordbookRepository.saveAndFlush(Wordbook.builder()
                 .child(child)
-                .word(request.word())
+                .word(word)
                 .meaning(explanation.meaning())
                 .exampleSentence(explanation.exampleSentence())
                 .entryType(request.entryType())
@@ -77,18 +85,41 @@ public class WordbookService {
     }
 
     /**
-     * 뜻과 예문 확보. 요청에 뜻이 있으면 그대로 쓰고, 없으면 LLM이 아이 눈높이로 만든다(단어-02).
+     * 뜻과 예문 확보 - 요청 뜻 > 이야기 어휘 사전 > LLM 생성 순서다.
      *
-     * <p>아이가 이야기를 듣다 모르는 단어를 누르는 경로에서는 뜻이 올 수 없으므로 LLM을 탄다.
-     * 벤더 선정 전까지 그 경로는 501이고, 클라이언트가 뜻을 직접 담아 보내는 경로는 지금도 동작한다.
+     * <p>고정 대사의 낱말은 이야기 어휘 사전(story_vocabulary)에 검수된 뜻이
+     * 있으므로 대부분 LLM 없이 끝난다. 사전에도 없는 단어만 LLM이 아이
+     * 눈높이로 만든다(단어-02).
      */
-    private Explanation explain(WordCreateRequest request, StoryScene sourceScene) {
+    private Explanation explain(String word, WordCreateRequest request, StoryScene sourceScene) {
         if (request.meaning() != null && !request.meaning().isBlank()) {
             return new Explanation(request.meaning(), request.exampleSentence());
         }
 
+        if (sourceScene != null) {
+            StoryVocabulary entry = storyVocabularyRepository
+                    .findByStoryIdAndWord(sourceScene.getStory().getId(), word)
+                    .orElse(null);
+            if (entry != null) {
+                // 요청 예문(아이가 단어를 고른 그 대사 문장)이 있으면 사전
+                // 예문보다 우선한다 - 아이가 실제로 만난 문장이라서.
+                return new Explanation(entry.getMeaning(),
+                        (request.exampleSentence() != null && !request.exampleSentence().isBlank())
+                                ? request.exampleSentence() : entry.getExampleSentence());
+            }
+        }
+
         WordMeaningLlmClient.WordMeaningResult generated =
-                wordMeaningLlmClient.generate(request.word(), sceneContextOf(sourceScene));
+                wordMeaningLlmClient.generate(word, sceneContextOf(sourceScene));
+
+        // STT 오인식이 만든 존재하지 않는 말("방비" 부류)은 저장을 거절한다.
+        // 단어장은 아이가 두고두고 다시 보는 학습 기록이라 쓰레기 단어가
+        // 영구히 남으면 안 된다. 동적(LLM 생성) 대사에서 단어를 담는 경로를
+        // 여는 전제 조건이기도 하다. 요청에 뜻이 실려 온 경우와 어휘 사전
+        // 히트는 이미 검수된 경로라 이 관문을 타지 않는다.
+        if (!generated.realWord()) {
+            throw new BusinessException(ErrorCode.INVALID_WORD);
+        }
 
         // 요청이 예문을 함께 보냈다면 이야기 원문에서 딴 문장이므로 생성분보다 우선한다.
         return new Explanation(generated.meaning(),

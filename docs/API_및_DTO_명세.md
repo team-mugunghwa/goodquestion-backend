@@ -28,7 +28,7 @@
 | 남의 리소스 | 403 | `FORBIDDEN` |
 | 없는 리소스 | 404 | `NOT_FOUND` |
 | 상태 충돌 | 409 | 아래 목록 |
-| 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
+| 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE`, `INVALID_WORD` (2026-08-16 추가) |
 | 로그인 시도 초과 잠금 | 423 | `ACCOUNT_LOCKED` |
 | 업로드 한도 초과 | 413 | `AUDIO_TOO_LARGE` (2026-08-16 추가. 기존 500) |
 | AI 벤더 오류 | **502** | `AI_UPSTREAM_ERROR` — 벤더가 4xx/5xx를 돌려줌(429 제외) |
@@ -798,10 +798,25 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 | `word` | String | `@NotBlank @Size(max=50)` | 저장할 단어 |
 | `entryType` | `WordEntryType` | `@NotNull` | `UNKNOWN` / `FAVORITE` |
 | `sourceSceneId` | UUID | | 단어가 나온 장면. 뜻 생성의 문맥으로 쓴다 |
-| `meaning` | String | | **없으면 서버가 LLM으로 생성** |
-| `exampleSentence` | String | | 이야기 속 예문. 없으면 뜻과 함께 서버가 생성 |
+| `meaning` | String | | **없으면 이야기 어휘 사전 -> LLM 순서로 서버가 채운다** |
+| `exampleSentence` | String | | 이야기 속 예문(아이가 단어를 만난 문장). 있으면 사전/생성 예문보다 우선 |
 
-같은 아이가 같은 단어를 또 저장하면 409 `DUPLICATE_WORD`.
+**서버는 `word`를 표제어로 정규화해 저장한다** (형태소 분석 Nori, 2026-08).
+"기왓장이"를 보내면 "기왓장"으로 저장되고 응답의 `word`도 표제어다. 조사를
+뗄 수 없는 낱말(비명사, 미등재어)은 보낸 그대로 저장된다.
+
+같은 아이가 같은 **표제어**를 또 저장하면 409 `DUPLICATE_WORD` - "기왓장이"를
+담은 뒤 "기왓장을"을 보내도 409다. 이때 뜻 생성은 일어나지 않는다.
+
+뜻이 없을 때의 채움 순서: 1) 이야기 어휘 사전(`story_vocabulary`, 검수된 뜻,
+LLM 없음) 2) 사전에 없으면 LLM 생성. 고정 대사에서 담는 단어는 대부분 1)에서
+끝난다. → 프론트 `docs/단어_저장_비용_속도_설계_조사.md`
+
+LLM 생성 단계에서 **실제 쓰이는 낱말이 아니라고 판정되면 422 `INVALID_WORD`**
+로 저장을 거절한다(2026-08-16). STT 오인식이 만든 존재하지 않는 말이 단어장에
+남는 것을 막는 관문으로, 동적(LLM 생성) 대사에서 단어를 담는 경로의 전제
+조건이다. 요청에 뜻을 담아 보내는 경로와 어휘 사전 히트는 이 관문을 타지
+않는다.
 
 #### `WordResponse`
 
@@ -1015,6 +1030,12 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
 
 **2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
+
+- 단어 저장이 표제어로 정규화된다(Nori 형태소 분석, V10). "기왓장이" ->
+  "기왓장"으로 저장되고 중복(409)도 표제어 기준이다. 뜻이 없으면 이야기 어휘
+  사전(`story_vocabulary`, 검수된 뜻) -> LLM 순서로 채워 고정 대사 단어는
+  대부분 LLM 호출 없이 저장된다. LLM이 실제 낱말이 아니라고 판정하면 422
+  `INVALID_WORD`로 거절한다(오인식 단어 차단). 3.11 참고
 
 - 사전 렌더 장면 음성 연결(#69). `SceneContentResponse`에 `narrationAudioUrl`과
   `narrationTimings`(문장별 실측 시작/끝) 추가 - STORY 장면 내레이션이 실제 음성으로
