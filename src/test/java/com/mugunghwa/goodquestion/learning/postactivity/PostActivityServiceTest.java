@@ -30,9 +30,18 @@ class PostActivityServiceTest {
     /** 하준의 세션 - 완주 기록이 없어 첫 완주 지급과 해금을 함께 확인할 수 있다. */
     private static final UUID SIBLING_SESSION_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-000000000003");
 
-    /** 시드 콘텐츠의 정답 순서. 응답에는 담기지 않으므로 테스트가 직접 안다. */
+    /**
+     * 시드 콘텐츠의 정답 순서. 응답에는 담기지 않으므로 테스트가 직접 안다.
+     *
+     * <p>카드 수는 프론트에 그림이 있는 4장에 맞춰져 있다. 시드의 cards를 늘리거나 줄이면
+     * 이 상수와 아래 개수 단언도 함께 고쳐야 한다.
+     */
     private static final List<String> CORRECT_ORDER =
-            List.of("card_1", "card_2", "card_3", "card_4", "card_5");
+            List.of("card_1", "card_2", "card_3", "card_4");
+
+    /** 시드의 retelling_keywords. 카드와 1:1로 짝지어 2단계에서 각 카드에 붙는다. */
+    private static final List<String> KEYWORDS =
+            List.of("참다", "쫓겨나다", "떨어뜨리다", "자신감");
 
     @Autowired
     private PostActivityService activityService;
@@ -46,7 +55,7 @@ class PostActivityServiceTest {
 
         PostActivityStartResponse response = activityService.start(PARENT_ID, sessionId);
 
-        assertThat(response.cards()).hasSize(5);
+        assertThat(response.cards()).hasSize(CORRECT_ORDER.size());
         assertThat(response.attemptCount()).isZero();
         assertThat(response.cards()).allSatisfy(card -> {
             assertThat(card.cardId()).isNotBlank();
@@ -93,7 +102,7 @@ class PostActivityServiceTest {
         activityService.start(PARENT_ID, sessionId);
 
         CardSubmitResponse response = activityService.submitOrder(PARENT_ID, sessionId,
-                new CardSubmitRequest(List.of("card_2", "card_1", "card_3", "card_4", "card_5")));
+                new CardSubmitRequest(List.of("card_2", "card_1", "card_3", "card_4")));
 
         assertThat(response.correct()).isFalse();
         assertThat(response.retellingKeywords()).isNull();
@@ -109,7 +118,7 @@ class PostActivityServiceTest {
                 PARENT_ID, sessionId, new CardSubmitRequest(CORRECT_ORDER));
 
         assertThat(response.correct()).isTrue();
-        assertThat(response.retellingKeywords()).containsExactly("방귀", "며느리", "배나무", "시아버지");
+        assertThat(response.retellingKeywords()).containsExactlyElementsOf(KEYWORDS);
         assertThat(activityService.getStatus(PARENT_ID, sessionId).status()).isEqualTo("ORDER_CORRECT");
     }
 
