@@ -142,6 +142,9 @@ external:
     #
     # 기본값을 openai 로 두는 것은 설정을 안 고친 환경(로컬·CI)이 그대로 뜨게 하려는 것이다.
     # 전환은 배포 환경에서 TTS_VENDOR=gemini 로 한다 - 그때 GEMINI_API_KEY 가 함께 있어야 한다.
+    # 기본 벤더. **재배포 없이 바꾸려면 관리자 콘솔에서 app_settings(tts.vendor)를
+    # 바꾼다** - DB 행이 있으면 그쪽이 이긴다(RoutingTtsClient). 여기 값은 행이 없을 때의
+    # 기본값이자 로컬·CI의 동작이다.
     vendor: ${TTS_VENDOR:openai}
     api-key: ${TTS_API_KEY:${LLM_API_KEY}}
     model: ${TTS_MODEL:gpt-4o-mini-tts}
@@ -161,10 +164,19 @@ external:
     # vendor=gemini 일 때만 쓰인다. 보이스 이름 체계가 벤더마다 달라(nova/onyx/echo vs
     # Leda/Puck/Charon) 맵을 공유할 수 없다 - 공유하면 벤더만 바꿨을 때 Gemini 가
     # "nova" 를 보이스 이름으로 받는다.
+    # Chirp 3: HD - 테스트 기간용 무료 벤더(월 100만 자). 보이스 페르소나가 Gemini와
+    # 같아(ko-KR-Chirp3-HD-Leda 등) gemini.voices 맵을 그대로 재사용한다.
+    # ⚠ 키는 **Cloud 콘솔 키**(GOOGLE_CLOUD_API_KEY)다. AI Studio 키(GEMINI_API_KEY)와
+    # 다르다 - 둘 다 AIzaSy로 시작해 눈으로 구분되지 않는데, 바꿔 넣으면 합성만 403이다.
+    chirp:
+      api-key: ${GOOGLE_CLOUD_API_KEY:}
+      speaking-rate: ${CHIRP_SPEAKING_RATE:0.95}
     gemini:
       # **Google AI Studio 키다.** Cloud TTS 키(texttospeech.googleapis.com)와 다르다 -
       # 둘 다 AIzaSy 로 시작해 눈으로 구분되지 않는데, 잘못 넣으면 앱은 뜨고 합성만 403 이다.
-      api-key: ${GEMINI_API_KEY}
+      # 기본값을 비워 둔다 - 벤더가 상시 빈이 되면서(RoutingTtsClient) 키 없는 환경도
+      # 기동은 되고, GEMINI 선택 시에만 503으로 안내한다.
+      api-key: ${GEMINI_API_KEY:}
       model: ${GEMINI_TTS_MODEL:gemini-2.5-flash-preview-tts}
       # 사전 렌더에 쓴 것과 같은 보이스여야 한 캐릭터로 들린다.
       default-voice: Kore
