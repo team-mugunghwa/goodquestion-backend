@@ -224,7 +224,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '시아버지가 며느리의 요란한 방귀에 깜짝 놀라 화를 내며, 이런 며느리와는 함께 살 수 없다고 말한다.',
     '시아버지는 창피한 며느리와 함께 살 수 없다고 생각하지만, 며느리는 일부러 그런 것이 아니다.',
     '/stories/banggui/scenes/05_dialogue2.jpg',
-    '/stories/banggui/scenes/05_dialogue2.mp4',
+    '/stories/banggui/scenes/05_dialogue2_loop.mp4',
     '시아버지',
     '아이고 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못살겠다! 그렇지 않니?',
     '흥, 그래도 도저히 이런 며느리와는 함께 살 수 없으니 친정으로 데려다줘야겠다.',
