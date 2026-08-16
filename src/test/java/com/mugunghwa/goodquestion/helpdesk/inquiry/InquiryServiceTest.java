@@ -61,6 +61,75 @@ class InquiryServiceTest {
     }
 
     @Test
+    @DisplayName("답변 전 문의는 수정할 수 있다")
+    void updatePendingInquiry() {
+        InquiryDetailResponse created = inquiryService.create(parentId,
+                new CreateInquiryRequest(InquiryCategory.ETC, "질문", "본문"));
+
+        InquiryDetailResponse updated = inquiryService.update(parentId, created.id(),
+                new CreateInquiryRequest(InquiryCategory.ACCOUNT, "고친 질문", "고친 본문"));
+
+        assertThat(updated.title()).isEqualTo("고친 질문");
+        assertThat(updated.content()).isEqualTo("고친 본문");
+        assertThat(updated.category()).isEqualTo(InquiryCategory.ACCOUNT);
+    }
+
+    @Test
+    @DisplayName("답변 전 문의는 삭제할 수 있다")
+    void deletePendingInquiry() {
+        InquiryDetailResponse created = inquiryService.create(parentId,
+                new CreateInquiryRequest(InquiryCategory.ETC, "질문", "본문"));
+
+        inquiryService.delete(parentId, created.id());
+
+        assertThatThrownBy(() -> inquiryService.get(parentId, created.id()))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("답변이 달린 문의는 수정/삭제할 수 없다 - 답변의 대상이 어긋난다")
+    void cannotEditAnsweredInquiry() {
+        InquiryDetailResponse created = inquiryService.create(parentId,
+                new CreateInquiryRequest(InquiryCategory.ETC, "질문", "본문"));
+        entityManager.flush();
+        jdbcTemplate.update("""
+                insert into inquiry_answers (inquiry_id, admin_name, content)
+                values (?, '고객센터', '답변')
+                """, created.id());
+        jdbcTemplate.update(
+                "update inquiries set status = 'ANSWERED', answered_at = now() where id = ?",
+                created.id());
+        entityManager.clear();
+
+        assertThatThrownBy(() -> inquiryService.update(parentId, created.id(),
+                new CreateInquiryRequest(InquiryCategory.ETC, "고침", "고침")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INQUIRY_ALREADY_ANSWERED);
+        assertThatThrownBy(() -> inquiryService.delete(parentId, created.id()))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INQUIRY_ALREADY_ANSWERED);
+    }
+
+    @Test
+    @DisplayName("남의 문의는 수정/삭제할 수 없다 - 404로 존재 자체를 숨긴다")
+    void cannotEditOthersInquiry() {
+        InquiryDetailResponse created = inquiryService.create(parentId,
+                new CreateInquiryRequest(InquiryCategory.ETC, "질문", "본문"));
+        UUID strangerId = parentRepository.save(Parent.builder()
+                .email("stranger-%s@example.com".formatted(System.nanoTime()))
+                .passwordHash("hash").provider(AuthProvider.LOCAL).name("남")
+                .build()).getId();
+
+        assertThatThrownBy(() -> inquiryService.update(strangerId, created.id(),
+                new CreateInquiryRequest(InquiryCategory.ETC, "고침", "고침")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
+        assertThatThrownBy(() -> inquiryService.delete(strangerId, created.id()))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
     @DisplayName("관리자가 답변을 달면 사용자 상세에 그 내용이 보인다")
     void answerBecomesVisible() {
         InquiryDetailResponse created = inquiryService.create(parentId,

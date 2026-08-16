@@ -205,6 +205,30 @@
 음성 인식 실패(빈 텍스트)는 `/api/stt`가 422 `STT_EMPTY_TEXT`로 알리므로 이 API까지 오지
 않는다. 3.11의 `SentencePracticeResponse` 참고.
 
+### 고객센터/공지/이용안내/알림 (2026-08-16 추가, #84 + 문의 수정/삭제)
+
+| 메서드 | 경로 | 설명 | 상태 |
+|---|---|---|---|
+| GET | `/api/notices` | 공개 공지 목록 (고정 먼저, 최신순) | ✅ |
+| GET | `/api/notices/{id}` | 공지 상세 (조회수 증가) | ✅ |
+| GET | `/api/guides` | 이용안내 목록 (`?category=` 선택) | ✅ |
+| GET | `/api/guides/{id}` | 이용안내 상세 | ✅ |
+| POST | `/api/inquiries` | 문의 작성 (`CreateInquiryRequest`) | ✅ |
+| GET | `/api/inquiries` | 내 문의 목록 (답변 여부 포함) | ✅ |
+| GET | `/api/inquiries/{id}` | 문의 상세 (답변 포함. 남의 것은 404) | ✅ |
+| PATCH | `/api/inquiries/{id}` | 문의 수정 - **답변 전(PENDING)만**. 이후 409 `INQUIRY_ALREADY_ANSWERED` | ✅ |
+| DELETE | `/api/inquiries/{id}` | 문의 삭제 - 답변 전만 (204) | ✅ |
+| GET | `/api/notifications` | 알림 목록 | ✅ |
+| GET | `/api/notifications/unread-count` | 안 읽은 알림 수 | ✅ |
+| PATCH | `/api/notifications/{id}/read` | 읽음 처리 | ✅ |
+| POST | `/api/notifications/read-all` | 전체 읽음 | ✅ |
+| POST | `/api/notifications/devices` | FCM 기기 토큰 등록 | ✅ |
+
+공지/이용안내의 생성·수정·삭제와 문의 답변은 **관리자 콘솔**(admin-goodquestion-backend,
+같은 DB의 같은 테이블)이 담당한다. 답변이 등록되면 사용자 알림이 함께 생성된다.
+답변이 달린 문의의 내용이 바뀌면 답변이 무엇에 대한 것인지 어긋나므로, 사용자 수정/삭제는
+PENDING 상태에서만 허용한다.
+
 ### 2.13 보상 — 상점·보관함
 
 | 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
@@ -1091,6 +1115,10 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
 
 **2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
+
+- 고객센터/공지/이용안내/알림 사용자 API(#84)가 명세에 빠져 있어 보충했다.
+  문의 수정/삭제(PATCH/DELETE, 답변 전만)를 새로 추가했다 - 409
+  `INQUIRY_ALREADY_ANSWERED`. 공지/이용안내 출시 콘텐츠는 R__5 시드
 
 - 단어 예문이 3종(이야기/일상/심화)으로 늘었다(V14). `WordResponse`에
   `exampleSentenceDaily`/`exampleSentenceAdvanced` 추가. 이야기 어휘 사전
