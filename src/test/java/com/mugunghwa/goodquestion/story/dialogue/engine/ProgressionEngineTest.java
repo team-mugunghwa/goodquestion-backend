@@ -99,6 +99,25 @@ class ProgressionEngineTest {
     }
 
     /**
+     * CLOSING 결정에는 유도 대상이 실리지 않는다. 이 불변식이 깨지면 끝내는 턴에
+     * [강한 유도]의 물음-종결 지시가 걸려 마무리 대사와 물음이 겹친다 —
+     * 프롬프트 쪽 CLOSING 가드(CharacterPromptBuilder.userPrompt)와 짝을 이루는 방어다.
+     */
+    @Test
+    void 끝내는_턴에는_유도_대상을_싣지_않는다() {
+        StorySession session = session();
+        for (int i = 0; i < 5; i++) {
+            session.applyTurn(List.of(), false);
+        }
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, unclear());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.CLOSING);
+        assertThat(decision.guidanceTarget()).isNull();
+        assertThat(decision.softCue()).isFalse();
+    }
+
+    /**
      * 두 종료 조건이 같이 걸리면 목표 달성이 우선한다. 요소를 다 채운 턴은 최대 턴에
      * 닿아도 MAX_TURNS 판정에 이르지 못하므로, 미션 보류(TurnTransactions)가
      * 마지막 턴을 따로 처리해야 한다 - 그 전제를 여기서 못박는다.
