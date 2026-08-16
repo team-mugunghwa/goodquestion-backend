@@ -28,7 +28,7 @@
 | 남의 리소스 | 403 | `FORBIDDEN` |
 | 없는 리소스 | 404 | `NOT_FOUND` |
 | 상태 충돌 | 409 | 아래 목록 |
-| 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE` |
+| 값이 규칙에 안 맞음 | 422 | `STT_EMPTY_TEXT`, `GRID_OUT_OF_RANGE`, `INVALID_WORD` (2026-08-16 추가) |
 | 로그인 시도 초과 잠금 | 423 | `ACCOUNT_LOCKED` |
 | 업로드 한도 초과 | 413 | `AUDIO_TOO_LARGE` (2026-08-16 추가. 기존 500) |
 | AI 벤더 오류 | **502** | `AI_UPSTREAM_ERROR` — 벤더가 4xx/5xx를 돌려줌(429 제외) |
@@ -812,6 +812,12 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 LLM 없음) 2) 사전에 없으면 LLM 생성. 고정 대사에서 담는 단어는 대부분 1)에서
 끝난다. → 프론트 `docs/단어_저장_비용_속도_설계_조사.md`
 
+LLM 생성 단계에서 **실제 쓰이는 낱말이 아니라고 판정되면 422 `INVALID_WORD`**
+로 저장을 거절한다(2026-08-16). STT 오인식이 만든 존재하지 않는 말이 단어장에
+남는 것을 막는 관문으로, 동적(LLM 생성) 대사에서 단어를 담는 경로의 전제
+조건이다. 요청에 뜻을 담아 보내는 경로와 어휘 사전 히트는 이 관문을 타지
+않는다.
+
 #### `WordResponse`
 
 > **사용처** — `POST /api/children/{childId}/words` · `GET /api/children/{childId}/words` · `PATCH /api/children/{childId}/words/{wordId}/favorite` 응답
@@ -1028,7 +1034,8 @@ LLM 없음) 2) 사전에 없으면 LLM 생성. 고정 대사에서 담는 단어
 - 단어 저장이 표제어로 정규화된다(Nori 형태소 분석, V10). "기왓장이" ->
   "기왓장"으로 저장되고 중복(409)도 표제어 기준이다. 뜻이 없으면 이야기 어휘
   사전(`story_vocabulary`, 검수된 뜻) -> LLM 순서로 채워 고정 대사 단어는
-  대부분 LLM 호출 없이 저장된다. 3.11 참고
+  대부분 LLM 호출 없이 저장된다. LLM이 실제 낱말이 아니라고 판정하면 422
+  `INVALID_WORD`로 거절한다(오인식 단어 차단). 3.11 참고
 
 - 사전 렌더 장면 음성 연결(#69). `SceneContentResponse`에 `narrationAudioUrl`과
   `narrationTimings`(문장별 실측 시작/끝) 추가 - STORY 장면 내레이션이 실제 음성으로

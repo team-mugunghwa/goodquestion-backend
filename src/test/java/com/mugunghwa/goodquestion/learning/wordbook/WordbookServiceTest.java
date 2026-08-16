@@ -107,9 +107,22 @@ class WordbookServiceTest {
     }
 
     @Test
+    void 실제_단어가_아니라고_판정되면_저장을_거절한다() {
+        // STT 오인식이 만든 존재하지 않는 말이 단어장에 영구히 남으면 안 된다.
+        // 동적(LLM 생성) 대사에서 단어를 담는 경로를 여는 전제 조건이다.
+        when(wordMeaningLlmClient.generate(any(), any()))
+                .thenReturn(new WordMeaningResult(null, null, false));
+
+        assertThatThrownBy(() -> wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "방빙끄", WordEntryType.UNKNOWN, SCENE_ID, null, null)))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.INVALID_WORD);
+    }
+
+    @Test
     void 사전에_없는_단어만_LLM으로_뜻을_만든다() {
         when(wordMeaningLlmClient.generate(eq("아궁이"), any()))
-                .thenReturn(new WordMeaningResult("불을 때는 곳이에요.", "아궁이에 불을 지폈어요."));
+                .thenReturn(new WordMeaningResult("불을 때는 곳이에요.", "아궁이에 불을 지폈어요.", true));
 
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "아궁이에", WordEntryType.UNKNOWN, SCENE_ID, null, null));
@@ -169,7 +182,7 @@ class WordbookServiceTest {
     @Test
     void 뜻을_보내지_않으면_LLM이_생성한_뜻과_예문을_저장한다() {
         when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
-                .thenReturn(new WordMeaningResult("음식을 끓이는 큰 솥", "가마솥에서 밥을 지었어요."));
+                .thenReturn(new WordMeaningResult("음식을 끓이는 큰 솥", "가마솥에서 밥을 지었어요.", true));
 
         WordCreateRequest request = new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);
@@ -183,7 +196,7 @@ class WordbookServiceTest {
     @Test
     void LLM_생성이_실패해도_저장_자체는_막히지_않는다() {
         when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
-                .thenReturn(new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null));
+                .thenReturn(new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null, true));
 
         WordCreateRequest request = new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);

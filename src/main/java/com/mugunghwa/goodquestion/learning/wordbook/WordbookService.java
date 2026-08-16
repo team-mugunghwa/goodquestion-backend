@@ -112,6 +112,15 @@ public class WordbookService {
         WordMeaningLlmClient.WordMeaningResult generated =
                 wordMeaningLlmClient.generate(word, sceneContextOf(sourceScene));
 
+        // STT 오인식이 만든 존재하지 않는 말("방비" 부류)은 저장을 거절한다.
+        // 단어장은 아이가 두고두고 다시 보는 학습 기록이라 쓰레기 단어가
+        // 영구히 남으면 안 된다. 동적(LLM 생성) 대사에서 단어를 담는 경로를
+        // 여는 전제 조건이기도 하다. 요청에 뜻이 실려 온 경우와 어휘 사전
+        // 히트는 이미 검수된 경로라 이 관문을 타지 않는다.
+        if (!generated.realWord()) {
+            throw new BusinessException(ErrorCode.INVALID_WORD);
+        }
+
         // 요청이 예문을 함께 보냈다면 이야기 원문에서 딴 문장이므로 생성분보다 우선한다.
         return new Explanation(generated.meaning(),
                 (request.exampleSentence() != null && !request.exampleSentence().isBlank())
