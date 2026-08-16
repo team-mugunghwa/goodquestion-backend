@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,12 +16,33 @@ class WordMeaningPromptBuilderTest {
     /// 길이 규칙은 글로만 적어 두면 모델이 글자를 못 세서 안 지켜진다
     /// (실서버 측정 11건 중 7건 초과, 최대 36자). 짧은 뜻 예시를 함께 준다.
     @Test
-    void 시스템_프롬프트는_짧은_뜻_예시를_포함한다() {
+    void 시스템_프롬프트는_어절_기준_길이와_뜻_예시를_준다() {
         String prompt = promptBuilder.buildSystemPrompt();
 
-        assertThat(prompt).contains("지붕을 덮는 납작한 조각이에요");
-        assertThat(prompt).contains("20자를 넘지 않는");
+        // 글자 수는 모델이 셀 수 없어 안 지켜졌다. 어절은 띄어쓰기 단위라 셀 수 있다.
+        assertThat(prompt).contains("5~7덩어리(어절)");
+        assertThat(prompt).contains("정확함을 해치면서까지 줄이지 않는다");
         assertThat(prompt).contains("마침표는 찍지 않는다");
+        assertThat(prompt).contains("지붕을 덮는 납작한 흙 조각이에요");
+    }
+
+    /// 예시에 적힌 덩어리 수가 실제와 다르면 모델에게 잘못 세는 법을 가르친다.
+    /// 예시를 손볼 때 표기도 함께 고치도록 고정한다.
+    @Test
+    void 뜻_예시에_적힌_덩어리_수가_실제_어절_수와_같다() {
+        Matcher matcher = Pattern
+                .compile("-> (\\S.*?)\\s+\\((\\d)덩어리\\)")
+                .matcher(promptBuilder.buildSystemPrompt());
+
+        int found = 0;
+        while (matcher.find()) {
+            String meaning = matcher.group(1).trim();
+            int declared = Integer.parseInt(matcher.group(2));
+            assertThat(meaning.split("\\s+")).as("예시 \"%s\"", meaning).hasSize(declared);
+            assertThat(declared).isBetween(5, 7);
+            found++;
+        }
+        assertThat(found).as("뜻 예시 개수").isGreaterThanOrEqualTo(3);
     }
 
     /// 유효성 관문이 실재하는 낱말을 막으면 아이가 궁금해한 말을 담지 못한다.
