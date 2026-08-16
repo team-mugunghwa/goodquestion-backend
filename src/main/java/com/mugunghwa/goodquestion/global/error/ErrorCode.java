@@ -16,6 +16,7 @@ public enum ErrorCode {
     SCENE_NOT_DIALOGUE(HttpStatus.CONFLICT, "현재 장면은 대화 장면이 아닙니다."),
     REPORT_NOT_READY(HttpStatus.CONFLICT, "리포트가 아직 생성되지 않았습니다."),
     DUPLICATE_WORD(HttpStatus.CONFLICT, "이미 저장된 단어입니다."),
+    INQUIRY_ALREADY_ANSWERED(HttpStatus.CONFLICT, "답변이 완료된 문의는 수정하거나 삭제할 수 없습니다."),
     STT_EMPTY_TEXT(HttpStatus.UNPROCESSABLE_ENTITY, "음성에서 텍스트를 인식하지 못했습니다."),
     INVALID_WORD(HttpStatus.UNPROCESSABLE_ENTITY, "단어장에 담기 어려운 말입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
