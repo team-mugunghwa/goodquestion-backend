@@ -44,6 +44,12 @@ public class StardustService {
     /** 단어 말하기 연습 1건. 소품 하나(1~2)에 못 미치는 잔돈이라 매일 해도 이야기 보상을 넘지 않는다. */
     private static final int WORD_PRACTICED_AWARD = 1;
 
+    /**
+     * 예문 따라 말하기 1건. 문장 전체를 90% 이상 정확히 말해야 해서 단어 연습(1)보다 크다.
+     * 하루 상한이 2건이라 하루 최대 4개 — 완주 최대치(3+2)를 넘지 않는다.
+     */
+    private static final int SENTENCE_PRACTICED_AWARD = 2;
+
     private static final int SCENE_BONUS_AWARD = 1;
     /** 세션 합계를 3~5로 묶기 위한 상한. 유니크로는 표현할 수 없어 세어서 막는다. */
     private static final int SCENE_BONUS_MAX_PER_SESSION = 2;
@@ -102,6 +108,16 @@ public class StardustService {
     @Transactional
     public StardustTransaction awardWordPracticed(Child child) {
         return earn(child.getId(), WORD_PRACTICED_AWARD, StardustReason.WORD_PRACTICED,
+                null, null, null);
+    }
+
+    /**
+     * 예문 따라 말하기 보상. 판정(일치율·최초 1회·하루 상한)은 호출자(SentencePracticeService)가
+     * 끝냈다 — 여기서는 지급만 한다. 판정까지 가져오면 sentence_practices를 이 서비스가 알아야 한다.
+     */
+    @Transactional
+    public StardustTransaction awardSentencePracticed(Child child) {
+        return earn(child.getId(), SENTENCE_PRACTICED_AWARD, StardustReason.SENTENCE_PRACTICED,
                 null, null, null);
     }
 
