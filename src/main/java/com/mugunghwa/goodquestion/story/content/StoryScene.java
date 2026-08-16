@@ -54,6 +54,18 @@ public class StoryScene {
     private String imageUrl;
 
     /**
+     * 장면 영상 (스토리지 경로). null이면 image_url만 쓴다.
+     *
+     * <p>이미지를 대체하지 않고 얹는다 - 영상을 못 받거나 재생에 실패하면 image_url로
+     * 떨어져야 한다. 저사양 기기와 데이터 절약 모드가 실제로 그렇게 된다.
+     *
+     * <p>반복 재생 여부는 컬럼으로 두지 않았다. scene_type이 이미 그 정보를 담고 있어서다 -
+     * STORY는 낭독이 끝나면 멈추고, DIALOGUE는 아이가 말하는 동안 계속 돌아야 한다.
+     */
+    @Column(name = "video_url")
+    private String videoUrl;
+
+    /**
      * 캐릭터 참조. characterName은 화면 표시용으로 남기고
      * 페르소나·보이스·표정은 이 참조로 찾는다.
      */
@@ -113,7 +125,7 @@ public class StoryScene {
 
     @Builder
     public StoryScene(Story story, short sceneOrder, SceneType sceneType,
-                      String sceneDescription, String conflict, String imageUrl,
+                      String sceneDescription, String conflict, String imageUrl, String videoUrl,
                       StoryCharacter character, String characterName, String sceneStance,
                       List<String> properNouns,
                       String characterOpening, String characterClosing, String sceneGoal,
@@ -126,6 +138,7 @@ public class StoryScene {
         this.sceneDescription = sceneDescription;
         this.conflict = conflict;
         this.imageUrl = imageUrl;
+        this.videoUrl = videoUrl;
         this.character = character;
         this.characterName = characterName;
         this.sceneStance = sceneStance;

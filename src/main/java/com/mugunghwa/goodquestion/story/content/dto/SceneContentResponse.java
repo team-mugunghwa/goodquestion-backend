@@ -30,6 +30,8 @@ public record SceneContentResponse(
          */
         List<NarrationTiming> narrationTimings,
         String imageUrl,
+        /** 장면 영상. null이면 imageUrl만 쓴다 */
+        String videoUrl,
         /** DIALOGUE만 값 */
         String characterName,
         /** DIALOGUE만 값 — 남은 턴 UI에 사용 */
@@ -53,6 +55,7 @@ public record SceneContentResponse(
                 narration == null ? null : narration.url(),
                 narration == null ? List.of() : toTimings(narration),
                 s.getImageUrl(),
+                s.getVideoUrl(),
                 s.getCharacterName(),
                 dialogue ? s.getMaxTurns() : null);
     }
