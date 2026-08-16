@@ -31,7 +31,7 @@ class SceneVideoUrlTest {
     private static final UUID PARENT_ID = UUID.fromString("99999999-9999-9999-9999-000000000001");
     private static final UUID CHILD_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-000000000001");
 
-    private static final String VIDEO_URL = "/stories/banggui/scenes/01_intro.mp4";
+    private static final String VIDEO_URL = "/stories/banggui/scenes/01_intro_loop.mp4";
     private static final String IMAGE_URL = "/stories/banggui/scenes/01_intro.jpg";
 
     @Autowired
