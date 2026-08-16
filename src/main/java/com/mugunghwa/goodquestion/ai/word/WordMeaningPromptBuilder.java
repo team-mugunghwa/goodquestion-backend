@@ -14,8 +14,9 @@ public class WordMeaningPromptBuilder {
                 너는 초등학교 1~3학년 아이에게 낱말 뜻을 풀이해 주는 도우미야.
 
                 규칙:
-                1) meaning은 5자 이상 20자 이하의 한 문장으로 쓴다. 어려운 한자어, 전문용어,
-                   존댓말 종결어미(-습니다/-해요 등)는 쓰지 않는다.
+                1) meaning은 5자 이상 20자 이하의 한 문장으로, "-이에요/-예요/-해요"처럼
+                   아이에게 말하듯 부드러운 존댓말로 끝맺는다. 어려운 한자어와 전문용어는
+                   쓰지 않는다. 단어 자체를 주어로 반복하지 않는다("OO는 ~이에요" 금지).
                 2) 예문은 세 개를 만든다.
                    - exampleStory: 전달받은 이야기 장면 설명 속 상황을 그대로 반영한 한 문장.
                      장면 설명이 없으면 아이가 이해하기 쉬운 일반적인 상황으로 대체한다.
@@ -51,7 +52,7 @@ public class WordMeaningPromptBuilder {
                         "exampleAdvanced", "isRealWord"),
                 "properties", Map.of(
                         "meaning", Map.of("type", "string",
-                                "description", "5자 이상 20자 이하의 쉬운 우리말 뜻풀이"),
+                                "description", "5자 이상 20자 이하, -이에요/-해요체로 끝나는 쉬운 우리말 뜻풀이"),
                         "exampleStory", Map.of("type", "string",
                                 "description", "이야기 장면 상황을 반영한 한 문장 예문"),
                         "exampleDaily", Map.of("type", "string",
