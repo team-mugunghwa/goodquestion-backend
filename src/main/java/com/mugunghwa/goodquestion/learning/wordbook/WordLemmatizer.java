@@ -50,11 +50,44 @@ public class WordLemmatizer {
             if (!trimmed.startsWith(lemma)) {
                 return trimmed;
             }
+            // 떼어낸 꼬리가 조사/어미일 때만 신뢰한다. 오인식이 만든 엉터리
+            // 말("방빙끄")은 머리("방")가 우연히 명사여도 꼬리("빙끄")가
+            // 정체불명이다 - 이때 잘라 버리면 엉터리 말이 실제 단어("방")로
+            // 둔갑해 유효성 관문(INVALID_WORD)까지 통과한다. 원형 그대로
+            // 돌려보내 관문이 원문을 판정하게 한다.
+            // (길이 비율로 거르는 방법은 "감에서" -> "감" 같은 정상 사례를
+            // 오차단해서 쓰지 않는다)
+            if (!hasTrustedTail(morphemes)) {
+                return trimmed;
+            }
             return lemma;
         } catch (Exception e) {
             log.warn("표제어 분석 실패 - 원형 그대로 저장: word={}", trimmed, e);
             return trimmed;
         }
+    }
+
+    /** 머리 명사 뒤의 형태소가 전부 조사/어미/접미 부류인가. */
+    private static boolean hasTrustedTail(List<Morpheme> morphemes) {
+        boolean inTail = false;
+        for (Morpheme morpheme : morphemes) {
+            if (!inTail && isNoun(morpheme.pos())) {
+                continue;
+            }
+            inTail = true;
+            if (!isFunctionalTail(morpheme.pos())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isFunctionalTail(POS.Tag tag) {
+        String name = tag.name();
+        return name.startsWith("J")    // 조사 (JKS/JKO/JKB/JX/JC ...)
+                || name.startsWith("E")  // 어미 (EP/EF/EC/ETN/ETM)
+                || tag == POS.Tag.VCP    // 긍정 지정사("이다"의 "이")
+                || tag == POS.Tag.XSN;   // 명사 파생 접미사("들" 등)
     }
 
     /**
