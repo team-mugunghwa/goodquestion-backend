@@ -798,10 +798,19 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 | `word` | String | `@NotBlank @Size(max=50)` | 저장할 단어 |
 | `entryType` | `WordEntryType` | `@NotNull` | `UNKNOWN` / `FAVORITE` |
 | `sourceSceneId` | UUID | | 단어가 나온 장면. 뜻 생성의 문맥으로 쓴다 |
-| `meaning` | String | | **없으면 서버가 LLM으로 생성** |
-| `exampleSentence` | String | | 이야기 속 예문. 없으면 뜻과 함께 서버가 생성 |
+| `meaning` | String | | **없으면 이야기 어휘 사전 -> LLM 순서로 서버가 채운다** |
+| `exampleSentence` | String | | 이야기 속 예문(아이가 단어를 만난 문장). 있으면 사전/생성 예문보다 우선 |
 
-같은 아이가 같은 단어를 또 저장하면 409 `DUPLICATE_WORD`.
+**서버는 `word`를 표제어로 정규화해 저장한다** (형태소 분석 Nori, 2026-08).
+"기왓장이"를 보내면 "기왓장"으로 저장되고 응답의 `word`도 표제어다. 조사를
+뗄 수 없는 낱말(비명사, 미등재어)은 보낸 그대로 저장된다.
+
+같은 아이가 같은 **표제어**를 또 저장하면 409 `DUPLICATE_WORD` - "기왓장이"를
+담은 뒤 "기왓장을"을 보내도 409다. 이때 뜻 생성은 일어나지 않는다.
+
+뜻이 없을 때의 채움 순서: 1) 이야기 어휘 사전(`story_vocabulary`, 검수된 뜻,
+LLM 없음) 2) 사전에 없으면 LLM 생성. 고정 대사에서 담는 단어는 대부분 1)에서
+끝난다. → 프론트 `docs/단어_저장_비용_속도_설계_조사.md`
 
 #### `WordResponse`
 
@@ -1015,6 +1024,11 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
 
 **2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
+
+- 단어 저장이 표제어로 정규화된다(Nori 형태소 분석, V10). "기왓장이" ->
+  "기왓장"으로 저장되고 중복(409)도 표제어 기준이다. 뜻이 없으면 이야기 어휘
+  사전(`story_vocabulary`, 검수된 뜻) -> LLM 순서로 채워 고정 대사 단어는
+  대부분 LLM 호출 없이 저장된다. 3.11 참고
 
 - 사전 렌더 장면 음성 연결(#69). `SceneContentResponse`에 `narrationAudioUrl`과
   `narrationTimings`(문장별 실측 시작/끝) 추가 - STORY 장면 내레이션이 실제 음성으로

@@ -16,6 +16,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @IntegrationTest
@@ -55,6 +58,66 @@ class WordbookServiceTest {
     /** LLM은 실제로 부르지 않는다 — 단어-02 자체는 WordMeaningLlmClientTest가 검증한다. */
     @MockitoBean
     private WordMeaningLlmClient wordMeaningLlmClient;
+
+    @Test
+    void 조사가_붙은_단어는_표제어로_저장한다() {
+        // "기왓장이"를 눌러도 단어장에는 "기왓장"으로 담긴다. 이야기 어휘
+        // 사전(R__4)에 있는 단어라 LLM 없이 검수된 뜻이 붙는다.
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "기왓장이", WordEntryType.UNKNOWN, SCENE_ID, null, null));
+
+        assertThat(saved.word()).isEqualTo("기왓장");
+        assertThat(saved.meaning()).isEqualTo("지붕을 덮는 납작한 조각");
+        verifyNoInteractions(wordMeaningLlmClient);
+    }
+
+    @Test
+    void 같은_단어를_조사만_다르게_담으면_중복이고_LLM은_부르지_않는다() {
+        wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "기왓장이", WordEntryType.UNKNOWN, SCENE_ID, null, null));
+
+        assertThatThrownBy(() -> wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "기왓장을", WordEntryType.UNKNOWN, SCENE_ID, null, null)))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.DUPLICATE_WORD);
+        verifyNoInteractions(wordMeaningLlmClient);
+    }
+
+    @Test
+    void 이야기_어휘_사전에_있으면_LLM_없이_검수된_뜻으로_저장한다() {
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "배나무", WordEntryType.UNKNOWN, SCENE_ID, null, null));
+
+        assertThat(saved.meaning()).isEqualTo("달고 시원한 배가 열리는 나무");
+        assertThat(saved.exampleSentence()).isNotBlank();
+        verifyNoInteractions(wordMeaningLlmClient);
+    }
+
+    @Test
+    void 사전_히트여도_요청_예문이_있으면_그쪽을_우선한다() {
+        // 아이가 단어를 고른 그 대사 문장이 실려 오는 경로 - 실제로 만난
+        // 문장이 사전의 일반 예문보다 낫다.
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "친정에", WordEntryType.UNKNOWN, SCENE_ID, null,
+                "며느리는 친정 가는 길에 배나무를 보았어요."));
+
+        assertThat(saved.word()).isEqualTo("친정");
+        assertThat(saved.exampleSentence()).isEqualTo("며느리는 친정 가는 길에 배나무를 보았어요.");
+        verifyNoInteractions(wordMeaningLlmClient);
+    }
+
+    @Test
+    void 사전에_없는_단어만_LLM으로_뜻을_만든다() {
+        when(wordMeaningLlmClient.generate(eq("아궁이"), any()))
+                .thenReturn(new WordMeaningResult("불을 때는 곳이에요.", "아궁이에 불을 지폈어요."));
+
+        WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
+                "아궁이에", WordEntryType.UNKNOWN, SCENE_ID, null, null));
+
+        // 표제어("아궁이")로 정규화된 뒤 LLM에 넘어간다.
+        assertThat(saved.word()).isEqualTo("아궁이");
+        assertThat(saved.meaning()).isEqualTo("불을 때는 곳이에요.");
+    }
 
     @Test
     void 뜻을_함께_보내면_그대로_저장한다() {
