@@ -653,7 +653,7 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 | 필드 | 타입 | 검증 | 설명 |
 |---|---|---|---|
 | `text` | String | `@NotBlank` | 확정 발화 텍스트 |
-| `sttRawText` | String | | STT 최초 변환 텍스트 |
+| `sttRawText` | String | | STT 최초 변환 텍스트. `/api/stt` 응답의 `rawText`(벤더 원문)를 되올린다 |
 | `sttConfidence` | BigDecimal | `@DecimalMin(0.0) @DecimalMax(1.0)` | 선택 |
 | `sttRetryCount` | Short | `@PositiveOrZero` | 선택, 기본 0 |
 | `missionId` | String | | 이 발화가 미션 수행 결과일 때 |
@@ -1023,7 +1023,13 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 
 > **사용처** — `POST /api/stt` 응답
 
-- `text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`
+- `text`(String) — 인식 결과가 비면 422 `STT_EMPTY_TEXT`. 저신뢰 턴(lowConfidence)에
+  한해 이야기 어휘 근접 오인식 교정("방비" -> "방귀")이 끝난 값이다. 화면 표시와
+  발화 제출(`utterance`) 모두 이 값을 쓴다. 한글이 전혀 없는 결과(무음에서 영어
+  상투구를 뱉는 환각)도 422 `STT_EMPTY_TEXT`
+- `rawText`(String) — 벤더가 돌려준 원문. 교정이 틀렸을 때 무엇이 실제로 인식됐는지
+  추적하는 유일한 근거다. 클라이언트는 발화 제출의 `sttRawText`에 text가 아니라
+  **이 값을** 되올린다 - text를 되올리면 원문이 유실된다
 - `confidence`(BigDecimal, 0~1, nullable) — exp(토큰 logprob 평균). 클라이언트는 이 값을
   발화 제출의 `sttConfidence`에 그대로 되올린다. 벤더가 logprob을 못 주면 null
 - `lowConfidence`(boolean) — 기준값(0.5) 미만 여부. 판정은 서버가 한다. true면 제출 전에
@@ -1113,6 +1119,20 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 ⛔는 0건이다. 명세에 있는 엔드포인트는 전부 동작한다.
 
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-16 갱신분 2** (집계 변동 없음 - STT 응답 필드 추가와 판정 강화)
+
+- `TranscriptionResponse`에 `rawText`(벤더 원문) 추가. `text`는 저신뢰 턴에 한해
+  이야기 어휘 근접 오인식 교정("방비" -> "방귀", 자모 편집거리)이 끝난 값이다.
+  또렷한 발화(고신뢰)는 교정하지 않는다 - 거리 상한 안에 일상어("방금", "바뀌-")가
+  잡히는 오교정이 실측돼, 교정 대상을 저신뢰 턴으로 좁혔다. 프론트는 발화 제출의
+  `sttRawText`에 `rawText`를 되올린다(프론트 main은 이미 rawText 파싱과 되올림을
+  구현했고, 서버가 안 주면 text로 폴백한다). 3.13 참고
+- 한글이 전혀 없는 결과는 422 `STT_EMPTY_TEXT`. 무음에서 모델이 영어 상투구
+  ("Thank you for watching")를 뱉는 환각이 어휘 에코 판정과 저신뢰 컷을 모두
+  빠져나가는 구멍을 막았다
+- 교정 후 텍스트로 어휘 에코 판정을 한 번 더 돈다. 뭉개진 에코가 원문 기준 판정을
+  통과한 뒤 교정으로 정확한 힌트 단어가 되는 재발 경로 차단
 
 **2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
 
