@@ -1,6 +1,8 @@
 package com.mugunghwa.goodquestion.learning.wordbook;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
+import com.mugunghwa.goodquestion.learning.wordbook.dto.SentencePracticeRequest;
+import com.mugunghwa.goodquestion.learning.wordbook.dto.SentencePracticeResponse;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordPracticeRequest;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordPracticeResponse;
 import com.mugunghwa.goodquestion.learning.wordbook.dto.WordCreateRequest;
@@ -20,6 +22,7 @@ public class WordbookController {
 
     private final WordbookService wordbookService;
     private final WordPracticeService wordPracticeService;
+    private final SentencePracticeService sentencePracticeService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,6 +56,19 @@ public class WordbookController {
                                          @PathVariable UUID wordId,
                                          @Valid @RequestBody WordPracticeRequest request) {
         return wordPracticeService.practice(parentId, childId, wordId, request.spokenText());
+    }
+
+    /**
+     * 예문 따라 말하기 제출. 목표 예문은 서버가 단어에서 꺼내고, 음성 인식은 클라이언트가
+     * /api/stt로 하고 여기는 텍스트만 받는다 — 아이 음성은 서버에 저장하지 않는다.
+     */
+    @PostMapping("/{wordId}/sentence-practice")
+    public SentencePracticeResponse practiceSentence(@CurrentParentId UUID parentId,
+                                                     @PathVariable UUID childId,
+                                                     @PathVariable UUID wordId,
+                                                     @Valid @RequestBody SentencePracticeRequest request) {
+        return sentencePracticeService.practice(parentId, childId, wordId,
+                request.sentenceType(), request.spokenText());
     }
 
     @DeleteMapping("/{wordId}")
