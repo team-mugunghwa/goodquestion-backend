@@ -67,7 +67,7 @@ class WordbookServiceTest {
                 "기왓장이", WordEntryType.UNKNOWN, SCENE_ID, null, null));
 
         assertThat(saved.word()).isEqualTo("기왓장");
-        assertThat(saved.meaning()).isEqualTo("지붕을 덮는 납작한 조각");
+        assertThat(saved.meaning()).isEqualTo("지붕을 덮는 납작한 조각이에요");
         verifyNoInteractions(wordMeaningLlmClient);
     }
 
@@ -88,7 +88,7 @@ class WordbookServiceTest {
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "배나무", WordEntryType.UNKNOWN, SCENE_ID, null, null));
 
-        assertThat(saved.meaning()).isEqualTo("달고 시원한 배가 열리는 나무");
+        assertThat(saved.meaning()).isEqualTo("달고 시원한 배가 열리는 나무예요");
         // 예문 3종(이야기/일상/심화)이 사전에서 함께 온다.
         assertThat(saved.exampleSentence()).isNotBlank();
         assertThat(saved.exampleSentenceDaily()).isNotBlank();
