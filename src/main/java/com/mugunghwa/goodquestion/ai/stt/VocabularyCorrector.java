@@ -19,6 +19,11 @@ import java.util.List;
  *
  * <p>교정본은 화면·판정용이고 <b>원문은 rawText로 보존</b>된다({@code TranscriptionResponse})
  * — 교정이 틀렸을 때 무엇이 실제로 인식됐는지 추적할 수 있어야 한다.
+ *
+ * <p>호출부(SpeechService)는 <b>저신뢰 턴에만</b> 교정을 건다. 거리 상한 안에
+ * 일상어가 함께 잡히기 때문이다 - "방금"과 "바뀌-"가 "방귀"와 같은 거리 2라,
+ * 거리로는 목표 사례("방비")와 오교정을 가를 수 없다. 또렷한 발화(고신뢰)는
+ * 오인식 확률 자체가 낮으니 신뢰도로 가른다.
  */
 @Component
 public class VocabularyCorrector {

@@ -44,6 +44,17 @@ class VocabularyCorrectorTest {
         assertThat(corrector.correct(text)).isEqualTo(text);
     }
 
+    /**
+     * 알려진 한계의 고정 - "방금"(ㅂㅏㅇㄱㅡㅁ)은 "방귀"(ㅂㅏㅇㄱㅜㅣ)와 거리 2로,
+     * 목표 사례 "방비"(거리 2)와 같은 거리라 교정기 단독으로는 가를 수 없다.
+     * 그래서 호출부(SpeechService)가 저신뢰 턴에만 교정을 건다. 이 동작이 바뀌면
+     * (거리 산식 조정 등) 호출부의 신뢰도 가드가 여전히 필요한지 다시 판단한다.
+     */
+    @Test
+    void 일상어_방금도_거리_안이라_잡힌다_호출부가_신뢰도로_거른다() {
+        assertThat(corrector.correct("방금 학교에서 왔어요")).isEqualTo("방귀 학교에서 왔어요");
+    }
+
     @Test
     void 사전이_비어_있으면_원문_그대로다() {
         VocabularyCorrector empty = new VocabularyCorrector("");
