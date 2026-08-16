@@ -99,36 +99,40 @@ on conflict (story_id, topic_id) do nothing;
 -- ------------------------------------------------------------
 
 -- 장면 1. 도입 (원본 ID: sc_banggui_01) - 전체 화면 스토리
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url, video_url) values
 (
     '33333333-3333-3333-3333-000000000001',
     '11111111-1111-1111-1111-111111111111',
     1, 'STORY',
     E'옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다.\n며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다.\n시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.',
-    '/stories/banggui/scenes/01_intro.jpg'
+    '/stories/banggui/scenes/01_intro.jpg',
+    '/stories/banggui/scenes/01_intro.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
     scene_order = excluded.scene_order,
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
-    image_url = excluded.image_url;
+    image_url = excluded.image_url,
+    video_url = excluded.video_url;
 
 -- 장면 2. 전개1 (sc_banggui_02) - 말 못할 사정이 있는 며느리
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url, video_url) values
 (
     '33333333-3333-3333-3333-000000000002',
     '11111111-1111-1111-1111-111111111111',
     2, 'STORY',
     E'그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다.\n하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다.\n몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다.',
-    '/stories/banggui/scenes/02_holding.jpg'
+    '/stories/banggui/scenes/02_holding.jpg',
+    '/stories/banggui/scenes/02_holding.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
     scene_order = excluded.scene_order,
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
-    image_url = excluded.image_url;
+    image_url = excluded.image_url,
+    video_url = excluded.video_url;
 
 -- 장면 3. 대화1 (sc_banggui_03) - 방귀쟁이 며느리와의 대화
 -- 요소는 문서 3절 표의 ["PERSPECTIVE", "EMOTION", "REASON", "SOLUTION"] 4종이다.
@@ -136,7 +140,7 @@ on conflict (id) do update set
 -- 포함으로 재확정되어 복원했다. 문서 5절 상세의 'EXPRESSION'은 사고 요소 8종에
 -- 없는 미정의 값이라 계속 제외한다.
 -- REASON의 기준/걱정 문구는 확정 문구가 아직 없어 제안값이다 - 확정되면 교체한다.
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url, video_url,
                           character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           preferred_turns, max_turns) values
@@ -147,6 +151,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '며느리가 방귀를 참는 것이 너무 힘들지만, 가족들이 자신을 이상하게 볼까 봐 걱정하고 있다.',
     '방귀를 뀌고 싶지만 가족들이 이상하게 생각할까 봐 솔직하게 말하지 못한다.',
     '/stories/banggui/scenes/03_dialogue1.jpg',
+    -- 대화 장면은 루프본을 쓴다. 아이가 말하는 동안 계속 돌아야 하는데
+    -- 5초본을 반복하면 이음매에서 튄다 (5초본 03_dialogue1.mp4도 함께 배치돼 있다).
+    '/stories/banggui/scenes/03_dialogue1_loop.mp4',
     '방귀쟁이 며느리',
     '내 방귀가 너무 크다는 걸 알면 가족들이 나를 이상하게 생각하지 않을까?',
     '그래도 아직은 못 말하겠어. 조금만 더 참아 볼게.',
@@ -174,6 +181,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
     image_url = excluded.image_url,
+    video_url = excluded.video_url,
     character_name = excluded.character_name,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
@@ -185,25 +193,27 @@ on conflict (id) do update set
     max_turns = excluded.max_turns;
 
 -- 장면 4. 전개2 (sc_banggui_04) - 며느리의 엄청난 방귀
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url, video_url) values
 (
     '33333333-3333-3333-3333-000000000004',
     '11111111-1111-1111-1111-111111111111',
     4, 'STORY',
     E'며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다.\n하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다.\n마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다.',
-    '/stories/banggui/scenes/04_bigfart.jpg'
+    '/stories/banggui/scenes/04_bigfart.jpg',
+    '/stories/banggui/scenes/04_bigfart.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
     scene_order = excluded.scene_order,
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
-    image_url = excluded.image_url;
+    image_url = excluded.image_url,
+    video_url = excluded.video_url;
 
 -- 장면 5. 대화2 (sc_banggui_05) - 시아버지와의 대화
 -- 요소는 5절의 ["PERSPECTIVE", "EMPATHY", "REASON", "REQUEST"]를 채택 (2026-08 확정).
 -- 3절 표의 배열은 대화1과 동일해 복붙 정황이 있고, 장면 목표("설득한다")와도 맞지 않는다.
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url, video_url,
                           character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
                           preferred_turns, max_turns) values
@@ -214,6 +224,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '시아버지가 며느리의 요란한 방귀에 깜짝 놀라 화를 내며, 이런 며느리와는 함께 살 수 없다고 말한다.',
     '시아버지는 창피한 며느리와 함께 살 수 없다고 생각하지만, 며느리는 일부러 그런 것이 아니다.',
     '/stories/banggui/scenes/05_dialogue2.jpg',
+    '/stories/banggui/scenes/05_dialogue2.mp4',
     '시아버지',
     '아이고 이게 무슨 일이냐! 우리 집안이 다 흔들리는구나! 이렇게 창피한 며느리와 함께 못살겠다! 그렇지 않니?',
     '흥, 그래도 도저히 이런 며느리와는 함께 살 수 없으니 친정으로 데려다줘야겠다.',
@@ -241,6 +252,7 @@ on conflict (id) do update set
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
     image_url = excluded.image_url,
+    video_url = excluded.video_url,
     character_name = excluded.character_name,
     character_opening = excluded.character_opening,
     character_closing = excluded.character_closing,
@@ -252,22 +264,26 @@ on conflict (id) do update set
     max_turns = excluded.max_turns;
 
 -- 장면 6. 전개3 (sc_banggui_06) - 높은 배나무를 만난 시아버지와 며느리
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url, video_url) values
 (
     '33333333-3333-3333-3333-000000000006',
     '11111111-1111-1111-1111-111111111111',
     6, 'STORY',
     E'한참 걷다 보니 아랫마을 길가에 아주 높은 배나무가 한 그루 서 있었습니다.\n나무 꼭대기에는 노랗고 탐스러운 배들이 주렁주렁 매달려 있었습니다.\n시아버지는 배를 보자 군침이 돌았습니다.\n마침 아랫마을 사람들도 그 배를 먹고 싶어 했지만, 나무가 너무 높아 아무도 딸 수 없었습니다.',
-    '/stories/banggui/scenes/06_peartree.jpg'
+    '/stories/banggui/scenes/06_peartree.jpg',
+    -- 6번은 i2v가 아니라 켄번즈(10초 루프) - 인물 6명 미디엄 와이드는 i2v가 무너지는 유형
+    '/stories/banggui/scenes/06_peartree.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
     scene_order = excluded.scene_order,
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
-    image_url = excluded.image_url;
+    image_url = excluded.image_url,
+    video_url = excluded.video_url;
 
 -- 장면 7. 대화3 (sc_banggui_07) - 마을 이장과의 대화 + 미션1
+-- video_url 없음 (영상 미제작) - 클라이언트는 image_url로 폴백한다.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
@@ -340,22 +356,25 @@ on conflict (id) do update set
     max_turns = excluded.max_turns;
 
 -- 장면 8. 전개4 (sc_banggui_08) - 후회하고 사과하는 시아버지
-insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url) values
+insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, image_url, video_url) values
 (
     '33333333-3333-3333-3333-000000000008',
     '11111111-1111-1111-1111-111111111111',
     8, 'STORY',
     E'시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다.\n자신이 며느리를 구박했던 일을 후회하고 사과합니다.',
-    '/stories/banggui/scenes/08_apology.jpg'
+    '/stories/banggui/scenes/08_apology.jpg',
+    '/stories/banggui/scenes/08_apology.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
     scene_order = excluded.scene_order,
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
-    image_url = excluded.image_url;
+    image_url = excluded.image_url,
+    video_url = excluded.video_url;
 
 -- 장면 9. 대화4 (sc_banggui_09) - 방귀쟁이 며느리와의 마지막 대화 + 미션2
+-- video_url 없음 (i2v 생성본이 인물 붕괴로 탈락) - 클라이언트는 image_url로 폴백한다.
 insert into story_scenes (id, story_id, scene_order, scene_type, scene_description, conflict, image_url,
                           character_name, character_opening, character_closing,
                           scene_goal, required_elements, element_criteria, remaining_worries,
