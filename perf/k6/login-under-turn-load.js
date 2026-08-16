@@ -18,7 +18,9 @@ const BASE = __ENV.BASE || 'http://localhost:8091';
 const EMAIL = __ENV.EMAIL || 'demo@goodquestion.kr';
 const PASSWORD = __ENV.PASSWORD || 'demo1234!';
 const CHILD_ID = __ENV.CHILD_ID || 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001';
-const TURN_VUS = Number(__ENV.TURN_VUS || 8);
+// 기본 16 - 커넥션 풀(10)보다 커야 v1의 기아가 드러난다. 6으로 줄이면
+// v1도 멀쩡해 보인다 (풀에 여유가 남아서). 실측으로 확인한 값이다.
+const TURN_VUS = Number(__ENV.TURN_VUS || 16);
 const DURATION = __ENV.DURATION || '90s';
 
 const probeLogin = new Trend('probe_login_duration', true);
@@ -70,14 +72,10 @@ function authHeaders(token) {
 export function setup() {
     const token = login();
     if (!token) throw new Error('로그인 실패 - 시드 데모 계정 확인');
-    // 이야기 id는 API로 찾는다 (버전 간 시드 차이에 안전). 실패 시 시드 상수.
-    let storyId = '11111111-1111-1111-1111-111111111111';
-    const stories = http.get(`${BASE}/api/stories`, authHeaders(token));
-    if (stories.status === 200) {
-        const list = stories.json();
-        if (Array.isArray(list) && list.length > 0 && list[0].id) storyId = list[0].id;
-        else if (list.stories && list.stories.length > 0) storyId = list.stories[0].id;
-    }
+    // 대화 장면이 있는 이야기여야 한다. 시드의 방귀 이야기(scene 3 DIALOGUE)가
+    // 전 버전에 공통이라 상수로 두고, 다른 데이터면 STORY_ID로 넘긴다.
+    // 카탈로그 첫 항목 자동 선택은 대화 없는 이야기(작은 씨앗)를 골라 버려서 뺐다.
+    const storyId = __ENV.STORY_ID || '11111111-1111-1111-1111-111111111111';
     return { token, storyId };
 }
 

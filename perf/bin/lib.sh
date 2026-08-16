@@ -34,9 +34,13 @@ load_version() {
 }
 
 wait_health() {
-    local url="$1" timeout="${2:-360}" i=0
+    # 200뿐 아니라 503도 "떠 있음"으로 본다 - 옛 버전에는 메일 헬스 인디케이터
+    # 버그(PR #48 이전, 535 Missing password로 전체 DOWN)가 있어 503이 정상 부팅일
+    # 수 있다. up.sh가 메일 헬스를 끄지만, 시대별 다른 인디케이터에도 안전하게.
+    local url="$1" timeout="${2:-360}" i=0 code
     while [ $i -lt "$timeout" ]; do
-        if curl -s -o /dev/null -w '%{http_code}' "$url/actuator/health" 2>/dev/null | grep -q 200; then
+        code=$(curl -s -o /dev/null -w '%{http_code}' "$url/actuator/health" 2>/dev/null)
+        if [ "$code" = "200" ] || [ "$code" = "503" ]; then
             return 0
         fi
         sleep 2; i=$((i + 2))

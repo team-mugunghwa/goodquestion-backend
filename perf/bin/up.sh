@@ -72,9 +72,12 @@ fi
 echo "부팅 중... (이 버전의 gradle 배포판 첫 다운로드면 수 분 걸릴 수 있음)"
 (
     cd "$WORKTREE"
+    # 메일 헬스는 끈다 - 측정에 SMTP는 무관하고, 옛 버전(PR #48 이전)에는
+    # 자격증명 없이 전체 헬스를 DOWN으로 만드는 버그가 있다
     nohup env SERVER_PORT="$SERVER_PORT" \
         DB_URL="jdbc:postgresql://localhost:$DB_PORT/goodquestion" \
         DB_USERNAME=postgres DB_PASSWORD=perf \
+        MANAGEMENT_HEALTH_MAIL_ENABLED=false \
         ${PROFILE_ENV[@]+"${PROFILE_ENV[@]}"} \
         ./gradlew bootRun --console=plain >"$RESULTS/server.log" 2>&1 &
     echo $! > "$RESULTS/gradle.pid"
