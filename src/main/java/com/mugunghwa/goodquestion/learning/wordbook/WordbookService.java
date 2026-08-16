@@ -51,6 +51,8 @@ public class WordbookService {
                 .word(word)
                 .meaning(explanation.meaning())
                 .exampleSentence(explanation.exampleSentence())
+                .exampleDaily(explanation.exampleDaily())
+                .exampleAdvanced(explanation.exampleAdvanced())
                 .entryType(request.entryType())
                 .sourceScene(sourceScene)
                 .build());
@@ -92,39 +94,51 @@ public class WordbookService {
      * 눈높이로 만든다(단어-02).
      */
     private Explanation explain(String word, WordCreateRequest request, StoryScene sourceScene) {
-        if (request.meaning() != null && !request.meaning().isBlank()) {
-            return new Explanation(request.meaning(), request.exampleSentence());
-        }
+        String requestExample = (request.exampleSentence() != null
+                && !request.exampleSentence().isBlank()) ? request.exampleSentence() : null;
 
-        if (sourceScene != null) {
-            StoryVocabulary entry = storyVocabularyRepository
-                    .findByStoryIdAndWord(sourceScene.getStory().getId(), word)
-                    .orElse(null);
-            if (entry != null) {
-                // 요청 예문(아이가 단어를 고른 그 대사 문장)이 있으면 사전
-                // 예문보다 우선한다 - 아이가 실제로 만난 문장이라서.
-                return new Explanation(entry.getMeaning(),
-                        (request.exampleSentence() != null && !request.exampleSentence().isBlank())
-                                ? request.exampleSentence() : entry.getExampleSentence());
-            }
+        // 어휘 사전이 있으면 뜻/예문 3종을 검수본으로 채운다. 이야기 예문은
+        // 요청 예문(아이가 단어를 만난 그 대사 문장)이 있으면 그쪽 우선.
+        StoryVocabulary entry = (sourceScene == null) ? null
+                : storyVocabularyRepository
+                        .findByStoryIdAndWord(sourceScene.getStory().getId(), word)
+                        .orElse(null);
+        if (entry != null) {
+            String meaning = (request.meaning() != null && !request.meaning().isBlank())
+                    ? request.meaning() : entry.getMeaning();
+            return new Explanation(meaning,
+                    requestExample != null ? requestExample : entry.getExampleSentence(),
+                    entry.getExampleDaily(), entry.getExampleAdvanced());
         }
 
         WordMeaningLlmClient.WordMeaningResult generated =
                 wordMeaningLlmClient.generate(word, sceneContextOf(sourceScene));
 
+        // 요청에 뜻이 실려 온 경로(검수/수동 입력)는 그 뜻을 신뢰한다. 예문
+        // 3종을 채우기 위한 생성만 쓰고, 관문 판정과 생성 실패로 저장을
+        // 막지 않는다 - 사람이 뜻을 쓴 단어를 모델 판정으로 거절할 이유가 없다.
+        if (request.meaning() != null && !request.meaning().isBlank()) {
+            boolean usable = generated.realWord();
+            return new Explanation(request.meaning(),
+                    requestExample != null ? requestExample
+                            : (usable ? generated.exampleStory() : null),
+                    usable ? generated.exampleDaily() : null,
+                    usable ? generated.exampleAdvanced() : null);
+        }
+
         // STT 오인식이 만든 존재하지 않는 말("방비" 부류)은 저장을 거절한다.
         // 단어장은 아이가 두고두고 다시 보는 학습 기록이라 쓰레기 단어가
         // 영구히 남으면 안 된다. 동적(LLM 생성) 대사에서 단어를 담는 경로를
-        // 여는 전제 조건이기도 하다. 요청에 뜻이 실려 온 경우와 어휘 사전
-        // 히트는 이미 검수된 경로라 이 관문을 타지 않는다.
+        // 여는 전제 조건이기도 하다. 어휘 사전 히트는 검수된 경로라 이 관문을
+        // 타지 않는다.
         if (!generated.realWord()) {
             throw new BusinessException(ErrorCode.INVALID_WORD);
         }
 
         // 요청이 예문을 함께 보냈다면 이야기 원문에서 딴 문장이므로 생성분보다 우선한다.
         return new Explanation(generated.meaning(),
-                (request.exampleSentence() != null && !request.exampleSentence().isBlank())
-                        ? request.exampleSentence() : generated.exampleSentence());
+                requestExample != null ? requestExample : generated.exampleStory(),
+                generated.exampleDaily(), generated.exampleAdvanced());
     }
 
     /** 같은 단어라도 이야기 안에서 쓰인 뜻으로 풀어야 해서 장면 설명을 함께 넘긴다(단어-06). */
@@ -152,5 +166,6 @@ public class WordbookService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "단어를 찾을 수 없습니다."));
     }
 
-    private record Explanation(String meaning, String exampleSentence) {}
+    private record Explanation(String meaning, String exampleSentence,
+                               String exampleDaily, String exampleAdvanced) {}
 }

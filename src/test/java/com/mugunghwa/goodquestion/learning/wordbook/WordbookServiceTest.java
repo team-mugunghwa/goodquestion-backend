@@ -89,7 +89,10 @@ class WordbookServiceTest {
                 "배나무", WordEntryType.UNKNOWN, SCENE_ID, null, null));
 
         assertThat(saved.meaning()).isEqualTo("달고 시원한 배가 열리는 나무");
+        // 예문 3종(이야기/일상/심화)이 사전에서 함께 온다.
         assertThat(saved.exampleSentence()).isNotBlank();
+        assertThat(saved.exampleSentenceDaily()).isNotBlank();
+        assertThat(saved.exampleSentenceAdvanced()).isNotBlank();
         verifyNoInteractions(wordMeaningLlmClient);
     }
 
@@ -111,7 +114,7 @@ class WordbookServiceTest {
         // STT 오인식이 만든 존재하지 않는 말이 단어장에 영구히 남으면 안 된다.
         // 동적(LLM 생성) 대사에서 단어를 담는 경로를 여는 전제 조건이다.
         when(wordMeaningLlmClient.generate(any(), any()))
-                .thenReturn(new WordMeaningResult(null, null, false));
+                .thenReturn(new WordMeaningResult(null, null, null, null, false));
 
         assertThatThrownBy(() -> wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "방빙끄", WordEntryType.UNKNOWN, SCENE_ID, null, null)))
@@ -122,7 +125,7 @@ class WordbookServiceTest {
     @Test
     void 사전에_없는_단어만_LLM으로_뜻을_만든다() {
         when(wordMeaningLlmClient.generate(eq("아궁이"), any()))
-                .thenReturn(new WordMeaningResult("불을 때는 곳이에요.", "아궁이에 불을 지폈어요.", true));
+                .thenReturn(new WordMeaningResult("불을 때는 곳이에요.", "아궁이에 불을 지폈어요.", "부엌 아궁이에서 연기가 나요.", "아궁이에 장작을 넣고 불을 지펴 가마솥을 데웠어요.", true));
 
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "아궁이에", WordEntryType.UNKNOWN, SCENE_ID, null, null));
@@ -133,7 +136,13 @@ class WordbookServiceTest {
     }
 
     @Test
-    void 뜻을_함께_보내면_그대로_저장한다() {
+    void 뜻을_함께_보내면_그대로_저장하고_나머지_예문은_생성으로_채운다() {
+        // 예문 3종 규칙(V14) 때문에 뜻이 실려 와도 일상/심화 예문 생성은 필요
+        // 하다. 다만 뜻은 사람이 쓴 쪽을 신뢰하고 모델 판정으로 거절하지 않는다.
+        when(wordMeaningLlmClient.generate(any(), any()))
+                .thenReturn(new WordMeaningResult("모델이 만든 뜻", "이야기 예문",
+                        "일상 예문", "심화 예문", true));
+
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID,
                 "밥을 짓는 아주 큰 솥이에요.", "부엌에 커다란 가마솥이 걸려 있었습니다."));
@@ -141,12 +150,18 @@ class WordbookServiceTest {
         assertThat(saved.id()).isNotNull();
         assertThat(saved.word()).isEqualTo("가마솥");
         assertThat(saved.meaning()).isEqualTo("밥을 짓는 아주 큰 솥이에요.");
+        assertThat(saved.exampleSentence()).isEqualTo("부엌에 커다란 가마솥이 걸려 있었습니다.");
+        assertThat(saved.exampleSentenceDaily()).isEqualTo("일상 예문");
+        assertThat(saved.exampleSentenceAdvanced()).isEqualTo("심화 예문");
         assertThat(saved.sourceSceneId()).isEqualTo(SCENE_ID);
         assertThat(saved.createdAt()).isNotNull();
     }
 
     @Test
     void 장면_없이도_저장할_수_있다() {
+        when(wordMeaningLlmClient.generate(any(), any()))
+                .thenReturn(new WordMeaningResult("모델 뜻", "이야기 예문", "일상 예문", "심화 예문", true));
+
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "두레박", WordEntryType.FAVORITE, null, "우물에서 물을 뜨는 그릇이에요.", null));
 
@@ -160,6 +175,9 @@ class WordbookServiceTest {
 
     @Test
     void 장면과_함께_저장하면_이야기_정보가_따라온다() {
+        when(wordMeaningLlmClient.generate(any(), any()))
+                .thenReturn(new WordMeaningResult("모델 뜻", "이야기 예문", "일상 예문", "심화 예문", true));
+
         WordResponse saved = wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, "밥을 짓는 아주 큰 솥이에요.", null));
 
@@ -182,7 +200,7 @@ class WordbookServiceTest {
     @Test
     void 뜻을_보내지_않으면_LLM이_생성한_뜻과_예문을_저장한다() {
         when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
-                .thenReturn(new WordMeaningResult("음식을 끓이는 큰 솥", "가마솥에서 밥을 지었어요.", true));
+                .thenReturn(new WordMeaningResult("음식을 끓이는 큰 솥", "가마솥에서 밥을 지었어요.", "가마솥은 아주 커요.", "명절이면 가마솥 가득 국을 끓였어요.", true));
 
         WordCreateRequest request = new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);
@@ -196,7 +214,7 @@ class WordbookServiceTest {
     @Test
     void LLM_생성이_실패해도_저장_자체는_막히지_않는다() {
         when(wordMeaningLlmClient.generate("가마솥", SCENE_DESCRIPTION))
-                .thenReturn(new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null, true));
+                .thenReturn(new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null, null, null, true));
 
         WordCreateRequest request = new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, null, null);
@@ -262,6 +280,9 @@ class WordbookServiceTest {
 
     @Test
     void 저장한_단어는_목록에_나온다() {
+        when(wordMeaningLlmClient.generate(any(), any()))
+                .thenReturn(new WordMeaningResult("모델 뜻", "이야기 예문", "일상 예문", "심화 예문", true));
+
         wordbookService.create(PARENT_ID, CHILD_ID, new WordCreateRequest(
                 "가마솥", WordEntryType.UNKNOWN, SCENE_ID, "밥을 짓는 아주 큰 솥이에요.", null));
 
