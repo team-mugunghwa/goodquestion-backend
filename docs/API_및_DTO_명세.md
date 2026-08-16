@@ -507,6 +507,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `narrationAudioUrl` | String | STORY만. 내레이션 사전 렌더 음성. null이면 음성 없이 진행하거나 `/api/tts`로 합성한다 (2026-08-16 추가) |
 | `narrationTimings` | `List<{index, start, end}>` | 문장별 실측 시작/끝(초). `narrationAudioUrl`이 있을 때만 값이 있다. index는 `narrationSentences` 순서와 같다 (2026-08-16 추가) |
 | `imageUrl` | String | 장면 배경 이미지 |
+| `videoUrl` | String | 장면 배경 영상. null이거나 재생 실패면 `imageUrl`로 폴백한다. 반복 여부는 `sceneType`이 정한다 - STORY는 낭독 종료 시 멈추고 DIALOGUE는 반복 (2026-08-16 추가) |
 | `characterName` | String | DIALOGUE만 |
 | `maxTurns` | Short | DIALOGUE만 — 남은 턴 UI |
 
@@ -1119,6 +1120,14 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 ⛔는 0건이다. 명세에 있는 엔드포인트는 전부 동작한다.
 
 ⚠️ 2건의 내용은 이렇다. 소셜 로그인은 카카오와 구글만, 내 정보 수정은 이름만 동작.
+
+**2026-08-16 갱신분 3** (집계 변동 없음 - 응답 필드 추가)
+
+- `SceneContentResponse`에 `videoUrl` 추가(V17, `story_scenes.video_url`). 방귀 뀌는
+  며느리 장면 1/2/3/4/5/6/8에 영상이 있고 7/9는 null이다. 영상은 이미지를 대체하지
+  않고 얹는다 - null이거나 재생 실패면 `imageUrl` 폴백. 이 DTO를 세션 시작/이어하기/
+  장면 전환/현재 장면 조회/장면 목록이 공유하므로 전 응답에 실린다. 영상 파일은
+  기존 이미지와 같은 정적 경로로 서빙한다(인증 불필요)
 
 **2026-08-16 갱신분 2** (집계 변동 없음 - STT 응답 필드 추가와 판정 강화)
 
