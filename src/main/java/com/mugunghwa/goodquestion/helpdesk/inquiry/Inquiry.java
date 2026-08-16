@@ -64,4 +64,11 @@ public class Inquiry {
     public boolean isOwnedBy(UUID parentId) {
         return this.parentId.equals(parentId);
     }
+
+    /** 답변 전에만 부른다 - 검증은 서비스가 한다. */
+    public void edit(InquiryCategory category, String title, String content) {
+        this.category = category;
+        this.title = title;
+        this.content = content;
+    }
 }

@@ -56,6 +56,35 @@ public class InquiryService {
      * <p>남의 문의는 404다. 403으로 내리면 "그 id의 문의가 존재한다"는 사실이 새어 나가고,
      * 어느 쪽이든 사용자가 할 수 있는 일은 같다.
      */
+    /**
+     * 문의 수정. <b>답변이 달리기 전에만</b> 할 수 있다 - 답변이 이미 나간
+     * 문의의 내용이 바뀌면 답변이 무엇에 대한 것인지 어긋난다. 종료(CLOSED)된
+     * 문의도 같다.
+     */
+    @Transactional
+    public InquiryDetailResponse update(UUID parentId, UUID inquiryId, CreateInquiryRequest request) {
+        Inquiry inquiry = findOwnedEditable(parentId, inquiryId);
+        inquiry.edit(request.category(), request.title(), request.content());
+        return InquiryDetailResponse.of(inquiry, null);
+    }
+
+    /** 문의 삭제. 수정과 같은 이유로 답변 전에만 할 수 있다. */
+    @Transactional
+    public void delete(UUID parentId, UUID inquiryId) {
+        Inquiry inquiry = findOwnedEditable(parentId, inquiryId);
+        inquiryRepository.delete(inquiry);
+    }
+
+    private Inquiry findOwnedEditable(UUID parentId, UUID inquiryId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .filter(found -> found.isOwnedBy(parentId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "문의를 찾을 수 없습니다."));
+        if (inquiry.getStatus() != InquiryStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INQUIRY_ALREADY_ANSWERED);
+        }
+        return inquiry;
+    }
+
     public InquiryDetailResponse get(UUID parentId, UUID inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .filter(found -> found.isOwnedBy(parentId))
