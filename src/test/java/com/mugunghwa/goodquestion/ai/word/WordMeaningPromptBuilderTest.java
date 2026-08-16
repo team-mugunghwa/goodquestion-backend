@@ -38,7 +38,7 @@ class WordMeaningPromptBuilderTest {
 
         @SuppressWarnings("unchecked")
         List<String> required = (List<String>) schema.get("required");
-        assertThat(required).containsExactlyInAnyOrder("meaning", "exampleSentence", "isRealWord");
+        assertThat(required).containsExactlyInAnyOrder("meaning", "exampleStory", "exampleDaily", "exampleAdvanced", "isRealWord");
         assertThat(schema.get("additionalProperties")).isEqualTo(false);
     }
 }

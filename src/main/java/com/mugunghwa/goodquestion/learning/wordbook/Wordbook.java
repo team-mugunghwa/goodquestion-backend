@@ -37,6 +37,14 @@ public class Wordbook {
     @Column(name = "example_sentence", columnDefinition = "text")
     private String exampleSentence;
 
+    /** 일상 예문 - 이야기 밖 쓰임 (V14). */
+    @Column(name = "example_daily", length = 300)
+    private String exampleDaily;
+
+    /** 심화 예문 - 일상 예문보다 한 단계 어려운 문장 (V14). */
+    @Column(name = "example_advanced", length = 300)
+    private String exampleAdvanced;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 20)
     private WordEntryType entryType;
@@ -51,11 +59,14 @@ public class Wordbook {
 
     @Builder
     public Wordbook(Child child, String word, String meaning, String exampleSentence,
+                    String exampleDaily, String exampleAdvanced,
                     WordEntryType entryType, StoryScene sourceScene) {
         this.child = child;
         this.word = word;
         this.meaning = meaning;
         this.exampleSentence = exampleSentence;
+        this.exampleDaily = exampleDaily;
+        this.exampleAdvanced = exampleAdvanced;
         this.entryType = entryType != null ? entryType : WordEntryType.UNKNOWN;
         this.sourceScene = sourceScene;
     }

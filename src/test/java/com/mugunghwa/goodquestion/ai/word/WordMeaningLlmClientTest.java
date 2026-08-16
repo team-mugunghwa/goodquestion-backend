@@ -28,13 +28,15 @@ class WordMeaningLlmClientTest {
         return new WordMeaningLlmClient(llmClient, promptBuilder);
     }
 
-    private LlmClient.LlmJsonResult resultOf(String meaning, String exampleSentence) {
+    private LlmClient.LlmJsonResult resultOf(String meaning, String exampleStory) {
         ObjectNode node = objectMapper.createObjectNode();
         if (meaning != null) {
             node.put("meaning", meaning);
         }
-        if (exampleSentence != null) {
-            node.put("exampleSentence", exampleSentence);
+        if (exampleStory != null) {
+            node.put("exampleStory", exampleStory);
+            node.put("exampleDaily", "일상에서도 이렇게 써요.");
+            node.put("exampleAdvanced", "조금 더 어려운 문장에서도 이렇게 써요.");
         }
         return new LlmClient.LlmJsonResult(node, "gpt-5-mini");
     }
@@ -48,7 +50,9 @@ class WordMeaningLlmClientTest {
         WordMeaningResult result = client(llmClient).generate("도토리", "다람쥐가 도토리를 모으고 있다");
 
         assertThat(result.meaning()).isEqualTo("참나무 열매");
-        assertThat(result.exampleSentence()).isEqualTo("다람쥐가 도토리를 모으고 있어요.");
+        assertThat(result.exampleStory()).isEqualTo("다람쥐가 도토리를 모으고 있어요.");
+        assertThat(result.exampleDaily()).isNotBlank();
+        assertThat(result.exampleAdvanced()).isNotBlank();
     }
 
     @Test
@@ -60,7 +64,7 @@ class WordMeaningLlmClientTest {
         WordMeaningResult result = client(llmClient).generate("도토리", null);
 
         assertThat(result.meaning()).isEqualTo("지금은 뜻을 알려줄 수 없어요");
-        assertThat(result.exampleSentence()).isNull();
+        assertThat(result.exampleStory()).isNull();
     }
 
     @Test
@@ -72,7 +76,7 @@ class WordMeaningLlmClientTest {
         WordMeaningResult result = client(llmClient).generate("도토리", null);
 
         assertThat(result.meaning()).isEqualTo("지금은 뜻을 알려줄 수 없어요");
-        assertThat(result.exampleSentence()).isNull();
+        assertThat(result.exampleStory()).isNull();
     }
 
     @Test
@@ -84,6 +88,6 @@ class WordMeaningLlmClientTest {
         WordMeaningResult result = client(llmClient).generate("도토리", null);
 
         assertThat(result.meaning()).isEqualTo("지금은 뜻을 알려줄 수 없어요");
-        assertThat(result.exampleSentence()).isNull();
+        assertThat(result.exampleStory()).isNull();
     }
 }

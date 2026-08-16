@@ -19,6 +19,7 @@ import java.util.UUID;
  * <p>장면 없이 저장된 단어는 세 값이 모두 null이다.
  */
 public record WordResponse(UUID id, String word, String meaning, String exampleSentence,
+                           String exampleSentenceDaily, String exampleSentenceAdvanced,
                            WordEntryType entryType, UUID sourceSceneId,
                            UUID storyId, String storyTitle, String storyImageUrl,
                            OffsetDateTime createdAt) {
@@ -27,6 +28,7 @@ public record WordResponse(UUID id, String word, String meaning, String exampleS
         StoryScene scene = w.getSourceScene();
         Story story = (scene != null) ? scene.getStory() : null;
         return new WordResponse(w.getId(), w.getWord(), w.getMeaning(), w.getExampleSentence(),
+                w.getExampleDaily(), w.getExampleAdvanced(),
                 w.getEntryType(),
                 (scene != null) ? scene.getId() : null,
                 (story != null) ? story.getId() : null,

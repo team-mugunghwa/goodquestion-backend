@@ -22,7 +22,7 @@ public class WordMeaningLlmClient {
     // 실패(예외/빈 응답)는 realWord=true로 흡수한다 - 생성이 안 됐다고 저장까지
     // 막으면 안 되고, "실제 단어가 아니다"는 모델이 명시적으로 판정했을 때만이다.
     private static final WordMeaningResult FALLBACK =
-            new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null, true);
+            new WordMeaningResult("지금은 뜻을 알려줄 수 없어요", null, null, null, true);
 
     private final LlmClient llmClient;
     private final WordMeaningPromptBuilder promptBuilder;
@@ -37,18 +37,21 @@ public class WordMeaningLlmClient {
 
             JsonNode json = result.json();
             String meaning = json.path("meaning").asText(null);
-            String exampleSentence = json.path("exampleSentence").asText(null);
+            String exampleStory = json.path("exampleStory").asText(null);
+            String exampleDaily = json.path("exampleDaily").asText(null);
+            String exampleAdvanced = json.path("exampleAdvanced").asText(null);
             // 스키마에 없던 응답(구 모델 캐시 등)이면 true - 판정 불가는 통과다.
             boolean realWord = json.path("isRealWord").asBoolean(true);
 
             if (!realWord) {
-                return new WordMeaningResult(null, null, false);
+                return new WordMeaningResult(null, null, null, null, false);
             }
             if (meaning == null || meaning.isBlank()) {
                 log.warn("단어 뜻 생성 실패 - meaning이 비어 있음: word={}", word);
                 return FALLBACK;
             }
-            return new WordMeaningResult(meaning, exampleSentence, true);
+            return new WordMeaningResult(meaning, exampleStory, exampleDaily,
+                    exampleAdvanced, true);
         } catch (Exception e) {
             log.warn("단어 뜻 생성 실패: word={}", word, e);
             return FALLBACK;
@@ -60,5 +63,6 @@ public class WordMeaningLlmClient {
      *                 STT 오인식이 만든 존재하지 않는 단어("방비" 부류)가 아이의
      *                 단어장에 영구히 남는 것을 막는 유일한 관문이다
      */
-    public record WordMeaningResult(String meaning, String exampleSentence, boolean realWord) {}
+    public record WordMeaningResult(String meaning, String exampleStory, String exampleDaily,
+                                    String exampleAdvanced, boolean realWord) {}
 }

@@ -42,4 +42,12 @@ public class StoryVocabulary {
 
     @Column(name = "example_sentence", length = 300)
     private String exampleSentence;
+
+    /** 일상 예문 - 이야기 밖 쓰임 (V14). */
+    @Column(name = "example_daily", length = 300)
+    private String exampleDaily;
+
+    /** 심화 예문 - 일상 예문보다 한 단계 어려운 문장 (V14). */
+    @Column(name = "example_advanced", length = 300)
+    private String exampleAdvanced;
 }
