@@ -106,7 +106,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     1, 'STORY',
     E'옛날 어느 마을에 방귀를 아주 크게 뀌는 며느리가 살았습니다.\n며느리는 시집에 온 뒤로 늘 얌전하고 예의 바르게 보이고 싶었습니다.\n시댁 식구들이 자신을 이상하게 볼까 봐 걱정했기 때문입니다.',
     '/stories/banggui/scenes/01_intro.jpg',
-    '/stories/banggui/scenes/01_intro.mp4'
+    '/stories/banggui/scenes/01_intro_loop.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -124,7 +124,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     2, 'STORY',
     E'그래서 며느리는 방귀가 나오려고 할 때마다 꾹꾹 참았습니다.\n하루도 참고, 이틀도 참고, 그렇게 오래 참다 보니 배는 점점 빵빵하게 부풀어 올랐고 얼굴은 노랗게 변했습니다.\n몸도 마음도 너무 힘들었지만, 며느리는 차마 가족들에게 솔직하게 말하지 못했습니다.',
     '/stories/banggui/scenes/02_holding.jpg',
-    '/stories/banggui/scenes/02_holding.mp4'
+    '/stories/banggui/scenes/02_holding_loop.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -200,7 +200,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     4, 'STORY',
     E'며느리는 더 이상 참을 수 없어 몰래 살짝만 방귀를 뀌려고 합니다.\n하지만 오래 참았던 탓에 방귀가 크게 터져 나왔습니다.\n마당의 먼지가 휘리릭 날아가고, 기왓장이 달그락거리고, 시아버지의 갓까지 휙 날아가 버렸습니다.',
     '/stories/banggui/scenes/04_bigfart.jpg',
-    '/stories/banggui/scenes/04_bigfart.mp4'
+    '/stories/banggui/scenes/04_bigfart_loop.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
@@ -363,7 +363,7 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     8, 'STORY',
     E'시아버지는 며느리의 방귀가 시끄럽고 별난 것이 아니라, 모두를 도울 수 있는 특별한 힘이라는 것을 깨닫습니다.\n자신이 며느리를 구박했던 일을 후회하고 사과합니다.',
     '/stories/banggui/scenes/08_apology.jpg',
-    '/stories/banggui/scenes/08_apology.mp4'
+    '/stories/banggui/scenes/08_apology_loop.mp4'
 )
 on conflict (id) do update set
     story_id = excluded.story_id,
