@@ -63,15 +63,17 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/banggui/cover.jpg',
     '보통',
     20,
+    -- 카드는 프론트에 그림(assets/images/recap/banggui/scene_N.webp)이 있는 4장에 맞춘다.
+    -- id의 숫자가 그림 파일 번호와 대응하므로 순서와 개수를 바꿀 때 그림도 함께 봐야 한다.
+    -- 핵심 단어는 카드와 1:1로 짝지어 2단계에서 각 카드에 붙는다.
     '{
       "cards": [
-        { "id": "card_1", "text": "며느리가 방귀를 꾹꾹 참아서 배가 아팠어요.", "correct_order": 1 },
-        { "id": "card_2", "text": "며느리가 방귀를 뀌자 집안이 흔들리고 시아버지의 갓이 날아갔어요.", "correct_order": 2 },
-        { "id": "card_3", "text": "시아버지가 며느리를 친정에 데려다주러 길을 나섰어요.", "correct_order": 3 },
-        { "id": "card_4", "text": "며느리가 방귀로 높은 배나무의 배를 우수수 떨어뜨렸어요.", "correct_order": 4 },
-        { "id": "card_5", "text": "시아버지가 사과했고, 며느리는 방귀를 특별한 힘으로 여기게 되었어요.", "correct_order": 5 }
+        { "id": "card_1", "text": "며느리가 방귀를 참느라 시무룩하게 서 있어요", "correct_order": 1 },
+        { "id": "card_2", "text": "며느리의 방귀에 시아버지의 갓이 날아가 시아버지가 화를 냈어요", "correct_order": 2 },
+        { "id": "card_3", "text": "며느리가 방귀로 배나무의 배를 우수수 떨어뜨렸어요", "correct_order": 3 },
+        { "id": "card_4", "text": "마을 사람들이 배를 얻고 며느리에게 고마워했어요", "correct_order": 4 }
       ],
-      "retelling_keywords": ["방귀", "며느리", "배나무", "시아버지"]
+      "retelling_keywords": ["참다", "쫓겨나다", "떨어뜨리다", "자신감"]
     }'::jsonb,
     'PUBLISHED'
 )
