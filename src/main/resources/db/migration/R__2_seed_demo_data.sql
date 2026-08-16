@@ -331,7 +331,7 @@ insert into reports (id, session_id, summary, strengths, next_focus) values
  '[{"element": "EMOTION", "comment": "상대가 힘들겠다는 마음을 먼저 말해 주었어요."},
    {"element": "PERSPECTIVE", "comment": "같은 일을 다른 쪽에서 바라보고 장점으로 바꾸어 말했어요."}]'::jsonb,
  '[{"element": "REASON", "comment": "왜 그렇게 생각했는지 까닭을 덧붙이면 더 잘 전해져요."}]'::jsonb)
-on conflict (id) do nothing;
+on conflict (session_id) do nothing;
 
 -- ------------------------------------------------------------
 -- 21. wordbook - 단어장
