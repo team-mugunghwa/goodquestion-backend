@@ -799,7 +799,13 @@ SHA-256을 `scene_audio.text_hash`와 대조해 맞을 때만 채우므로, LLM�
 | `entryType` | `WordEntryType` | `@NotNull` | `UNKNOWN` / `FAVORITE` |
 | `sourceSceneId` | UUID | | 단어가 나온 장면. 뜻 생성의 문맥으로 쓴다 |
 | `meaning` | String | | **없으면 이야기 어휘 사전 -> LLM 순서로 서버가 채운다** |
-| `exampleSentence` | String | | 이야기 속 예문(아이가 단어를 만난 문장). 있으면 사전/생성 예문보다 우선 |
+| `exampleSentence` | String | | 이야기 예문(아이가 단어를 만난 문장). 있으면 사전/생성 예문보다 우선 |
+
+**예문은 항상 3종으로 저장된다**(2026-08-16, V14): 1) 이야기 예문(`exampleSentence`)
+2) 일상 예문(`exampleSentenceDaily`) 3) 심화 예문(`exampleSentenceAdvanced`, 일상보다
+한 단계 어려움). 요청은 이야기 예문 하나만 보낼 수 있고, 나머지는 어휘 사전 또는
+LLM 생성으로 서버가 채운다. 뜻을 직접 보낸 저장도 예문을 채우기 위해 생성이 돌 수
+있다(이때 모델 판정으로 저장을 거절하지는 않는다).
 
 **서버는 `word`를 표제어로 정규화해 저장한다** (형태소 분석 Nori, 2026-08).
 "기왓장이"를 보내면 "기왓장"으로 저장되고 응답의 `word`도 표제어다. 조사를
@@ -822,7 +828,9 @@ LLM 생성 단계에서 **실제 쓰이는 낱말이 아니라고 판정되면 4
 
 > **사용처** — `POST /api/children/{childId}/words` · `GET /api/children/{childId}/words` · `PATCH /api/children/{childId}/words/{wordId}/favorite` 응답
 
-`id` · `word` · `meaning` · `exampleSentence` · `entryType` · `sourceSceneId` · `storyId` · `storyTitle` · `storyImageUrl` · `createdAt`
+`id` · `word` · `meaning` · `exampleSentence`(이야기 예문) · `exampleSentenceDaily`(일상 예문) · `exampleSentenceAdvanced`(심화 예문) · `entryType` · `sourceSceneId` · `storyId` · `storyTitle` · `storyImageUrl` · `createdAt`
+
+V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 
 이야기 3필드는 단어장 화면이 단어를 **이야기별로 묶어** 보여주기 때문에 담는다. 장면 조회가
 `GET /api/stories/{storyId}/scenes` 뿐이라 `sourceSceneId`만으로는 클라이언트가 이야기를 되짚을
@@ -1031,6 +1039,9 @@ LLM 생성 단계에서 **실제 쓰이는 낱말이 아니라고 판정되면 4
 
 **2026-08-16 갱신분** (집계 변동 없음 - 응답 필드 추가와 값 채워짐)
 
+- 단어 예문이 3종(이야기/일상/심화)으로 늘었다(V14). `WordResponse`에
+  `exampleSentenceDaily`/`exampleSentenceAdvanced` 추가. 이야기 어휘 사전
+  9단어도 3종 예문으로 확장
 - 단어 저장이 표제어로 정규화된다(Nori 형태소 분석, V13). "기왓장이" ->
   "기왓장"으로 저장되고 중복(409)도 표제어 기준이다. 뜻이 없으면 이야기 어휘
   사전(`story_vocabulary`, 검수된 뜻) -> LLM 순서로 채워 고정 대사 단어는
