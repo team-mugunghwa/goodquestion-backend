@@ -27,6 +27,9 @@ public class WordMeaningPromptBuilder {
                    끝맺고, **마침표는 찍지 않는다.** 어려운 한자어와 전문용어는 쓰지 않는다.
                    단어 자체를 주어로 반복하지 않는다("OO는 ~이에요" 금지).
                 3) 예문은 세 개를 만든다. 예문에는 마침표를 찍는다.
+                   예문도 meaning처럼 "-어요/-았어요/-해요"로 끝나는 부드러운 존댓말
+                   한 문장이다. "-ㄴ다/-았다"처럼 딱딱하게 끝맺지 않는다.
+                     걷는다 (X) -> 걸어요 (O) / 찾는다 (X) -> 찾아요 (O)
                    - exampleStory: 전달받은 이야기 장면 설명 속 상황을 그대로 반영한 한 문장.
                      장면 설명이 없으면 아이가 이해하기 쉬운 일반적인 상황으로 대체한다.
                    - exampleDaily: 이야기와 관계없이 일상 생활에서 이 단어를 어떻게 쓰는지
@@ -69,11 +72,11 @@ public class WordMeaningPromptBuilder {
                         "meaning", Map.of("type", "string",
                                 "description", "띄어쓰기 기준 5~7어절, -이에요/-해요체로 끝나고 마침표가 없는 쉬운 우리말 뜻풀이"),
                         "exampleStory", Map.of("type", "string",
-                                "description", "이야기 장면 상황을 반영한 한 문장 예문"),
+                                "description", "이야기 장면 상황을 반영한, -어요/-해요체로 끝나는 한 문장 예문"),
                         "exampleDaily", Map.of("type", "string",
-                                "description", "일상 생활에서의 쓰임을 보여 주는 한 문장 예문"),
+                                "description", "일상 생활에서의 쓰임을 보여 주는, -어요/-해요체로 끝나는 한 문장 예문"),
                         "exampleAdvanced", Map.of("type", "string",
-                                "description", "일상 예문보다 한 단계 어려운 한 문장 예문"),
+                                "description", "일상 예문보다 한 단계 어려운, -어요/-해요체로 끝나는 한 문장 예문"),
                         "isRealWord", Map.of("type", "boolean",
                                 "description", "실제 낱말이면 true. 옛말/사투리/낯선 말도 true. 어느 낱말로도 읽히지 않을 때만 false")));
     }
