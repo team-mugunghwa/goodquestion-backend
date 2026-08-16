@@ -31,4 +31,11 @@ public class ReportController {
         return reportService.getReport(parentId, sessionId);
     }
 
+    /** 세션별 리포트 상세. 생성 전이면 REPORT_NOT_READY(409). */
+    @GetMapping("/api/sessions/{sessionId}/report")
+    public ReportDetailResponse getReport(@CurrentParentId UUID parentId,
+                                          @PathVariable UUID sessionId) {
+        return reportService.getReport(parentId, sessionId);
+    }
+
 }
