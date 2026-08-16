@@ -13,6 +13,11 @@ import java.util.Map;
  *
  * <p>유도 원칙과 금지 사항은 근거 문서의 문구를 그대로 옮긴 것이다. 다듬으려면 문서를
  * 먼저 고친다.
+ *
+ * <p>[강한 유도]의 물음-종결 문장과 userPrompt의 강한 유도 분기는 문서 13장의 허용
+ * 예시(물음 형태)와 14장 "핵심 반응" 규정을 구현 세칙으로 푼 것이다 — 문서 14장 개정
+ * 제안 중(2026-08-16), 확정 전 임시 세칙. 금지선 문구는 여전히 문서 사본이며 여기서
+ * 고치지 않는다.
  */
 @Component
 public class CharacterPromptBuilder {
@@ -81,6 +86,10 @@ public class CharacterPromptBuilder {
                         아래의 걱정을 이번 대사의 핵심 반응으로 드러낸다. 한 번에 이 걱정 하나만
                         유도한다. 캐릭터의 상황과 감정 안에서 걱정으로 표현하고, 정답이나 모범
                         답안을 캐릭터가 먼저 말하지 않는다.
+                        대사는 걱정을 드러낸 뒤, 그 걱정에 대한 아이의 생각을 구하는 캐릭터 자신의
+                        물음으로 끝낸다. 물음은 걱정이 담고 있는 상황을 그대로 짚어 구체적으로 묻되,
+                        지식을 확인하는 학습 질문처럼 들리게 하지 않는다.
+                        (안 되는 물음: "해결 방법을 말해 봐." / 되는 물음: "그런데 다음에도 같은 일이 생기면 어떡하지?")
                         걱정: %s
                         """.formatted(input.remainingWorry()));
             }
@@ -93,6 +102,9 @@ public class CharacterPromptBuilder {
     }
 
     public String userPrompt(CharacterLlmClient.CharacterLlmInput input) {
+        boolean strongGuidance = !"CLOSING".equals(input.mode())
+                && !input.softCue()
+                && input.remainingWorry() != null && !input.remainingWorry().isBlank();
         return """
                 [이번 반응 방식]
                 %s
@@ -103,12 +115,15 @@ public class CharacterPromptBuilder {
                 [발화 분석 요약]
                 %s
 
-                위 반응 방식에 따라 캐릭터의 다음 대사를 만든다.
+                %s
                 """.formatted(
                 REACTION_INSTRUCTIONS.getOrDefault(input.reactionKey(),
                         REACTION_INSTRUCTIONS.get("DIRECT_RESPONSE")),
                 input.childUtterance(),
-                input.analysisSummary());
+                input.analysisSummary(),
+                strongGuidance
+                        ? "위 반응 방식으로 아이의 말을 짧게 받아 주되, 이번 대사의 핵심은 시스템 지시의 [강한 유도]다."
+                        : "위 반응 방식에 따라 캐릭터의 다음 대사를 만든다.");
     }
 
     /** 출력 스키마 — 대사와 감정. 감정 값은 CharacterEmotion 6종과 맞춘다. */
