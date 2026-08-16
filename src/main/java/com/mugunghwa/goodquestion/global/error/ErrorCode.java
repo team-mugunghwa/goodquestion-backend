@@ -19,6 +19,8 @@ public enum ErrorCode {
     INQUIRY_ALREADY_ANSWERED(HttpStatus.CONFLICT, "답변이 완료된 문의는 수정하거나 삭제할 수 없습니다."),
     STT_EMPTY_TEXT(HttpStatus.UNPROCESSABLE_ENTITY, "음성에서 텍스트를 인식하지 못했습니다."),
     INVALID_WORD(HttpStatus.UNPROCESSABLE_ENTITY, "단어장에 담기 어려운 말입니다."),
+    // V14 이전에 저장된 단어는 일상/심화 예문이 null일 수 있다 - 그 유형으로 따라 말하기가 오면 막는다
+    EXAMPLE_SENTENCE_MISSING(HttpStatus.CONFLICT, "이 단어에는 아직 준비된 예문이 없습니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     ACCOUNT_LOCKED(HttpStatus.LOCKED, "로그인 시도가 많아 계정이 일시적으로 잠겼습니다."),

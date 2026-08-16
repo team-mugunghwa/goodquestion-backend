@@ -191,12 +191,19 @@
 | GET | `/api/children/{childId}/words` | 단어 목록을 조회한다 | `?entryType=` (선택) | `List<WordResponse>` | ✅ |
 | PATCH | `/api/children/{childId}/words/{wordId}/favorite` | 즐겨찾기를 켜고 끈다 | — | `WordResponse` | ✅ |
 | DELETE | `/api/children/{childId}/words/{wordId}` | 저장한 단어를 삭제한다 (2026-08 경로 확정) | — | 204 | ✅ |
+| POST | `/api/children/{childId}/words/{wordId}/sentence-practice` | 예문 따라 말하기를 제출한다. 일치율 90% 이상이면 별가루 2개 | `SentencePracticeRequest` | `SentencePracticeResponse` | ✅ |
 
 아이가 이야기를 듣다 모르는 단어를 누르는 경로에서는 뜻이 올 수 없어 LLM을 타므로, 벤더 선정
 전까지 그 경로만 501이다. 클라이언트가 뜻을 담아 보내면 지금도 저장된다.
 
 즐겨찾기와 삭제는 단어가 그 아이의 것인지까지 확인한다. 아이가 둘인 보호자가 `childId`에 다른
 아이를 넣어 형제의 단어를 건드리지 못하게 하기 위해서이고, 없는 자원과 같이 404로 알린다.
+
+예문 따라 말하기(2026-08-16)는 학습 -> 보상(별가루) -> 놀이(행성 꾸미기) -> 학습 사이클의
+단어장 쪽 두 번째 학습이다. 예문 3종(이야기/일상/심화) 중 하나를 골라 그대로 따라 말하면,
+클라이언트가 `/api/stt`로 인식한 텍스트를 보내고 서버가 문자 일치율을 채점한다.
+음성 인식 실패(빈 텍스트)는 `/api/stt`가 422 `STT_EMPTY_TEXT`로 알리므로 이 API까지 오지
+않는다. 3.11의 `SentencePracticeResponse` 참고.
 
 ### 고객센터/공지/이용안내/알림 (2026-08-16 추가, #84 + 문의 수정/삭제)
 
@@ -864,6 +871,50 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 맞췄다. 장면 없이 저장된 단어는 세 값이 모두 null이다.
 
 목록은 평면 유지다 — 그룹핑은 클라이언트가 한다.
+
+#### `SentencePracticeRequest`
+
+> **사용처** — `POST /api/children/{childId}/words/{wordId}/sentence-practice` 요청
+
+| 필드 | 타입 | 검증 | 설명 |
+|---|---|---|---|
+| `sentenceType` | `ExampleSentenceType` | `@NotNull` | `STORY` / `DAILY` / `ADVANCED` |
+| `spokenText` | String | `@NotBlank @Size(max=500)` | `/api/stt`가 돌려준 인식 텍스트 |
+
+목표 문장은 서버가 단어에서 꺼낸다 - 문장을 클라이언트가 보내면 쉬운 문장으로
+바꿔치기해 보상을 딸 수 있다. 음성 자체는 보내지도 저장하지도 않는다.
+
+#### `SentencePracticeResponse`
+
+> **사용처** — `POST /api/children/{childId}/words/{wordId}/sentence-practice` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `matched` | boolean | 일치율이 기준(0.90)을 넘었는지 |
+| `similarity` | BigDecimal | 채점된 일치율(0.00~1.00, 소수 둘째 자리) |
+| `targetSentence` | String | 채점 기준이 된 예문. 화면이 어디가 달랐는지 비교해 보여 줄 수 있게 |
+| `rewarded` | boolean | 별가루가 지급됐는지 |
+| `skipReason` | enum | 성공인데 지급이 없을 때만. `ALREADY_REWARDED` / `DAILY_LIMIT` |
+| `stardustAmount` | int | 이번에 지급된 별가루 수. 지급이 없으면 0 |
+| `stardustBalance` | int | 지급 반영 후 잔액 |
+
+화면이 갈라야 하는 세 갈래를 그대로 담는다:
+
+1) `matched=false` - 일치율 미달. 일치율과 목표 문장을 보여 주며 재도전을 권한다
+2) `matched=true, rewarded=false` - 성공인데 지급 없음. `skipReason`으로 이유를 알린다
+3) `matched=true, rewarded=true` - 성공에 지급. 별가루 연출과 잔액 갱신
+
+채점은 문자 단위 일치율이다. 목표 예문과 발화 텍스트를 글자/숫자만 남겨 정규화한 뒤
+편집 거리를 긴 쪽 길이로 나눈다 - 띄어쓰기와 문장부호는 STT 표기 차이일 뿐이라
+점수에서 뺀다. 같은 발화는 항상 같은 점수를 받는 결정적 채점이라 LLM은 쓰지 않는다.
+
+지급 규칙: 일치율 90% 이상 · 예문(단어 x 유형)당 최초 1회 · 2개 · 하루 최대 2건
+(자정 기준 Asia/Seoul). 하루 4개는 완주 최대치(3+2)를 넘지 않는다. 보상이 나간
+연습만 `sentence_practices`에 남는다(V15) - 상한에 걸린 날의 성공은 기록하지 않아
+그 예문은 내일 다시 성공하면 보상받는다.
+
+오류: 단어가 없거나 남의 아이 것이면 404 `NOT_FOUND`, V14 이전 단어의 빠진 예문
+유형이면 409 `EXAMPLE_SENTENCE_MISSING`, 검증 실패는 400 `INVALID_REQUEST`.
 
 ---
 
