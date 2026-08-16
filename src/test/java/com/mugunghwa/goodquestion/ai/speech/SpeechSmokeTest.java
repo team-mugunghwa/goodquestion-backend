@@ -2,6 +2,7 @@ package com.mugunghwa.goodquestion.ai.speech;
 
 import com.mugunghwa.goodquestion.ai.stt.OpenAiSttClient;
 import com.mugunghwa.goodquestion.ai.stt.SttResult;
+import com.mugunghwa.goodquestion.ai.stt.VocabularyEchoDetector;
 import com.mugunghwa.goodquestion.ai.tts.OpenAiTtsClient;
 import com.mugunghwa.goodquestion.ai.tts.SynthesizedAudio;
 import com.mugunghwa.goodquestion.global.config.WebClientConfig;
@@ -54,7 +55,9 @@ class SpeechSmokeTest {
                 apiKey, "gpt-4o-mini-transcribe",
                 "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
                 "며느리가 시아버지 앞에서 방귀를 참는 옛이야기예요. 며느리는 친정 가는 길에 "
-                        + "갓을 쓴 이장을 만나고, 장대로 배나무의 배를 따요. 방귀에 기왓장이 들썩여요.");
+                        + "갓을 쓴 이장을 만나고, 장대로 배나무의 배를 따요. 방귀에 기왓장이 들썩여요.",
+                new VocabularyEchoDetector(
+                        "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장"));
 
         long ttsStart = System.nanoTime();
         SynthesizedAudio audio = tts.synthesize(SENTENCE, null);
