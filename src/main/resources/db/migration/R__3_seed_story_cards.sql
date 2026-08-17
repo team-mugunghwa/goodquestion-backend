@@ -64,8 +64,11 @@ on conflict (id) do update set
 -- 도입(누가·어디), 뒤 문장이 상황(지금 무슨 일)이다. 장면 대본이 준비되면
 -- 대본의 도입 장면에 맞춰 다시 손보는 것을 전제로 한다.
 -- ------------------------------------------------------------
+-- display_order는 10 단위로 띄워 둔다. 장면 대본이 없어 아직 진행할 수 없는 6편이라
+-- 진행 가능한 방귀 뀌는 며느리(1) 뒤에 놓는다. 사이에 끼워 넣을 때 값을 다시 매기지
+-- 않도록 간격을 준다.
 insert into stories (id, title, summary, child_role, intro, image_url, difficulty,
-                     estimated_minutes, status) values
+                     estimated_minutes, status, display_order) values
 (
     '11111111-1111-1111-1111-000000000021',
     '해와 달이 된 오누이',
@@ -75,7 +78,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/haewadal/cover.jpg',
     '쉬움',
     15,
-    'PUBLISHED'
+    'PUBLISHED',
+    10
 ),
 (
     '11111111-1111-1111-1111-000000000022',
@@ -86,7 +90,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/uijoheun/cover.jpg',
     '보통',
     20,
-    'PUBLISHED'
+    'PUBLISHED',
+    20
 ),
 (
     '11111111-1111-1111-1111-000000000023',
@@ -97,7 +102,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/heungbu/cover.jpg',
     '쉬움',
     15,
-    'PUBLISHED'
+    'PUBLISHED',
+    30
 ),
 (
     '11111111-1111-1111-1111-000000000031',
@@ -108,7 +114,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/tokki/cover.jpg',
     '쉬움',
     15,
-    'PUBLISHED'
+    'PUBLISHED',
+    40
 ),
 (
     '11111111-1111-1111-1111-000000000032',
@@ -119,7 +126,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/horangi/cover.jpg',
     '보통',
     20,
-    'PUBLISHED'
+    'PUBLISHED',
+    50
 ),
 (
     '11111111-1111-1111-1111-000000000041',
@@ -130,7 +138,8 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
     '/stories/hakgyo/cover.jpg',
     '쉬움',
     15,
-    'PUBLISHED'
+    'PUBLISHED',
+    60
 )
 on conflict (id) do update set
     title = excluded.title,
@@ -140,7 +149,8 @@ on conflict (id) do update set
     image_url = excluded.image_url,
     difficulty = excluded.difficulty,
     estimated_minutes = excluded.estimated_minutes,
-    status = excluded.status;
+    status = excluded.status,
+    display_order = excluded.display_order;
 
 
 -- ------------------------------------------------------------
@@ -166,7 +176,5 @@ insert into story_topics (story_id, topic_id) values
     ('11111111-1111-1111-1111-000000000041', '22222222-2222-2222-2222-000000000007'),
     ('11111111-1111-1111-1111-000000000041', '22222222-2222-2222-2222-000000000008'),
     -- 기존: 방귀 뀌는 며느리 - 옛이야기
-    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-000000000004'),
-    -- 기존: 작은 씨앗 - 일상
-    ('11111111-1111-1111-1111-222222222222', '22222222-2222-2222-2222-000000000007')
+    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-000000000004')
 on conflict (story_id, topic_id) do nothing;

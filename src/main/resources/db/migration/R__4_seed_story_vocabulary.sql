@@ -13,8 +13,8 @@
 -- word는 표제어다. 저장 경로가 WordLemmatizer 정규화 결과("기왓장이" ->
 -- "기왓장")를 키로 조회하므로 조사가 붙은 형태를 넣으면 영영 조회되지 않는다.
 --
--- 작은 씨앗(데모)은 proper_nouns가 없어 아직 비워 둔다 - 어휘를 정리해
--- 검수하면 이 파일에 추가한다.
+-- 방귀 뀌는 며느리 외의 이야기는 장면 대본이 없어 아직 비워 둔다 - 어휘를
+-- 정리해 검수하면 이 파일에 추가한다.
 -- ============================================================
 
 insert into story_vocabulary (story_id, word, meaning, example_sentence, example_daily, example_advanced) values
