@@ -53,6 +53,15 @@ public class Parent {
     private String lastLoginIp;
 
     /**
+     * 마지막으로 인증을 통과한 시각. 로그인(이메일/소셜/가입)과 리프레시 재발급이 갱신한다.
+     *
+     * <p>{@code lastLoginIp}가 "어디서"만 남기고 "언제"를 빠뜨려서 함께 채운다.
+     * 이력이 아니라 마지막 1건이라 이전 값은 덮어쓴다.
+     */
+    @Column(name = "last_login_at")
+    private OffsetDateTime lastLoginAt;
+
+    /**
      * 계정 상태. 관리자 콘솔이 바꾼다(admin-goodquestion-backend).
      *
      * <p>여기서는 읽기만 한다. 정지된 계정은 로그인이 거부되고, 이미 발급된
@@ -143,6 +152,21 @@ public class Parent {
         this.failedLoginAttempts = 0;
         this.lockedUntil = null;
         this.lastLoginIp = clientIp;
+        this.lastLoginAt = OffsetDateTime.now();
+    }
+
+    /**
+     * 리프레시 토큰으로 다시 들어온 시각을 남긴다.
+     *
+     * <p>액세스 토큰이 30분, 리프레시가 14일이라 며칠 만에 앱을 연 사용자는 비밀번호를
+     * 다시 입력하지 않고 재발급으로 통과한다. 로그인만 세면 그 사람의 마지막 접속 시각이
+     * 2주 전으로 남는다.
+     *
+     * <p>IP는 건드리지 않는다. {@code lastLoginIp}는 "마지막으로 로그인한 위치"라서
+     * 자격 증명을 실제로 확인한 때만 의미가 있다.
+     */
+    public void recordReconnect() {
+        this.lastLoginAt = OffsetDateTime.now();
     }
 
     public boolean isLocked() {

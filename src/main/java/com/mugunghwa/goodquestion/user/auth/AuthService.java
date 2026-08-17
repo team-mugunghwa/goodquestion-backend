@@ -88,6 +88,8 @@ public class AuthService {
     @Transactional
     public TokenResponse refresh(String refreshToken) {
         RefreshTokenService.RotationResult rotated = refreshTokenService.rotate(refreshToken);
+        // 재접속도 접속이다. 같은 트랜잭션이라 더티 체킹으로 반영된다.
+        rotated.parent().recordReconnect();
         return TokenResponse.of(
                 jwtProvider.issue(rotated.parent().getId()),
                 rotated.refreshToken(),
