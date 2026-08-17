@@ -1,0 +1,540 @@
+<title>이야기 파이프라인 구간 지도</title>
+<style>
+  :root {
+    --bg: #FAFAFB;
+    --surface: #FFFFFF;
+    --ink: #1B1E26;
+    --ink-soft: #5A6070;
+    --line: #DDE0E8;
+    --line-soft: #EDEFF4;
+    --accent: #3F5488;
+    --vendor: #B85C2E;
+    --vendor-fill: #F6E6DC;
+    --db: #3E7A8F;
+    --db-fill: #DFEDF2;
+    --free: #4F7D4A;
+    --free-fill: #E2EFE0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161B;
+      --surface: #1C1F26;
+      --ink: #E6E8EE;
+      --ink-soft: #9CA3B2;
+      --line: #333844;
+      --line-soft: #262A33;
+      --accent: #8CA0D8;
+      --vendor: #E08A55;
+      --vendor-fill: #3A2A22;
+      --db: #6FB3C8;
+      --db-fill: #1F2E35;
+      --free: #86BC7C;
+      --free-fill: #223026;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161B;
+    --surface: #1C1F26;
+    --ink: #E6E8EE;
+    --ink-soft: #9CA3B2;
+    --line: #333844;
+    --line-soft: #262A33;
+    --accent: #8CA0D8;
+    --vendor: #E08A55;
+    --vendor-fill: #3A2A22;
+    --db: #6FB3C8;
+    --db-fill: #1F2E35;
+    --free: #86BC7C;
+    --free-fill: #223026;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Pretendard, 'Apple SD Gothic Neo', system-ui, sans-serif;
+    line-height: 1.75;
+    margin: 0;
+    padding: 56px 24px 96px;
+  }
+  main { max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+  h1 { font-size: 30px; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 8px; }
+  h2 {
+    font-size: 19px; letter-spacing: -0.01em; margin: 52px 0 4px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 15px; margin: 28px 0 2px; color: var(--accent); }
+  p { margin: 10px 0; max-width: 68ch; }
+  .lead { font-size: 16px; color: var(--ink-soft); max-width: 68ch; }
+  strong { font-weight: 650; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.88em; background: var(--line-soft);
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  figure { margin: 24px 0 8px; }
+  .scroll { overflow-x: auto; }
+  svg { display: block; max-width: 100%; height: auto; color: var(--ink); }
+  figcaption {
+    font-size: 13px; color: var(--ink-soft); margin-top: 10px;
+    padding-left: 12px; border-left: 2px solid var(--line); max-width: 68ch;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 24px 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+  .card .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+  .card .v {
+    font-size: 25px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums; margin-top: 2px;
+  }
+  .card .n { font-size: 12px; color: var(--ink-soft); }
+
+  table { border-collapse: collapse; font-size: 13.5px; margin: 18px 0; width: 100%; }
+  th, td { border-bottom: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-soft); font-weight: 600; }
+  td.num {
+    text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0 4px; font-size: 13px; }
+  .legend span { display: flex; align-items: center; gap: 7px; color: var(--ink-soft); }
+  .sw { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid; }
+  .sw-v { background: var(--vendor-fill); border-color: var(--vendor); }
+  .sw-d { background: var(--db-fill); border-color: var(--db); }
+  .sw-f { background: var(--free-fill); border-color: var(--free); }
+
+  .callout {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); border-radius: 6px;
+    padding: 14px 18px; margin: 22px 0;
+  }
+  .callout p { margin: 6px 0; }
+  ul, ol { max-width: 68ch; padding-left: 22px; }
+  li { margin: 6px 0; }
+</style>
+
+<main>
+<h1>이야기 파이프라인 구간 지도</h1>
+<p class="lead">아이가 한 번 말할 때 서버 안에서 무슨 일이 순서대로 일어나는지,
+시간이 어디서 새는지, 무엇이 이미 캐시되어 있고 무엇이 안 되어 있는지를 그린
+지도입니다. 모든 숫자는 2026-08-17 실측값(중앙값)입니다.</p>
+
+<div class="cards">
+  <div class="card"><div class="k">턴 응답</div><div class="v">4.47초</div>
+    <div class="n">서버가 대사를 돌려주기까지</div></div>
+  <div class="card"><div class="k">그중 AI 두 번</div><div class="v">96%</div>
+    <div class="n">분석 2.60초 + 대사 1.66초</div></div>
+  <div class="card"><div class="k">음성 변환</div><div class="v">1.39초</div>
+    <div class="n">문장마다 한 번씩 추가</div></div>
+  <div class="card"><div class="k">서버와 DB</div><div class="v">37ms</div>
+    <div class="n">전체의 0.8%</div></div>
+</div>
+
+<div class="legend">
+  <span><i class="sw sw-v"></i>외부 AI 호출 (초 단위)</span>
+  <span><i class="sw sw-d"></i>서버와 데이터베이스 (밀리초)</span>
+  <span><i class="sw sw-f"></i>사전 렌더 또는 캐시 (거의 0)</span>
+</div>
+
+<h2>1. 이야기 한 편의 전체 흐름</h2>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 920 300" role="img" aria-label="세션 시작부터 완료까지의 단계별 흐름과 각 단계의 비용">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="ard" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-soft)"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="28" font-size="12" fill="var(--ink-soft)">아이가 앱에서 이야기 한 편을 끝까지 노는 동안</text>
+
+  <rect x="20" y="48" width="140" height="62" rx="6" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="90" y="72" font-size="13" text-anchor="middle" fill="var(--ink)">세션 시작</text>
+  <text x="90" y="92" font-size="11" text-anchor="middle" fill="var(--ink-soft)">DB 기록 26ms</text>
+
+  <line x1="164" y1="79" x2="192" y2="79" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="196" y="48" width="160" height="62" rx="6" fill="var(--free-fill)" stroke="var(--free)" stroke-width="1.5"/>
+  <text x="276" y="72" font-size="13" text-anchor="middle" fill="var(--ink)">이야기 장면 (5개)</text>
+  <text x="276" y="92" font-size="11" text-anchor="middle" fill="var(--ink-soft)">사전 렌더 음성 재생</text>
+
+  <line x1="360" y1="79" x2="388" y2="79" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="392" y="48" width="170" height="62" rx="6" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="477" y="72" font-size="13" text-anchor="middle" fill="var(--ink)">대화 장면 (4개)</text>
+  <text x="477" y="92" font-size="11" text-anchor="middle" fill="var(--vendor)">턴 3~5회씩, 여기가 핵심</text>
+
+  <path d="M 412 114 C 400 142, 554 142, 542 114" fill="none" stroke="var(--vendor)"
+        stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)" color="var(--vendor)"/>
+  <text x="477" y="152" font-size="11" text-anchor="middle" fill="var(--vendor)">턴 반복</text>
+
+  <line x1="566" y1="79" x2="594" y2="79" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="598" y="48" width="150" height="62" rx="6" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="673" y="72" font-size="13" text-anchor="middle" fill="var(--ink)">후속 활동</text>
+  <text x="673" y="92" font-size="11" text-anchor="middle" fill="var(--ink-soft)">카드 맞추기 8~13ms</text>
+
+  <line x1="752" y1="79" x2="780" y2="79" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="784" y="48" width="116" height="62" rx="6" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="842" y="72" font-size="13" text-anchor="middle" fill="var(--ink)">완료</text>
+  <text x="842" y="92" font-size="11" text-anchor="middle" fill="var(--ink-soft)">별가루 지급 12ms</text>
+
+  <line x1="842" y1="114" x2="842" y2="186" stroke="var(--ink-soft)" stroke-width="1.5"
+        stroke-dasharray="5 4" marker-end="url(#ard)"/>
+  <rect x="700" y="190" width="200" height="56" rx="6" fill="none" stroke="var(--ink-soft)"
+        stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="800" y="212" font-size="12.5" text-anchor="middle" fill="var(--ink)">보호자 리포트 생성</text>
+  <text x="800" y="230" font-size="11" text-anchor="middle" fill="var(--ink-soft)">비동기 22~30초 (안 기다림)</text>
+
+  <text x="20" y="212" font-size="12" fill="var(--ink-soft)">이야기 장면은 미리 만들어 둔 음성 파일을</text>
+  <text x="20" y="230" font-size="12" fill="var(--ink-soft)">재생하므로 AI 호출이 없습니다.</text>
+  <text x="20" y="252" font-size="12" fill="var(--ink-soft)">대화 장면만 AI를 씁니다.</text>
+</svg>
+</div>
+<figcaption>이야기 한 편은 장면 9개로 이루어지고, 그중 대화 장면 4개에서만
+외부 AI를 호출합니다. 나머지는 전부 데이터베이스 작업이거나 미리 만들어 둔
+음성 재생입니다. 리포트는 완료 후 따로 만들어지므로 아이는 기다리지 않습니다.</figcaption>
+</figure>
+
+<h2>2. 턴 하나에서 시간이 흐르는 방식</h2>
+
+<p>아래는 아이가 한 번 말하고 캐릭터 목소리를 들을 때까지를 <strong>시간에
+비례한 폭</strong>으로 그린 것입니다. 캐릭터가 두 문장으로 답하는 가장 흔한
+경우입니다.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 920 330" role="img" aria-label="턴 하나의 구간별 소요 시간을 시간에 비례한 폭으로 표현한 타임라인">
+  <text x="48" y="30" font-size="12" fill="var(--ink-soft)">아이가 기다리는 시간 (가로 폭 = 실제 걸린 시간)</text>
+
+  <rect x="48" y="52" width="69" height="48" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="82" y="80" font-size="11.5" text-anchor="middle" fill="var(--ink)">받아쓰기</text>
+  <text x="82" y="44" font-size="11" text-anchor="middle" fill="var(--vendor)">0.80초</text>
+
+  <rect x="117" y="52" width="0.5" height="48" fill="var(--db-fill)" stroke="var(--db)" stroke-width="0.8"/>
+
+  <rect x="118" y="52" width="224" height="48" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="230" y="74" font-size="12.5" text-anchor="middle" fill="var(--ink)">아이 말 이해하기</text>
+  <text x="230" y="90" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">분석 AI</text>
+  <text x="230" y="44" font-size="11.5" text-anchor="middle" fill="var(--vendor)">2.60초</text>
+
+  <rect x="342" y="52" width="1.5" height="48" fill="var(--db-fill)" stroke="var(--db)" stroke-width="0.8"/>
+
+  <rect x="344" y="52" width="143" height="48" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="415" y="74" font-size="12.5" text-anchor="middle" fill="var(--ink)">대사 쓰기</text>
+  <text x="415" y="90" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">캐릭터 AI</text>
+  <text x="415" y="44" font-size="11.5" text-anchor="middle" fill="var(--vendor)">1.66초</text>
+
+  <rect x="487" y="52" width="1.1" height="48" fill="var(--db-fill)" stroke="var(--db)" stroke-width="0.8"/>
+
+  <rect x="489" y="52" width="120" height="48" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="549" y="80" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 1문장</text>
+  <text x="549" y="44" font-size="11" text-anchor="middle" fill="var(--vendor)">1.39초</text>
+
+  <rect x="610" y="52" width="120" height="48" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="670" y="80" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 2문장</text>
+  <text x="670" y="44" font-size="11" text-anchor="middle" fill="var(--vendor)">1.39초</text>
+
+  <line x1="48" y1="118" x2="731" y2="118" stroke="var(--line)" stroke-width="1"/>
+  <g font-size="10" fill="var(--ink-soft)" text-anchor="middle">
+    <line x1="48" y1="114" x2="48" y2="122" stroke="var(--line)"/><text x="48" y="136">0초</text>
+    <line x1="134" y1="114" x2="134" y2="122" stroke="var(--line)"/><text x="134" y="136">1</text>
+    <line x1="220" y1="114" x2="220" y2="122" stroke="var(--line)"/><text x="220" y="136">2</text>
+    <line x1="306" y1="114" x2="306" y2="122" stroke="var(--line)"/><text x="306" y="136">3</text>
+    <line x1="392" y1="114" x2="392" y2="122" stroke="var(--line)"/><text x="392" y="136">4</text>
+    <line x1="478" y1="114" x2="478" y2="122" stroke="var(--line)"/><text x="478" y="136">5</text>
+    <line x1="564" y1="114" x2="564" y2="122" stroke="var(--line)"/><text x="564" y="136">6</text>
+    <line x1="650" y1="114" x2="650" y2="122" stroke="var(--line)"/><text x="650" y="136">7</text>
+    <line x1="731" y1="114" x2="731" y2="122" stroke="var(--line)"/><text x="731" y="136">8초</text>
+  </g>
+
+  <line x1="343" y1="104" x2="360" y2="168" stroke="var(--db)" stroke-width="1"/>
+  <rect x="300" y="172" width="270" height="52" rx="5" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="316" y="192" font-size="12" fill="var(--ink)">서버와 데이터베이스: 세 구간 합쳐 37ms</text>
+  <text x="316" y="211" font-size="11" fill="var(--ink-soft)">준비 6 + 저장 18 + 반영 13 (선으로만 보이는 폭)</text>
+
+  <text x="48" y="258" font-size="12.5" fill="var(--ink)">여기서 읽어야 할 것</text>
+  <text x="48" y="278" font-size="11.5" fill="var(--ink-soft)">1. 색이 진한 네 덩어리가 전부 외부 AI입니다. 우리 서버가 하는 일은 선 세 개 두께입니다.</text>
+  <text x="48" y="296" font-size="11.5" fill="var(--ink-soft)">2. 음성 변환은 서버 응답이 끝난 뒤에 문장 수만큼 줄줄이 붙습니다.</text>
+  <text x="48" y="314" font-size="11.5" fill="var(--ink-soft)">3. 세 문장짜리 대사면 오른쪽에 1.39초가 하나 더 붙어 9.6초가 됩니다.</text>
+</svg>
+</div>
+<figcaption>턴 하나의 실측 타임라인. 데이터베이스 구간이 선처럼 얇게 보이는
+것이 핵심입니다. 흔히 성능 개선이라고 하면 쿼리와 인덱스를 떠올리지만, 이
+서비스에서 시간을 쓰는 것은 전부 외부 AI 왕복입니다.</figcaption>
+</figure>
+
+<h3>서버 내부의 다섯 단계와 트랜잭션 경계</h3>
+
+<p>서버는 턴을 다섯 단계로 나눠 처리하고, <strong>AI를 부르는 두 단계는
+데이터베이스 트랜잭션 밖</strong>에 있습니다. 예전에는 이것이 트랜잭션 안에
+있어서 AI를 기다리는 동안 DB 연결이 묶였고, 그 결과 로그인 같은 무관한 기능까지
+멈췄습니다. 지금 구조가 그 문제를 고친 결과입니다.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 920 250" role="img" aria-label="턴 처리의 다섯 단계와 데이터베이스 트랜잭션 경계">
+  <rect x="20" y="40" width="128" height="58" rx="5" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="84" y="63" font-size="12.5" text-anchor="middle" fill="var(--ink)">1. 준비</text>
+  <text x="84" y="82" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">세션 확인 6ms</text>
+
+  <line x1="152" y1="69" x2="176" y2="69" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="180" y="40" width="150" height="58" rx="5" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="255" y="63" font-size="12.5" text-anchor="middle" fill="var(--ink)">2. 분석 AI</text>
+  <text x="255" y="82" font-size="10.5" text-anchor="middle" fill="var(--vendor)">2,603ms</text>
+
+  <line x1="334" y1="69" x2="358" y2="69" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="362" y="40" width="128" height="58" rx="5" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="426" y="63" font-size="12.5" text-anchor="middle" fill="var(--ink)">3. 판단과 저장</text>
+  <text x="426" y="82" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">진행 규칙 18ms</text>
+
+  <line x1="494" y1="69" x2="518" y2="69" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="522" y="40" width="150" height="58" rx="5" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="597" y="63" font-size="12.5" text-anchor="middle" fill="var(--ink)">4. 대사 AI</text>
+  <text x="597" y="82" font-size="10.5" text-anchor="middle" fill="var(--vendor)">1,662ms</text>
+
+  <line x1="676" y1="69" x2="700" y2="69" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <rect x="704" y="40" width="128" height="58" rx="5" fill="var(--db-fill)" stroke="var(--db)" stroke-width="1.5"/>
+  <text x="768" y="63" font-size="12.5" text-anchor="middle" fill="var(--ink)">5. 반영</text>
+  <text x="768" y="82" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">대사 저장 13ms</text>
+
+  <rect x="14" y="30" width="140" height="78" rx="7" fill="none" stroke="var(--db)"
+        stroke-width="1.2" stroke-dasharray="5 4"/>
+  <rect x="356" y="30" width="140" height="78" rx="7" fill="none" stroke="var(--db)"
+        stroke-width="1.2" stroke-dasharray="5 4"/>
+  <rect x="698" y="30" width="140" height="78" rx="7" fill="none" stroke="var(--db)"
+        stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="84" y="124" font-size="10.5" text-anchor="middle" fill="var(--db)">DB 연결 사용</text>
+  <text x="426" y="124" font-size="10.5" text-anchor="middle" fill="var(--db)">DB 연결 사용</text>
+  <text x="768" y="124" font-size="10.5" text-anchor="middle" fill="var(--db)">DB 연결 사용</text>
+
+  <text x="255" y="124" font-size="10.5" text-anchor="middle" fill="var(--vendor)">DB 연결 반납 상태</text>
+  <text x="597" y="124" font-size="10.5" text-anchor="middle" fill="var(--vendor)">DB 연결 반납 상태</text>
+
+  <rect x="20" y="152" width="812" height="76" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+  <text x="38" y="176" font-size="12.5" fill="var(--ink)">왜 이 경계가 중요한가</text>
+  <text x="38" y="196" font-size="11.5" fill="var(--ink-soft)">DB 연결은 서버에 10개뿐입니다. AI를 기다리는 4.3초 동안 연결을 쥐고 있으면 아이 3명이</text>
+  <text x="38" y="214" font-size="11.5" fill="var(--ink-soft)">동시에 말할 때 연결이 바닥나고, 로그인처럼 대화와 무관한 요청까지 줄을 섭니다. 실측: 3.52초 -&gt; 117ms</text>
+</svg>
+</div>
+<figcaption>느린 외부 호출을 트랜잭션 밖으로 뺀 구조. 이 서비스에서 가장 큰
+성능 개선이었고, 부하 실험에서 무관한 API의 p95가 3.52초에서 117ms로
+줄어드는 것으로 재확인했습니다.</figcaption>
+</figure>
+
+<h2>3. 지금 이미 캐시되어 있는 곳과 비어 있는 곳</h2>
+
+<p>이 서비스에는 이미 캐시가 세 겹 있습니다. 문제는 <strong>가장 비싼 경로에서만
+전부 빗나간다</strong>는 것입니다.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 920 400" role="img" aria-label="고정 대사 경로와 생성 대사 경로의 캐시 적중 차이">
+  <text x="20" y="26" font-size="13" fill="var(--free)">경로 A. 정해진 대사 (장면 시작 인사, 마무리 대사)</text>
+
+  <rect x="20" y="40" width="150" height="56" rx="5" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>
+  <text x="95" y="64" font-size="12" text-anchor="middle" fill="var(--ink)">대사 필요</text>
+  <text x="95" y="82" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">고정 문장 있음</text>
+
+  <line x1="174" y1="68" x2="204" y2="68" stroke="var(--free)" stroke-width="1.5" marker-end="url(#ar)" color="var(--free)"/>
+  <text x="189" y="58" font-size="10" text-anchor="middle" fill="var(--free)">건너뜀</text>
+
+  <rect x="208" y="40" width="170" height="56" rx="5" fill="var(--free-fill)" stroke="var(--free)" stroke-width="1.5"/>
+  <text x="293" y="64" font-size="12" text-anchor="middle" fill="var(--ink)">AI 호출 안 함</text>
+  <text x="293" y="82" font-size="10.5" text-anchor="middle" fill="var(--free)">0ms (실측 6턴 전부)</text>
+
+  <line x1="382" y1="68" x2="412" y2="68" stroke="var(--free)" stroke-width="1.5" marker-end="url(#ar)" color="var(--free)"/>
+
+  <rect x="416" y="40" width="200" height="56" rx="5" fill="var(--free-fill)" stroke="var(--free)" stroke-width="1.5"/>
+  <text x="516" y="64" font-size="12" text-anchor="middle" fill="var(--ink)">미리 만든 음성 파일</text>
+  <text x="516" y="82" font-size="10.5" text-anchor="middle" fill="var(--free)">문장 해시로 찾아 재생</text>
+
+  <line x1="620" y1="68" x2="650" y2="68" stroke="var(--free)" stroke-width="1.5" marker-end="url(#ar)" color="var(--free)"/>
+  <rect x="654" y="40" width="120" height="56" rx="5" fill="var(--free-fill)" stroke="var(--free)" stroke-width="2"/>
+  <text x="714" y="72" font-size="13" text-anchor="middle" fill="var(--free)">합계 0초</text>
+
+  <line x1="20" y1="122" x2="900" y2="122" stroke="var(--line)" stroke-width="1"/>
+
+  <text x="20" y="150" font-size="13" fill="var(--vendor)">경로 B. AI가 만드는 대사 (아이 말에 맞춘 실제 대화)</text>
+
+  <rect x="20" y="164" width="150" height="56" rx="5" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>
+  <text x="95" y="188" font-size="12" text-anchor="middle" fill="var(--ink)">대사 필요</text>
+  <text x="95" y="206" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">매번 새 문장</text>
+
+  <line x1="174" y1="192" x2="204" y2="192" stroke="var(--vendor)" stroke-width="1.5" marker-end="url(#ar)" color="var(--vendor)"/>
+
+  <rect x="208" y="164" width="170" height="56" rx="5" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="293" y="188" font-size="12" text-anchor="middle" fill="var(--ink)">캐릭터 AI 호출</text>
+  <text x="293" y="206" font-size="10.5" text-anchor="middle" fill="var(--vendor)">1,662ms</text>
+
+  <line x1="382" y1="192" x2="412" y2="192" stroke="var(--vendor)" stroke-width="1.5" marker-end="url(#ar)" color="var(--vendor)"/>
+
+  <rect x="416" y="164" width="200" height="56" rx="5" fill="var(--surface)" stroke="var(--vendor)"
+        stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="516" y="186" font-size="12" text-anchor="middle" fill="var(--ink)">미리 만든 음성 찾기</text>
+  <text x="516" y="204" font-size="10.5" text-anchor="middle" fill="var(--vendor)">해시 불일치, 항상 실패</text>
+
+  <line x1="620" y1="192" x2="650" y2="192" stroke="var(--vendor)" stroke-width="1.5" marker-end="url(#ar)" color="var(--vendor)"/>
+
+  <rect x="654" y="164" width="246" height="56" rx="5" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="2"/>
+  <text x="777" y="186" font-size="12" text-anchor="middle" fill="var(--ink)">음성 AI 호출 x 문장 수</text>
+  <text x="777" y="204" font-size="10.5" text-anchor="middle" fill="var(--vendor)">1,391ms x 1~3</text>
+
+  <path d="M 516 226 L 516 250" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="524" y="248" font-size="10.5" fill="var(--ink-soft)">음성 캐시(같은 문장 512개 보관)도 새 문장이라 못 맞음. 적중 시 9ms로 실증됨</text>
+
+  <rect x="20" y="272" width="880" height="112" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+  <text x="38" y="296" font-size="12.5" fill="var(--ink)">캐시가 비어 있는 두 자리</text>
+  <text x="38" y="318" font-size="11.5" fill="var(--ink-soft)">1. 음성 벤더 설정값을 음성 변환 때마다 DB에서 새로 읽습니다. 완주 한 번에 26~31회.</text>
+  <text x="38" y="336" font-size="11.5" fill="var(--ink-soft)">2. 분석 AI에 매번 보내는 2,278자짜리 고정 지시문이 벤더 쪽에서 캐시되는지 아무도 확인한 적이 없습니다.</text>
+  <text x="38" y="360" font-size="11.5" fill="var(--ink)">둘 다 고치면 좋지만, 1번은 회당 몇 ms고 2번은 확인부터 해야 합니다.</text>
+  <text x="38" y="378" font-size="11.5" fill="var(--ink)">진짜 큰 자리는 캐시가 아니라 순서 바꾸기입니다. 다음 절.</text>
+</svg>
+</div>
+<figcaption>이야기의 뼈대가 되는 대사는 AI를 아예 타지 않고 미리 만든 음성으로
+재생됩니다. 반대로 아이 말에 맞춰 만드는 대사는 매번 새 문장이라 어떤 캐시도
+맞지 않습니다. 캐시로는 이 경로를 구할 수 없다는 뜻입니다.</figcaption>
+</figure>
+
+<h2>4. 가장 큰 개선은 캐시가 아니라 순서 바꾸기</h2>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 920 270" role="img" aria-label="음성 변환을 순차 처리하는 현재와 첫 문장부터 재생하는 개선안의 차이">
+  <text x="20" y="26" font-size="13" fill="var(--ink)">지금: 세 문장을 다 만든 뒤에 재생 시작</text>
+
+  <rect x="20" y="40" width="128" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="84" y="66" font-size="11.5" text-anchor="middle" fill="var(--ink)">대사 완성</text>
+
+  <rect x="152" y="40" width="118" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="211" y="66" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 1</text>
+  <rect x="274" y="40" width="118" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="333" y="66" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 2</text>
+  <rect x="396" y="40" width="118" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="455" y="66" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 3</text>
+
+  <line x1="514" y1="61" x2="546" y2="61" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+  <rect x="550" y="40" width="150" height="42" rx="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+  <text x="625" y="66" font-size="12" text-anchor="middle" fill="var(--ink)">재생 시작</text>
+
+  <line x1="152" y1="94" x2="514" y2="94" stroke="var(--vendor)" stroke-width="1.5"/>
+  <line x1="152" y1="89" x2="152" y2="99" stroke="var(--vendor)" stroke-width="1.5"/>
+  <line x1="514" y1="89" x2="514" y2="99" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="333" y="112" font-size="12" text-anchor="middle" fill="var(--vendor)">아이가 조용히 기다리는 4.2초</text>
+
+  <line x1="20" y1="134" x2="900" y2="134" stroke="var(--line)" stroke-width="1"/>
+
+  <text x="20" y="162" font-size="13" fill="var(--free)">개선: 첫 문장이 되면 바로 재생하고, 나머지는 재생 중에 만들기</text>
+
+  <rect x="20" y="176" width="128" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="84" y="202" font-size="11.5" text-anchor="middle" fill="var(--ink)">대사 완성</text>
+
+  <rect x="152" y="176" width="118" height="42" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="211" y="202" font-size="11.5" text-anchor="middle" fill="var(--ink)">음성 1</text>
+
+  <line x1="274" y1="197" x2="300" y2="197" stroke="var(--free)" stroke-width="1.5" marker-end="url(#ar)" color="var(--free)"/>
+  <rect x="304" y="176" width="150" height="42" rx="4" fill="var(--free-fill)" stroke="var(--free)" stroke-width="2"/>
+  <text x="379" y="202" font-size="12" text-anchor="middle" fill="var(--ink)">재생 시작</text>
+
+  <rect x="304" y="226" width="118" height="30" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)"
+        stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="363" y="246" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">음성 2 (재생 중)</text>
+  <rect x="428" y="226" width="118" height="30" rx="4" fill="var(--vendor-fill)" stroke="var(--vendor)"
+        stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="487" y="246" font-size="10.5" text-anchor="middle" fill="var(--ink-soft)">음성 3 (재생 중)</text>
+
+  <line x1="152" y1="230" x2="274" y2="230" stroke="var(--free)" stroke-width="1.5"/>
+  <line x1="152" y1="225" x2="152" y2="235" stroke="var(--free)" stroke-width="1.5"/>
+  <line x1="274" y1="225" x2="274" y2="235" stroke="var(--free)" stroke-width="1.5"/>
+  <text x="213" y="248" font-size="12" text-anchor="middle" fill="var(--free)">1.4초</text>
+
+  <text x="570" y="200" font-size="12.5" fill="var(--ink)">대사 내용은 한 글자도 바뀌지 않습니다.</text>
+  <text x="570" y="220" font-size="12.5" fill="var(--ink)">기다림만 4.2초에서 1.4초로 줄어듭니다.</text>
+</svg>
+</div>
+<figcaption>음식점에서 요리 셋을 다 만든 뒤 한꺼번에 내오느냐, 되는 대로
+하나씩 내오느냐의 차이입니다. 클라이언트 쪽 순서만 바꾸면 되고 이야기 내용에는
+영향이 없습니다.</figcaption>
+</figure>
+
+<h2>5. 대사를 짧게 하면 이야기가 재미없어질까</h2>
+
+<div class="callout">
+<p><strong>앞선 보고서에서 제가 낸 제안을 여기서 수정합니다.</strong>
+코드를 다시 확인해 보니 길이 제한은 이미 걸려 있었고, 추가로 조이는 것은
+얻는 것에 비해 잃는 것이 큽니다.</p>
+</div>
+
+<p>확인한 사실 세 가지입니다.</p>
+
+<h3>1) 이미 1~3문장으로 제한하고 있고, 모델이 지키고 있습니다</h3>
+<p>캐릭터 프롬프트에 <code>1~3문장, 아이가 듣고 이해할 수 있는 쉬운 말로 한다</code>
+라는 지침이 있고, 응답 형식 정의에도 <code>1~3문장의 한국어</code>라고 적혀
+있습니다. 실측한 33개 대사의 분포입니다.</p>
+
+<table>
+<thead><tr><th>문장 수</th><th class="num">건수</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>1문장</td><td class="num">9</td><td>짧은 되묻기, 반응</td></tr>
+<tr><td>2문장</td><td class="num">18</td><td>가장 흔한 형태</td></tr>
+<tr><td>3문장</td><td class="num">12</td><td>상한. 넘긴 사례 없음</td></tr>
+</tbody>
+</table>
+<p>글자 수는 중앙값 69자, 최대 132자였습니다. 지침을 어긴 폭주가 없으므로
+<strong>지금 문제는 모델이 말을 길게 해서가 아니라, 두 문장이든 세 문장이든
+한 문장 만드는 데 1.4초가 걸리기 때문</strong>입니다.</p>
+
+<h3>2) 이야기의 뼈대는 애초에 AI가 쓰지 않습니다</h3>
+<p>장면을 여는 인사와 장면을 닫는 마무리 대사는 콘텐츠에 미리 쓰여 있는 고정
+문장이고, 코드가 그 경우 AI 호출 자체를 건너뜁니다. 실측에서도 이런 턴 6건의
+대사 생성 시간이 정확히 0ms였습니다. <strong>이야기의 서사와 감동을 만드는
+부분은 길이 설정과 아무 상관이 없다</strong>는 뜻입니다. AI가 쓰는 것은 장면
+한가운데에서 아이 말에 맞춰 주고받는 대화뿐입니다.</p>
+
+<h3>3) 그래서 얻는 것과 잃는 것</h3>
+<table>
+<thead><tr><th>선택</th><th>얻는 시간</th><th>이야기에 주는 영향</th></tr></thead>
+<tbody>
+<tr><td>1~3문장을 1~2문장으로 조이기</td>
+    <td class="num">약 1.4초</td>
+    <td>3문장 대사 12건이 짧아짐. 되물음과 공감이 함께 들어가는 대사가 줄어듦</td></tr>
+<tr><td>음성 파이프라이닝</td>
+    <td class="num">약 2.8초</td>
+    <td>없음. 내용은 그대로</td></tr>
+<tr><td>분석과 대사 AI 합치기</td>
+    <td class="num">약 1.9초</td>
+    <td>불확실. 품질 실험 필요</td></tr>
+</tbody>
+</table>
+
+<p><strong>결론: 길이는 건드리지 않는 편이 낫습니다.</strong> 시간을 가장 많이
+버는 것은 내용을 하나도 바꾸지 않는 파이프라이닝이고, 길이 제한은 그것을 다
+하고도 부족할 때 마지막에 꺼낼 카드입니다. 다만 <code>max_tokens</code>는
+설정해 두는 게 좋습니다. 내용을 줄이려는 목적이 아니라, 모델이 드물게 폭주할 때
+10초 타임아웃으로 턴이 통째로 실패하는 것을 막는 안전망으로,
+평소 길이보다 넉넉히 위에 두는 용도입니다.</p>
+
+<h2>정리</h2>
+<ol>
+<li>느린 곳은 외부 AI 왕복 네 번(받아쓰기, 분석, 대사, 음성)이고, 우리 서버와
+데이터베이스는 전체의 0.8%입니다.</li>
+<li>이야기의 고정 대사는 이미 AI를 건너뛰고 미리 만든 음성을 재생합니다. 이미
+가장 좋은 캐시가 걸려 있는 셈입니다.</li>
+<li>AI가 만드는 대사는 매번 새 문장이라 어떤 캐시도 맞지 않습니다. 캐시로 풀
+문제가 아닙니다.</li>
+<li>가장 큰 개선은 순서 바꾸기(첫 문장부터 재생)이고, 이야기 내용을 전혀 건드리지
+않습니다.</li>
+<li>대사 길이 제한은 효과가 작고 재미를 깎을 위험이 있어 우선순위에서 내립니다.</li>
+</ol>
+</main>
