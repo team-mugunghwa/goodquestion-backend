@@ -25,7 +25,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from gqapi import Api, percentile
 
-NON_SPEECH = ("silence.wav", "noise.wav", "tone.wav")
+NON_SPEECH = ("silence.wav", "noise.wav", "tone.wav", "noise_5s.wav", "noise_10s.wav")
 
 
 def cer(expected, actual):
@@ -43,10 +43,17 @@ def cer(expected, actual):
     return round(prev[len(a)] / len(e), 3)
 
 
+def wav_seconds(path):
+    import wave
+    with wave.open(str(path), "rb") as w:
+        return round(w.getnframes() / w.getframerate(), 1)
+
+
 def submit(api, path):
     status, body, latency = api.post_multipart(
         "/api/stt", "audio", path.name, path.read_bytes(), "audio/wav")
-    row = {"sample": path.name, "status": status, "latency_ms": round(latency, 1)}
+    row = {"sample": path.name, "audio_seconds": wav_seconds(path),
+           "status": status, "latency_ms": round(latency, 1)}
     if status == 200:
         data = json.loads(body)
         row["text"] = data.get("text") or ""

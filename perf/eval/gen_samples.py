@@ -27,6 +27,13 @@ def write(path, frames):
     print(f"생성: {path}")
 
 
+def noise_frames(seconds, seed):
+    rng = random.Random(seed)  # 고정 시드 - 같은 잡음으로 재현 가능해야 한다
+    count = RATE * seconds
+    samples = [max(-32768, min(32767, int(rng.gauss(0, 1500)))) for _ in range(count)]
+    return struct.pack(f"<{count}h", *samples)
+
+
 def main():
     out = pathlib.Path(__file__).parent / "samples"
     out.mkdir(exist_ok=True)
@@ -34,14 +41,14 @@ def main():
 
     count = RATE * SECONDS
     write(out / "silence.wav", struct.pack(f"<{count}h", *([0] * count)))
-
-    rng = random.Random(20260816)  # 고정 시드 - 같은 잡음으로 재현 가능해야 한다
-    noise = [int(rng.gauss(0, 1500)) for _ in range(count)]
-    noise = [max(-32768, min(32767, s)) for s in noise]
-    write(out / "noise.wav", struct.pack(f"<{count}h", *noise))
-
+    write(out / "noise.wav", noise_frames(SECONDS, 20260816))
     tone = [int(12000 * math.sin(2 * math.pi * 440 * i / RATE)) for i in range(count)]
     write(out / "tone.wav", struct.pack(f"<{count}h", *tone))
+
+    # STT 지연의 음원 길이 스케일 측정용. 내용은 같은 성질의 잡음이고 길이만
+    # 다르다 - 벤더 처리 시간이 길이에 비례하는지 본다.
+    write(out / "noise_5s.wav", noise_frames(5, 20260817))
+    write(out / "noise_10s.wav", noise_frames(10, 20260818))
 
 
 if __name__ == "__main__":
