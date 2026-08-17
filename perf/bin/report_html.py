@@ -266,7 +266,10 @@ body { font-family: 'Apple SD Gothic Neo', Pretendard, sans-serif; margin: 40px 
        max-width: 860px; color: #222; background: #fff; }
 h1 { font-size: 26px; } h2 { font-size: 20px; margin-top: 40px;
      border-bottom: 2px solid #eee; padding-bottom: 6px; }
-p { color: #555; line-height: 1.6; }
+h3 { font-size: 16px; margin-top: 26px; color: #333; }
+p, li { color: #444; line-height: 1.7; }
+a { color: #4878a8; }
+ul.refs { font-size: 12px; } ul.refs li { color: #666; line-height: 1.5; }
 svg { display: block; margin: 18px 0; }
 svg .ct { font-size: 13px; font-weight: 600; fill: #333; }
 svg .ax { font-size: 11px; fill: #777; }

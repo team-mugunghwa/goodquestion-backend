@@ -48,4 +48,5 @@ out/
 
 # Local Codex/dev server logs
 .codex-*.log
-perf/results/
+perf/results/*
+!perf/results/NOTES.html
