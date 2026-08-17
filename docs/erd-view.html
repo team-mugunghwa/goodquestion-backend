@@ -580,6 +580,8 @@ erDiagram
         varchar provider "LOCAL, KAKAO"
         varchar provider_id UK "provider와 복합"
         varchar name
+        varchar last_login_ip "마지막 로그인 위치"
+        timestamptz last_login_at "마지막 접속 시각"
     }
 
     children {

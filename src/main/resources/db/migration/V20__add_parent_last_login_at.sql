@@ -7,7 +7,11 @@
 -- last_login_ip와 같이 이력은 쌓지 않고 마지막 1건만 덮어쓴다.
 -- 기존 행은 null로 남는다. 마지막 접속 시각을 모르는 것과 없는 것은 다르므로
 -- 가입 시각 같은 값으로 채우지 않는다.
+--
+-- 관리자 콘솔이 이 값을 읽는다. 두 앱이 같은 DB에 각자 Flyway를 돌리므로
+-- admin-goodquestion-backend에도 같은 내용이 들어 있고, 먼저 뜬 쪽이 컬럼을
+-- 만든다. V12(status)와 같은 방식으로 if not exists를 건다.
 -- ============================================================
 
 alter table parents
-    add column last_login_at timestamptz;
+    add column if not exists last_login_at timestamptz;
