@@ -291,10 +291,16 @@ def main():
             "<p class='note'>현재 환경에서의 재현 측정이다. 당시 운영 수치가 아니며, "
             "방법과 공정성 체크리스트는 perf/README.md에 있다. 여정 비교는 코드와 "
             "이야기 콘텐츠가 함께 변한 총체의 비교라는 점에 주의.</p>"]
+    # 측정 회차의 관찰/제안을 담는 자유 서술 조각. 생성기와 분리해 둔다.
+    notes = results / "NOTES.html"
+    if notes.exists():
+        body.append(notes.read_text(encoding="utf-8"))
     body.append(journey_section(results, versions_of(perf_dir, "journey")))
     body.append(tts_section(results, versions_of(perf_dir, "journey")))
-    body.append(stt_section(results, versions_of(perf_dir, "journey"))
-                or stt_section(results, versions_of(perf_dir, "stt")))
+    # STT의 버전 이야기(환각율 100% -> 0%)는 stt 트랙에 있다 - 여정 버전은
+    # 전부 필터 이후라 개선사가 안 보인다.
+    body.append(stt_section(results, versions_of(perf_dir, "stt"))
+                or stt_section(results, versions_of(perf_dir, "journey")))
     body.append(k6_section(results, versions_of(perf_dir, "turn")))
     body.append(word_section(results, versions_of(perf_dir, "word")))
 

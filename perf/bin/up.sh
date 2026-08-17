@@ -15,7 +15,13 @@ load_version "${1:?사용법: up.sh <perf/태그>}"
 
 mkdir -p "$RESULTS"
 
-# 1) worktree
+# 1) worktree. 병렬 up이 git 잠금 경합으로 반쪽짜리 디렉터리를 남길 수 있어,
+#    src가 없으면 깨진 것으로 보고 다시 만든다.
+if [ -d "$WORKTREE" ] && [ ! -d "$WORKTREE/src" ]; then
+    echo "깨진 worktree 재생성: $WORKTREE"
+    git -C "$REPO_ROOT" worktree remove --force "$WORKTREE" 2>/dev/null || rm -rf "$WORKTREE"
+    git -C "$REPO_ROOT" worktree prune
+fi
 if [ ! -d "$WORKTREE" ]; then
     git -C "$REPO_ROOT" worktree add --detach "$WORKTREE" "$TAG"
     echo "worktree: $WORKTREE ($(git -C "$WORKTREE" log -1 --format='%h %s'))"

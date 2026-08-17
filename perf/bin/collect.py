@@ -63,10 +63,12 @@ def main():
     parser.add_argument("--out", default=str(perf_dir / "results" / "REPORT.md"))
     args = parser.parse_args()
 
-    versions = {"turn": [], "word": [], "stt": []}
+    versions = {}
     for line in (perf_dir / "versions.tsv").read_text(encoding="utf-8").splitlines()[1:]:
         cols = line.split("\t")
-        versions[cols[0]].append((cols[2].removeprefix("perf/"), cols[7]))
+        versions.setdefault(cols[0], []).append((cols[2].removeprefix("perf/"), cols[7]))
+    for track in ("turn", "word", "stt", "journey"):
+        versions.setdefault(track, [])
 
     results_dir = perf_dir / "results"
     sections = ["# 성능 재현 측정 결과", "",
