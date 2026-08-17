@@ -205,6 +205,7 @@ erDiagram
         smallint estimated_minutes
         jsonb post_activity_config "후속 활동 카드 정의"
         varchar status "DRAFT, PUBLISHED, ARCHIVED"
+        smallint display_order "목록과 홈 노출 순서, 작을수록 앞"
         timestamptz created_at
     }
 

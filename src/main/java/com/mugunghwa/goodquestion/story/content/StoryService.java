@@ -30,7 +30,7 @@ public class StoryService {
     public StoryListResponse getStories(String topic) {
         List<Story> stories = StringUtils.hasText(topic)
                 ? storyRepository.findAllByTopicNameAndStatus(topic, StoryStatus.PUBLISHED)
-                : storyRepository.findAllByStatusOrderByCreatedAtDesc(StoryStatus.PUBLISHED);
+                : storyRepository.findAllByStatusOrderByDisplayOrderAscCreatedAtDesc(StoryStatus.PUBLISHED);
 
         Map<UUID, List<String>> topicNames =
                 findTopicNames(stories.stream().map(Story::getId).toList());

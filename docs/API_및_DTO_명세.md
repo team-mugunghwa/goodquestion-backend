@@ -455,7 +455,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `inProgressSession` | `SessionSummaryResponse` | 없으면 null |
-| `recommendedStories` | `List<StoryCardResponse>` | 현재는 PUBLISHED 최신 3개 |
+| `recommendedStories` | `List<StoryCardResponse>` | 현재는 PUBLISHED 상위 3개(`display_order` 오름차순, 같으면 `created_at` 내림차순) |
 | `planetWidget` | `PlanetWidget` | 홈에 띄우는 행성 요약. 별가루 잔액과 배치 수 |
 
 **`PlanetWidget`**: `stardustBalance` int, `placedCount` int, `hasUnacknowledged` boolean
@@ -478,7 +478,7 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `stories` | `List<StoryCardResponse>` | `?topic=` 필터 적용 결과 |
+| `stories` | `List<StoryCardResponse>` | `?topic=` 필터 적용 결과. `display_order` 오름차순, 같으면 `created_at` 내림차순 |
 | `topics` | `List<String>` | **필터와 무관하게 항상 전체** — 필터 칩을 그리는 용도 |
 
 페이징은 없다. MVP 콘텐츠 수가 한 화면에 들어간다.

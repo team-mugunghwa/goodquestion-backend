@@ -53,7 +53,7 @@ on conflict (id) do update set
 --             아니라 '마을 사람들의 고민을 듣는 상대'로 잡았다.
 -- ------------------------------------------------------------
 insert into stories (id, title, summary, child_role, intro, image_url, difficulty,
-                     estimated_minutes, post_activity_config, status) values
+                     estimated_minutes, post_activity_config, status, display_order) values
 (
     '11111111-1111-1111-1111-111111111111',
     '방귀 뀌는 며느리',
@@ -75,7 +75,10 @@ insert into stories (id, title, summary, child_role, intro, image_url, difficult
       ],
       "retelling_keywords": ["참다", "쫓겨나다", "떨어뜨리다", "자신감"]
     }'::jsonb,
-    'PUBLISHED'
+    'PUBLISHED',
+    -- 목록과 홈의 첫 칸. 장면 대본과 음성이 다 있어 끝까지 진행되는 유일한 이야기라
+    -- 아이가 들어오자마자 이걸 만나야 한다. 나머지는 R__3에서 10 단위로 뒤에 놓는다.
+    1
 )
 on conflict (id) do update set
     title = excluded.title,
@@ -86,7 +89,8 @@ on conflict (id) do update set
     difficulty = excluded.difficulty,
     estimated_minutes = excluded.estimated_minutes,
     post_activity_config = excluded.post_activity_config,
-    status = excluded.status;
+    status = excluded.status,
+    display_order = excluded.display_order;
 
 insert into story_topics (story_id, topic_id) values
     ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-000000000001'),

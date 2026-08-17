@@ -59,13 +59,21 @@ public class Story {
     @Column(nullable = false, length = 20)
     private StoryStatus status;
 
+    /**
+     * 목록과 홈 추천의 노출 순서. 작을수록 앞이고, 같은 값끼리는 created_at 내림차순으로
+     * 갈린다. 시드가 created_at을 적지 않아 한 마이그레이션의 이야기들이 같은 시각을
+     * 갖는 탓에 created_at만으로는 첫 칸을 고정할 수 없어 따로 둔다.
+     */
+    @Column(name = "display_order", nullable = false)
+    private short displayOrder;
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
     @Builder
     public Story(String title, String summary, String childRole, String intro, String imageUrl,
                  String difficulty, Short estimatedMinutes,
-                 Map<String, Object> postActivityConfig, StoryStatus status) {
+                 Map<String, Object> postActivityConfig, StoryStatus status, Short displayOrder) {
         this.title = title;
         this.summary = summary;
         this.childRole = childRole;
@@ -75,5 +83,7 @@ public class Story {
         this.estimatedMinutes = estimatedMinutes;
         this.postActivityConfig = postActivityConfig;
         this.status = status != null ? status : StoryStatus.DRAFT;
+        // 컬럼 기본값(100)과 맞춘다 - 순서를 정하지 않고 만든 이야기는 큐레이션한 뒤에 붙는다.
+        this.displayOrder = displayOrder != null ? displayOrder : 100;
     }
 }

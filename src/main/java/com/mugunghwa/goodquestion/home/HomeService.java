@@ -54,8 +54,9 @@ public class HomeService {
                 .map(this::toSummary)
                 .orElse(null);
 
-        // MVP: 추천 로직 미구현 — PUBLISHED 최신순 상위 3개를 그대로 노출한다(홈-03)
-        List<Story> recommended = storyRepository.findTop3ByStatusOrderByCreatedAtDesc(StoryStatus.PUBLISHED);
+        // MVP: 추천 로직 미구현 — 콘텐츠가 정한 노출 순서(display_order) 상위 3개를 그대로 쓴다(홈-03)
+        List<Story> recommended =
+                storyRepository.findTop3ByStatusOrderByDisplayOrderAscCreatedAtDesc(StoryStatus.PUBLISHED);
         Map<UUID, List<String>> topicNames = findTopicNames(recommended.stream().map(Story::getId).toList());
         List<StoryCardResponse> cards = recommended.stream()
                 .map(s -> new StoryCardResponse(s.getId(), s.getTitle(), s.getSummary(),
