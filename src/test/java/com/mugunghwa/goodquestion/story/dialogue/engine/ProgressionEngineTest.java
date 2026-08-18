@@ -25,7 +25,7 @@ class ProgressionEngineTest {
 
     private final ProgressionEngine engine = new ProgressionEngine(
             new GuidanceTargetSelector(), new ReactionKeyResolver(),
-            new ProgressionProperties(2, 2, 2));
+            new ProgressionProperties(2, 2, 2, true));
 
     /**
      * 원 규칙(진행-09/10)을 검증할 때 쓰는 엔진. always-guide를 끄면 문서의 제한적 유도로
