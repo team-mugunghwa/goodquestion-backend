@@ -62,6 +62,17 @@ class ProgressionEngineTest {
                 .build();
     }
 
+    /**
+     * 2턴을 보냈고 이번 턴에 새 요소가 없는 상태 - 진행-10의 필요 신호가 하나도 서지 않는다
+     * (무진전 1 &lt; 2, 저정보 0 &lt; 2, 잔여 3 &gt; 2). 반응 보류만 판정을 가르는 자리다.
+     */
+    private StorySession twoTurnsNoProgress() {
+        StorySession session = session();
+        session.applyTurn(List.of("SOLUTION"), false);
+        session.applyTurn(List.of("SOLUTION"), false);
+        return session;
+    }
+
     /** 아이가 되물은 턴 — 진행-14가 유도를 보류시키는 반응. */
     private UtteranceAnalysis question() {
         return UtteranceAnalysis.builder()
@@ -332,38 +343,81 @@ class ProgressionEngineTest {
     /**
      * 진행-14는 강한 유도에도 걸린다. always-guide가 켜지면서 이 규칙이 조용히 꺼져 있었다 -
      * 아이가 되물었는데 캐릭터가 제 걱정부터 꺼내면 아이 말이 통째로 무시된다.
+     *
+     * <p>2턴 상태로 세운다. 1턴이면 "첫 발화 유도 금지"에 먼저 걸려 보류 로직을 지워도
+     * 테스트가 통과한다(교차 검증에서 잡힌 결함). 무진전 1 / 잔여 3턴이라 진행-10의
+     * 필요 신호는 서지 않고, 오직 반응 보류만 판정을 가른다.
      */
     @Test
     void 아이가_되물은_턴에는_강한_유도를_붙이지_않는다() {
-        StorySession session = session();
-        session.applyTurn(List.of("SOLUTION"), false);
-
-        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, question());
+        ProgressionDecision decision =
+                engine.decide(twoTurnsNoProgress(), scene(), ResponseMode.NORMAL, question());
 
         assertThat(decision.mode()).isNotEqualTo(ResponseMode.GUIDED);
     }
 
     @Test
-    void 아이가_장난친_턴에도_강한_유도를_붙이지_않는다() {
-        StorySession session = session();
-        session.applyTurn(List.of("SOLUTION"), false);
+    void 아이가_장난친_턴에는_강한_유도를_붙이지_않는다() {
+        ProgressionDecision decision =
+                engine.decide(twoTurnsNoProgress(), scene(), ResponseMode.NORMAL, playful());
 
-        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, playful());
+        assertThat(decision.mode()).isNotEqualTo(ResponseMode.GUIDED);
+    }
+
+    @Test
+    void 아이_말이_불명확한_턴에는_강한_유도를_붙이지_않는다() {
+        ProgressionDecision decision =
+                engine.decide(twoTurnsNoProgress(), scene(), ResponseMode.NORMAL, unclear());
 
         assertThat(decision.mode()).isNotEqualTo(ResponseMode.GUIDED);
     }
 
     /**
-     * 다만 보류가 무조건이면 짧게만 답하는 아이에게 유도가 영영 안 걸린다.
-     * 진행-10의 필요 신호(여기서는 무진전 2연속)가 서면 보류를 푼다.
+     * 위 세 건의 대조군. 같은 상태에서 반응만 바뀌면 유도가 걸린다 -
+     * 판정을 가른 것이 반응 보류임을 여기서 못박는다.
      */
     @Test
-    void 되묻기만_이어져_진전이_없으면_보류를_풀고_유도한다() {
+    void 같은_상태라도_반응이_평범하면_강한_유도가_걸린다() {
+        ProgressionDecision decision =
+                engine.decide(twoTurnsNoProgress(), scene(), ResponseMode.NORMAL, opinion());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
+    }
+
+    /**
+     * 보류가 무조건이면 짧게만 답하는 아이에게 유도가 영영 안 걸린다.
+     * 진행-10의 필요 신호가 서면 보류를 푼다 - 신호 세 갈래를 모두 확인한다.
+     */
+    @Test
+    void 진전이_없으면_되묻는_턴이어도_보류를_푼다() {
         StorySession session = session();
         session.applyTurn(List.of(), false);
         session.applyTurn(List.of(), false);
 
         ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, question());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
+    }
+
+    @Test
+    void 저정보가_두_번_이어지면_불명확한_턴이어도_보류를_푼다() {
+        StorySession session = session();
+        session.applyTurn(List.of("SOLUTION"), true);
+        session.applyTurn(List.of("SOLUTION"), true);
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, unclear());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
+    }
+
+    @Test
+    void 남은_턴이_얼마_없으면_장난친_턴이어도_보류를_푼다() {
+        StorySession session = session();
+        session.applyTurn(List.of("SOLUTION"), false);
+        session.applyTurn(List.of("SOLUTION"), false);
+        session.applyTurn(List.of("SOLUTION"), false);
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, playful());
 
         assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
     }
