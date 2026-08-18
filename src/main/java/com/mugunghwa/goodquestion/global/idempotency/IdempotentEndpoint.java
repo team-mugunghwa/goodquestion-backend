@@ -5,5 +5,7 @@ public enum IdempotentEndpoint {
     /** 발화 제출 - 중복 처리 시 중복 턴 + LLM 요금 2배. scope는 세션 */
     UTTERANCE,
     /** 아이템 구매 - 중복 처리 시 별가루 이중 차감. scope는 아이 */
-    ITEM_PURCHASE
+    ITEM_PURCHASE,
+    /** 자유 대화 발화 - 중복 처리 시 중복 턴 + LLM 요금 2배. scope는 대화 */
+    FREE_TALK_MESSAGE
 }
