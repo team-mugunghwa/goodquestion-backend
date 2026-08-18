@@ -268,6 +268,37 @@ PENDING 상태에서만 허용한다.
 
 > **멀티파트 한도** — 30초 16kHz mono WAV가 약 960KB로 Spring Boot 기본 1MB에 아슬아슬하게 걸려, `max-file-size`를 10MB로 올려 두었다.
 
+### 2.17 후속 자유 대화 (2026-08-18 추가)
+
+이야기를 완주한 뒤 그 이야기의 인물과 이어서 하는 대화다. **학습이 아니라 관계**라서
+요소 판정·유도·별가루·리포트가 전부 없고, 세션(`/api/sessions`)과는 표도 경로도 갈라져 있다.
+
+| 메서드 | 경로 | 설명 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|---|
+| GET | `/api/children/{childId}/stories/{storyId}/free-talk/characters` | 완주한 이야기의 대화 가능 인물 | — | `List<FreeTalkCharacterResponse>` | ✅ |
+| POST | `/api/children/{childId}/free-talk` | 대화를 열고 첫 인사를 받는다 (201) | `FreeTalkStartRequest` | `FreeTalkStartResponse` | ✅ |
+| POST | `/api/free-talk/{freeTalkId}/messages` | 아이의 말을 제출한다. `Idempotency-Key` 헤더(선택) | `FreeTalkMessageRequest` | `FreeTalkTurnResponse` | ✅ |
+| POST | `/api/free-talk/{freeTalkId}/end` | 아이가 먼저 그만둔다 | — | `FreeTalkEndResponse` | ✅ |
+
+음성 인식은 기존 `POST /api/stt`를 그대로 쓴다. **아이 음성 원본은 저장하지 않는다.**
+
+**충돌·거절**
+
+| 상황 | 코드 | 의미 |
+|---|---|---|
+| 완주하지 않은 이야기 | 404 `STORY_NOT_COMPLETED` | 있음을 알리지 않는다 — 403으로 답하면 아직 안 읽은 이야기의 인물 구성이 드러난다 |
+| 이미 끝난 대화에 발화 | 409 `FREE_TALK_ENDED` | 10턴을 채웠거나 아이가 먼저 그만둔 대화다 |
+| 같은 대화에 턴이 겹쳤다 | 409 `CONCURRENT_TURN` | 학습 대화와 같은 판정. 앞선 요청이 끝난 뒤 다시 보낸다 |
+| 남의 대화 | 403 `FORBIDDEN` | 대화를 만든 보호자만 이어갈 수 있다 |
+
+**턴 상한** — 아이가 10번 말하면 캐릭터가 스스로 인사하고 닫는다(`ended: true`).
+남은 턴은 화면에 표시하지 않는다. `maxTurns`는 클라이언트가 길이를 가늠하라고 주는 값이지
+카운터를 그리라는 뜻이 아니다.
+
+`POST /end`는 **이미 닫힌 대화에도 200**으로 응답하며 남아 있는 마지막 대사를 그대로
+돌려준다. 끝난 대화에 "그만하기"가 한 번 더 들어오는 것은 흔한 일이고, 그때마다 대사를
+새로 만들면 요금만 두 배가 된다.
+
 ---
 
 ## 3. DTO 상세
@@ -1044,6 +1075,58 @@ V14 이전에 저장된 단어는 일상/심화 예문이 null이다.
 |---|---|---|
 | 요청 | `text`(`@NotBlank`) · `characterName` | 이름이 있으면 캐릭터 보이스, 없으면 내레이션 보이스 |
 | 응답 | `audioUrl` · `expiresAt` | **바이트를 직접 내리지 않는다** — URL이라야 다시 듣기·캐싱이 된다 |
+
+---
+
+### 3.14 후속 자유 대화
+
+#### `FreeTalkCharacterResponse`
+
+> **사용처** — `GET /api/children/{childId}/stories/{storyId}/free-talk/characters` 응답 ·
+> `FreeTalkStartResponse`에 중첩
+
+- `characterId`(UUID) · `name`(String) — 대화를 시작할 때 되올리는 값과 화면 표시 이름
+- `characterKey`(String) — 표정 이미지 파일명의 키. 클라이언트가
+  `{characterKey}_{expression}.png`로 조립한다
+- `thumbnailUrl`(String, nullable) — **지금은 항상 null이다.** 캐릭터 이미지가 클라이언트
+  자산이라 서버가 가진 것이 없다. `characters`에 이미지 컬럼이 생기면 그때 채운다
+- `lastTalkedAt`(OffsetDateTime, nullable) — 이 인물과 마지막으로 이야기한 시각. 없으면 null
+
+#### `FreeTalkStartRequest` / `FreeTalkStartResponse`
+
+> **사용처** — `POST /api/children/{childId}/free-talk` 요청 / 응답
+
+| | 필드 | 설명 |
+|---|---|---|
+| 요청 | `storyId`(`@NotNull`) · `characterId`(`@NotNull`) | 인물이 그 이야기 소속이 아니면 404 |
+| 응답 | `freeTalkId` · `character` · `opening` · `maxTurns` | `opening`은 캐릭터가 먼저 건네는 인사다 |
+
+#### `FreeTalkMessageRequest` / `FreeTalkTurnResponse`
+
+> **사용처** — `POST /api/free-talk/{freeTalkId}/messages` 요청 / 응답
+
+| | 필드 | 설명 |
+|---|---|---|
+| 요청 | `text`(`@NotBlank`) | STT 결과 텍스트. 신뢰도·원문은 받지 않는다 — 리포트에 쓰이지 않아 남길 이유가 없다 |
+| 응답 | `characterMessage` · `turnCount` · `ended` | `ended: true`면 이 대사가 마지막이다 |
+
+#### `FreeTalkEndResponse`
+
+> **사용처** — `POST /api/free-talk/{freeTalkId}/end` 응답
+
+`closing`(`FreeTalkLineResponse`) — 캐릭터의 작별 대사
+
+#### `FreeTalkLineResponse`
+
+> **사용처** — `FreeTalkStartResponse.opening` · `FreeTalkTurnResponse.characterMessage` ·
+> `FreeTalkEndResponse.closing`에 중첩
+
+- `text`(String) — 캐릭터 대사
+- `audioUrl`(String, nullable) — 서버가 미리 합성해 둔 음성. **null이면 합성에 실패한
+  것이고 클라이언트가 `POST /api/tts`로 직접 만든다** — 목소리 하나 때문에 대화를
+  끊지 않는다
+- `emotion`(CharacterEmotion, nullable) — 표정 전환용. 6종(`NEUTRAL` `HAPPY` `SAD`
+  `WORRIED` `SURPRISED` `RELIEVED`)
 
 ---
 
