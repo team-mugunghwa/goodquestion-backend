@@ -14,6 +14,7 @@ build/
 .springBeans
 .sts4-cache
 bin/
+!perf/bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
@@ -47,3 +48,5 @@ out/
 
 # Local Codex/dev server logs
 .codex-*.log
+perf/results/*
+!perf/results/NOTES.html
