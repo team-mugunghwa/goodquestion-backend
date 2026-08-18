@@ -27,6 +27,14 @@ class ProgressionEngineTest {
             new GuidanceTargetSelector(), new ReactionKeyResolver(),
             new ProgressionProperties(2, 2, 2));
 
+    /**
+     * 원 규칙(진행-09/10)을 검증할 때 쓰는 엔진. always-guide를 끄면 문서의 제한적 유도로
+     * 돌아간다 - 그 경로가 살아 있는지 여기서 지킨다.
+     */
+    private final ProgressionEngine limitedEngine = new ProgressionEngine(
+            new GuidanceTargetSelector(), new ReactionKeyResolver(),
+            new ProgressionProperties(2, 2, 2, false));
+
     /** 필수 요소 2개, 최소 2턴, 최대 5턴짜리 대화 장면. */
     private StoryScene scene() {
         return scene((short) 5);
@@ -163,7 +171,7 @@ class ProgressionEngineTest {
         session.applyTurn(List.of(), false);
         session.applyTurn(List.of(), false);
 
-        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.GUIDED, unclear());
+        ProgressionDecision decision = limitedEngine.decide(session, scene(), ResponseMode.GUIDED, unclear());
 
         assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
     }
@@ -175,7 +183,7 @@ class ProgressionEngineTest {
         session.applyTurn(List.of(), false);
         session.applyTurn(List.of("SOLUTION"), false);
 
-        assertThat(engine.decide(session, scene(), ResponseMode.NORMAL, opinion()).mode())
+        assertThat(limitedEngine.decide(session, scene(), ResponseMode.NORMAL, opinion()).mode())
                 .isEqualTo(ResponseMode.NORMAL);
     }
 
@@ -210,7 +218,7 @@ class ProgressionEngineTest {
         session.applyTurn(List.of("SOLUTION"), false);
         session.applyTurn(List.of(), false);   // 2턴 종료, 남은 턴 = 3, 무진전 1, 저정보 0
 
-        assertThat(engine.decide(session, scene(), ResponseMode.NORMAL, unclear()).mode())
+        assertThat(limitedEngine.decide(session, scene(), ResponseMode.NORMAL, unclear()).mode())
                 .isEqualTo(ResponseMode.NORMAL);
     }
 
@@ -221,7 +229,7 @@ class ProgressionEngineTest {
         StorySession session = session();
         session.applyTurn(List.of("SOLUTION"), false);   // 신규 요소, REASON 잔여
 
-        ProgressionDecision decision = engine.decide(session, scene(), null, opinion());
+        ProgressionDecision decision = limitedEngine.decide(session, scene(), null, opinion());
 
         assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
         assertThat(decision.softCue()).isTrue();
@@ -238,7 +246,7 @@ class ProgressionEngineTest {
                 .detectedElements(List.of())
                 .utteranceValidity(UtteranceValidity.PLAYFUL)
                 .build();
-        ProgressionDecision decision = engine.decide(session, scene(), null, playful);
+        ProgressionDecision decision = limitedEngine.decide(session, scene(), null, playful);
 
         assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
         assertThat(decision.softCue()).isFalse();
@@ -262,9 +270,44 @@ class ProgressionEngineTest {
         session.applyTurn(List.of("SOLUTION"), false);
         session.applyTurn(List.of(), false);   // 무진전 1턴 - 강한 유도 조건도 미달
 
-        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, opinion());
+        ProgressionDecision decision = limitedEngine.decide(session, scene(), ResponseMode.NORMAL, opinion());
 
         assertThat(decision.mode()).isEqualTo(ResponseMode.NORMAL);
         assertThat(decision.softCue()).isFalse();
+    }
+
+    // ---------------------------------------------------------------- 강한 유도 기본값
+
+    @Test
+    void 기본값에서는_새_요소가_나온_턴에도_남은_요소를_유도한다() {
+        StorySession session = session();
+        session.applyTurn(List.of(), false);             // 첫 발화(유도 금지 구간)를 지난다
+        session.applyTurn(List.of("SOLUTION"), false);   // 이번 턴에 진전이 있었다
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.NORMAL, opinion());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
+        assertThat(decision.guidanceTarget()).isEqualTo(ThinkingElement.REASON);
+    }
+
+    @Test
+    void 기본값에서는_직전_턴이_유도여도_이어서_유도한다() {
+        StorySession session = session();
+        session.applyTurn(List.of(), false);
+        session.applyTurn(List.of(), false);
+
+        ProgressionDecision decision = engine.decide(session, scene(), ResponseMode.GUIDED, opinion());
+
+        assertThat(decision.mode()).isEqualTo(ResponseMode.GUIDED);
+    }
+
+    @Test
+    void 기본값에서도_첫_발화에는_유도하지_않는다() {
+        StorySession session = session();
+        session.applyTurn(List.of(), false);   // 아직 1턴
+
+        ProgressionDecision decision = engine.decide(session, scene(), null, opinion());
+
+        assertThat(decision.mode()).isNotEqualTo(ResponseMode.GUIDED);
     }
 }
