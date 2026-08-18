@@ -5,7 +5,6 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.global.settings.AppSettingRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@Primary
 public class RoutingTtsClient implements TtsClient {
 
     static final String SETTING_KEY = "tts.vendor";

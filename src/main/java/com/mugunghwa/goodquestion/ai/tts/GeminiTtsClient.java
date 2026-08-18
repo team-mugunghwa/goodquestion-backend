@@ -14,7 +14,6 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Gemini 음성 합성 (gemini-2.5-flash-preview-tts).
@@ -43,16 +42,12 @@ public class GeminiTtsClient implements TtsClient {
     private static final int BITS_PER_SAMPLE = 16;
 
     /** 같은 (보이스, 문장) 재합성을 막는다. 고정 대사가 20개뿐이라 적중률이 높다. */
-    private static final int CACHE_MAX_ENTRIES = 512;
-
     private final WebClient webClient;
     private final String baseUrl;
     private final String apiKey;
     private final String model;
     private final GeminiVoiceProperties voices;
     private final Duration timeout;
-    private final ConcurrentHashMap<String, SynthesizedAudio> cache = new ConcurrentHashMap<>();
-
     public GeminiTtsClient(
             WebClient webClient,
             @Value("${external.tts.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
@@ -73,19 +68,10 @@ public class GeminiTtsClient implements TtsClient {
         return apiKey != null && !apiKey.isBlank();
     }
 
+    /** 캐시는 벤더가 아니라 합성이라는 행위의 관심사다 - CachingTtsClient가 라우터 위에서 맡는다. */
     @Override
     public SynthesizedAudio synthesize(String text, String characterName) {
-        String key = voices.voiceFor(characterName) + "" + text;
-        SynthesizedAudio cached = cache.get(key);
-        if (cached != null) {
-            return cached;
-        }
-        SynthesizedAudio fresh = callVendor(text, characterName);
-        if (cache.size() >= CACHE_MAX_ENTRIES) {
-            cache.clear();
-        }
-        cache.put(key, fresh);
-        return fresh;
+        return callVendor(text, characterName);
     }
 
     private SynthesizedAudio callVendor(String text, String characterName) {
