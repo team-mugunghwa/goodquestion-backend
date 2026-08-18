@@ -1,6 +1,6 @@
 package com.mugunghwa.goodquestion.story.session.dto;
 
-import com.mugunghwa.goodquestion.story.content.SceneAudio;
+import com.mugunghwa.goodquestion.story.content.SceneAudioView;
 import com.mugunghwa.goodquestion.story.session.Message;
 
 import java.util.List;
@@ -40,15 +40,14 @@ public record CharacterMessageResponse(UUID messageId, String text, String audio
      *              {@code SceneAudioResolver}가 <b>문장 해시로</b> 찾아 준 것만 넣어야 한다 —
      *              슬롯만 보고 넣으면 대사를 고쳤을 때 옛 음성이 그대로 나간다.
      */
-    public static CharacterMessageResponse from(Message message, SceneAudio audio) {
+    public static CharacterMessageResponse from(Message message, SceneAudioView audio) {
         return new CharacterMessageResponse(message.getId(), message.getText(),
                 audio == null ? null : audio.url(),
                 audio == null ? List.of() : toTimings(audio));
     }
 
-    private static List<AudioTiming> toTimings(SceneAudio audio) {
-        List<SceneAudio.SentenceTiming> timings = audio.getSentenceTimings();
-        return timings == null ? List.of() : timings.stream()
+    private static List<AudioTiming> toTimings(SceneAudioView audio) {
+        return audio.sentenceTimings().stream()
                 .map(t -> new AudioTiming(t.index(), t.start(), t.end()))
                 .toList();
     }

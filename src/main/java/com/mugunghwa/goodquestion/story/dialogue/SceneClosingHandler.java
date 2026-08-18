@@ -1,7 +1,7 @@
 package com.mugunghwa.goodquestion.story.dialogue;
 
-import com.mugunghwa.goodquestion.story.content.SceneAudio;
 import com.mugunghwa.goodquestion.story.content.SceneAudioResolver;
+import com.mugunghwa.goodquestion.story.content.SceneAudioView;
 import com.mugunghwa.goodquestion.story.content.SceneService;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 import com.mugunghwa.goodquestion.story.dialogue.CharacterResponseService.CharacterReply;
@@ -122,7 +122,7 @@ public class SceneClosingHandler {
     }
 
     /** 고정 마지막 대사의 사전 렌더 음성. 대사를 고쳤으면 해시가 어긋나 null이 나간다. */
-    private SceneAudio closingAudio(Message closingMessage) {
+    private SceneAudioView closingAudio(Message closingMessage) {
         return sceneAudioResolver.forText(
                 closingMessage.getScene().getId(), closingMessage.getText()).orElse(null);
     }

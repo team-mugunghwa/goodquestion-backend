@@ -1,6 +1,7 @@
 package com.mugunghwa.goodquestion.story.content.dto;
 
 import com.mugunghwa.goodquestion.story.content.SceneAudio;
+import com.mugunghwa.goodquestion.story.content.SceneAudioView;
 import com.mugunghwa.goodquestion.story.content.SceneType;
 import com.mugunghwa.goodquestion.story.content.StoryScene;
 
@@ -47,7 +48,7 @@ public record SceneContentResponse(
         return from(s, null);
     }
 
-    public static SceneContentResponse from(StoryScene s, SceneAudio narration) {
+    public static SceneContentResponse from(StoryScene s, SceneAudioView narration) {
         boolean dialogue = s.isDialogue();
         return new SceneContentResponse(
                 s.getId(), s.getSceneOrder(), s.getSceneType(),
@@ -60,9 +61,8 @@ public record SceneContentResponse(
                 dialogue ? s.getMaxTurns() : null);
     }
 
-    private static List<NarrationTiming> toTimings(SceneAudio narration) {
-        List<SceneAudio.SentenceTiming> timings = narration.getSentenceTimings();
-        return timings == null ? List.of() : timings.stream()
+    private static List<NarrationTiming> toTimings(SceneAudioView narration) {
+        return narration.sentenceTimings().stream()
                 .map(t -> new NarrationTiming(t.index(), t.start(), t.end()))
                 .toList();
     }
