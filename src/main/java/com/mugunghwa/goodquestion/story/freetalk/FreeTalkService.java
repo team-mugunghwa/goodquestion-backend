@@ -89,9 +89,18 @@ public class FreeTalkService {
         return new FreeTalkEndResponse(withVoice(closing, ending.characterName()));
     }
 
-    /** <b>트랜잭션 밖에서 부른다.</b> 모르는 감정 값은 NEUTRAL로 맞춘다. */
+    /**
+     * <b>트랜잭션 밖에서 부른다.</b> 모르는 감정 값은 NEUTRAL로 맞춘다.
+     *
+     * <p>대사가 비어 돌아오면 여기서 끊는다. 그대로 저장하러 가면 text NOT NULL에 걸려
+     * 무결성 예외가 되고, 그것을 동시 제출로 읽어 409로 내보내게 된다 - 벤더 응답 형식
+     * 오류가 "연타했으니 다시 보내라"로 둔갑하면 클라이언트가 영원히 재시도한다.
+     */
     private FreeTalkLine speak(FreeTalkLlmClient.FreeTalkLlmInput input) {
         FreeTalkLlmClient.FreeTalkLlmResult result = llmClient.speak(input);
+        if (result.text() == null || result.text().isBlank()) {
+            throw new BusinessException(ErrorCode.AI_UPSTREAM_ERROR, "캐릭터 대사를 받지 못했습니다.");
+        }
         return new FreeTalkLine(result.text(), toEmotion(result.emotion()));
     }
 

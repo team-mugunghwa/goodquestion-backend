@@ -1,6 +1,5 @@
 package com.mugunghwa.goodquestion.story.freetalk;
 
-import com.mugunghwa.goodquestion.ai.freetalk.FreeTalkLlmClient;
 import com.mugunghwa.goodquestion.ai.freetalk.FreeTalkPromptBuilder;
 import com.mugunghwa.goodquestion.global.error.BusinessException;
 import com.mugunghwa.goodquestion.global.error.ErrorCode;
@@ -19,10 +18,7 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @IntegrationTest
 @Transactional
-@Import(FreeTalkIntegrationTest.StubFreeTalkConfig.class)
+@Import(StubFreeTalkConfig.class)
 class FreeTalkIntegrationTest {
 
     /** R__2_seed_demo_data.sql의 데모 계정. 보호자 "김보호" / 아이 "지우". */
@@ -152,7 +148,7 @@ class FreeTalkIntegrationTest {
         assertThat(response.freeTalkId()).isNotNull();
         assertThat(response.character().characterId()).isEqualTo(character.characterId());
         assertThat(response.opening().text()).isNotBlank();
-        assertThat(response.opening().audioUrl()).isEqualTo(STUB_AUDIO_URL);
+        assertThat(response.opening().audioUrl()).isEqualTo(StubFreeTalkConfig.STUB_AUDIO_URL);
         assertThat(response.maxTurns()).isEqualTo(10);
         // 첫 대사는 유도가 아니라 인사다 - 프롬프트 단계로 확인한다.
         assertThat(llmClient.lastStage).isEqualTo(FreeTalkPromptBuilder.STAGE_OPENING);
@@ -380,67 +376,4 @@ class FreeTalkIntegrationTest {
         return walletRepository.findByChildId(CHILD_ID).orElseThrow().getBalance();
     }
 
-    // ----- 대역 -----
-
-    static final String STUB_AUDIO_URL = "https://audio.test/free-talk.mp3";
-
-    @TestConfiguration
-    static class StubFreeTalkConfig {
-
-        @Bean
-        @Primary
-        StubFreeTalkLlmClient stubFreeTalkLlmClient() {
-            return new StubFreeTalkLlmClient();
-        }
-
-        /** 벤더를 부르지 않는다. 합성 성공 경로만 있으면 되고 실패 경로는 별도 관심사다. */
-        @Bean
-        @Primary
-        FreeTalkVoice stubFreeTalkVoice() {
-            return new FreeTalkVoice(null) {
-                @Override
-                public String synthesize(String text, String characterName) {
-                    return STUB_AUDIO_URL;
-                }
-            };
-        }
-    }
-
-    /**
-     * 어떤 단계로 불렸는지를 남기는 대역. 대사 내용이 아니라 <b>단계</b>가 검증 대상이다 -
-     * 마지막 턴에 마무리 지시가 갔는지는 그것으로만 확인할 수 있다.
-     */
-    static class StubFreeTalkLlmClient extends FreeTalkLlmClient {
-
-        String lastStage;
-        int calls;
-        private boolean failNext;
-
-        StubFreeTalkLlmClient() {
-            super(null, null);
-        }
-
-        void reset() {
-            lastStage = null;
-            calls = 0;
-            failNext = false;
-        }
-
-        /** 다음 한 번만 실패한다. 벤더 타임아웃 자리를 재현한다. */
-        void willFail() {
-            failNext = true;
-        }
-
-        @Override
-        public FreeTalkLlmResult speak(FreeTalkLlmInput input) {
-            lastStage = input.stage();
-            calls++;
-            if (failNext) {
-                failNext = false;
-                throw new IllegalStateException("대역이 대사 생성을 실패시킨다");
-            }
-            return new FreeTalkLlmResult("그때 이야기 말이지, 나도 자주 생각나.",
-                    CharacterEmotion.HAPPY.name());
-        }
-    }
 }
