@@ -234,9 +234,15 @@ public class SessionService {
         getOwnedSession(parentId, sessionId).stop();
     }
 
-    /** 세션 소유권 검증 공용 — dialog/activity/report에서도 사용 */
+    /**
+     * 세션 소유권 검증 공용 — dialog/activity/report에서도 사용.
+     *
+     * <p>child와 currentScene을 페치 조인으로 함께 읽는다. 소유권 검증이 child를 보고
+     * 대부분의 호출자가 곧바로 장면을 보므로 LAZY로 두면 매번 쿼리 셋이 나간다
+     * (SessionFetchPlanTest가 1회를 고정한다).
+     */
     public StorySession getOwnedSession(UUID parentId, UUID sessionId) {
-        StorySession session = sessionRepository.findById(sessionId)
+        StorySession session = sessionRepository.findByIdWithChildAndScene(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "세션을 찾을 수 없습니다."));
         if (!session.getChild().isOwnedBy(parentId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);

@@ -30,6 +30,16 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          # 정적 자산(장면 영상 33MB, 사전 렌더 음성, 이미지, 행성 모델)에 Cache-Control을
+          # 단다. 없으면 브라우저가 추정 캐시에 의존해 같은 영상을 반복 다운로드한다.
+          # 이 파일들은 배포로만 바뀌는데 파일명에 버전이 없으므로, 무한 캐시 대신
+          # 하루로 제한해 "배포 다음 날이면 확실히 새 파일"을 보장한다.
+          max-age: 1d
+
   threads:
     virtual:
       # 요청 시간의 대부분이 STT/LLM/TTS 대기다. 가상 스레드면 대기 중에도 플랫폼 스레드를

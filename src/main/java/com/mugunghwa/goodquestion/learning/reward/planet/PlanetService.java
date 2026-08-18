@@ -12,9 +12,9 @@ import com.mugunghwa.goodquestion.learning.reward.planet.dto.TutorialCompleteRes
 import com.mugunghwa.goodquestion.learning.reward.shop.ChildItem;
 import com.mugunghwa.goodquestion.learning.reward.shop.ChildItemRepository;
 import com.mugunghwa.goodquestion.learning.reward.shop.Item;
-import com.mugunghwa.goodquestion.learning.reward.shop.ItemRepository;
-import com.mugunghwa.goodquestion.learning.reward.shop.ItemStatus;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemCatalog;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemUnlockPolicy;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemView;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWallet;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustWalletRepository;
 import com.mugunghwa.goodquestion.user.child.ChildService;
@@ -41,7 +41,7 @@ public class PlanetService {
     private final PlanetRepository planetRepository;
     private final PlanetItemRepository planetItemRepository;
     private final ChildItemRepository childItemRepository;
-    private final ItemRepository itemRepository;
+    private final ItemCatalog itemCatalog;
     private final StardustWalletRepository walletRepository;
     private final ItemUnlockPolicy unlockPolicy;
     private final ChildService childService;
@@ -130,8 +130,7 @@ public class PlanetService {
         StardustWallet wallet = walletRepository.findByChildId(childId).orElse(null);
         int totalEarned = wallet == null ? 0 : wallet.getTotalEarned();
 
-        PlanetResponse.NextUnlock nextUnlock = itemRepository
-                .findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+        PlanetResponse.NextUnlock nextUnlock = itemCatalog.activeItems().stream()
                 .filter(item -> !unlockPolicy.isUnlocked(item, childId, totalEarned))
                 .findFirst()
                 .map(this::toNextUnlock)
@@ -141,9 +140,9 @@ public class PlanetService {
                 planetItemRepository.countByPlanetId(planet.getId()), nextUnlock);
     }
 
-    private PlanetResponse.NextUnlock toNextUnlock(Item item) {
+    private PlanetResponse.NextUnlock toNextUnlock(ItemView item) {
         return new PlanetResponse.NextUnlock(
-                item.getName(), item.getThumbnailUrl(), unlockPolicy.conditionText(item));
+                item.name(), item.thumbnailUrl(), unlockPolicy.conditionText(item));
     }
 
     private void requireEmptyCell(Planet planet, short q, short r) {

@@ -1,9 +1,7 @@
 package com.mugunghwa.goodquestion.story.content;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -22,57 +20,50 @@ import java.util.UUID;
  *
  * <p>덕분에 아이 이름이 들어간 대사도 알아서 걸러진다. 공용 음성은 "ㅇㅇ아"를 읽을 수 없는데,
  * 치환된 문장("민준아, ...")의 해시는 렌더 원본과 다르므로 매칭되지 않는다.
+ *
+ * <p>후보 목록은 {@link SceneAudioCache}가 들고 있다 - DB를 치지 않으므로 트랜잭션도 없다.
+ * 해시 대조는 여기 남는다. 캐시는 "이 장면에 어떤 음성이 있는가"까지만 알고,
+ * "지금 이 문장에 써도 되는가"는 매번 새로 판정해야 위의 성질이 유지된다.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SceneAudioResolver {
 
-    private final SceneAudioRepository repository;
-
-    /**
-     * 이 문장으로 렌더된 공용 음성의 URL. 없으면 null(클라이언트가 실시간 합성한다).
-     *
-     * @param sceneId 문장이 속한 장면
-     * @param text    실제로 내보내는 문장 — 이름 치환까지 끝난 상태여야 한다
-     */
-    @Transactional(readOnly = true)
-    public String urlFor(UUID sceneId, String text) {
-        return forText(sceneId, text).map(SceneAudio::url).orElse(null);
-    }
+    private final SceneAudioCache cache;
 
     /**
      * 이 문장으로 렌더된 공용 음성. 없으면 비어 있다.
      *
      * <p>URL만으로는 부족한 호출자가 있다 - 캐릭터 메시지는 문장별 실측 시각까지 실어야
      * 클라이언트가 파일 하나를 재생하면서 자막을 문장 단위로 넘길 수 있다.
+     *
+     * @param sceneId 문장이 속한 장면
+     * @param text    실제로 내보내는 문장 — 이름 치환까지 끝난 상태여야 한다
      */
-    @Transactional(readOnly = true)
-    public Optional<SceneAudio> forText(UUID sceneId, String text) {
+    public Optional<SceneAudioView> forText(UUID sceneId, String text) {
         if (sceneId == null || text == null || text.isBlank()) {
             return Optional.empty();
         }
         String hash = sha256Hex(text);
-        return repository.findAllBySceneIdAndChildIdIsNull(sceneId).stream()
+        return cache.sharedAudioOf(sceneId).stream()
                 .filter(audio -> matches(hash, audio))
                 .findFirst();
     }
 
     /** 장면의 내레이션 음성. 문장별 실측 시각이 필요해 URL만으로는 부족하다. */
-    @Transactional(readOnly = true)
-    public Optional<SceneAudio> narrationOf(UUID sceneId, String narrationText) {
+    public Optional<SceneAudioView> narrationOf(UUID sceneId, String narrationText) {
         if (sceneId == null || narrationText == null || narrationText.isBlank()) {
             return Optional.empty();
         }
         String hash = sha256Hex(narrationText);
-        return repository.findBySceneIdAndSlotAndChildIdIsNull(sceneId, SceneAudioSlot.NARRATION)
-                .filter(audio -> matches(hash, audio));
+        return cache.sharedAudioOf(sceneId).stream()
+                .filter(audio -> audio.slot() == SceneAudioSlot.NARRATION)
+                .filter(audio -> matches(hash, audio))
+                .findFirst();
     }
 
-    /** text_hash는 char(64)라 값이 짧으면 공백이 붙어 온다. 해시는 정확히 64자지만 방어해 둔다. */
-    private static boolean matches(String hash, SceneAudio audio) {
-        String stored = audio.getTextHash();
-        return stored != null && hash.equalsIgnoreCase(stored.trim());
+    private static boolean matches(String hash, SceneAudioView audio) {
+        return audio.textHash() != null && hash.equalsIgnoreCase(audio.textHash());
     }
 
     static String sha256Hex(String text) {

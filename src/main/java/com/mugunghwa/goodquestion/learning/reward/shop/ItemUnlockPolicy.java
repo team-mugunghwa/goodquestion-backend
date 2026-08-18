@@ -21,14 +21,22 @@ public class ItemUnlockPolicy {
     private final StoryPlayCounter playCounter;
 
     /** @param totalEarned 누적 획득량. 사용해도 줄지 않으므로 잔액이 아니라 이 값이 기준이다 */
-    public boolean isUnlocked(Item item, UUID childId, int totalEarned) {
-        return switch (item.getUnlockType()) {
+    public boolean isUnlocked(ItemView item, UUID childId, int totalEarned) {
+        return switch (item.unlockType()) {
             case ALWAYS -> true;
-            case STORY_COMPLETE -> item.getUnlockStory() != null
-                    && playCounter.get(childId, item.getUnlockStory().getId()) >= 1;
-            case STARDUST_CUMULATIVE -> item.getUnlockStardustTotal() != null
-                    && totalEarned >= item.getUnlockStardustTotal();
+            case STORY_COMPLETE -> item.unlockStoryId() != null
+                    && playCounter.get(childId, item.unlockStoryId()) >= 1;
+            case STARDUST_CUMULATIVE -> item.unlockStardustTotal() != null
+                    && totalEarned >= item.unlockStardustTotal();
         };
+    }
+
+    /**
+     * 엔티티 경로(단건 구매 검증). 판정 규칙은 뷰 쪽 한 곳에만 둔다 - 두 벌이면
+     * 한쪽만 고쳐져 목록에선 열렸는데 구매는 거절되는 식으로 갈라진다.
+     */
+    public boolean isUnlocked(Item item, UUID childId, int totalEarned) {
+        return isUnlocked(ItemView.from(item), childId, totalEarned);
     }
 
     /**
@@ -36,13 +44,13 @@ public class ItemUnlockPolicy {
      *
      * <p>아이가 읽는 문장이라 조건을 그대로 옮기지 않고 무엇을 하면 열리는지로 적는다.
      */
-    public String conditionText(Item item) {
-        return switch (item.getUnlockType()) {
+    public String conditionText(ItemView item) {
+        return switch (item.unlockType()) {
             case ALWAYS -> null;
-            case STORY_COMPLETE -> item.getUnlockStory() == null ? null
-                    : "%s 이야기를 끝까지 하면 열려요".formatted(item.getUnlockStory().getTitle());
-            case STARDUST_CUMULATIVE -> item.getUnlockStardustTotal() == null ? null
-                    : "별가루를 모두 %d개 모으면 열려요".formatted(item.getUnlockStardustTotal());
+            case STORY_COMPLETE -> item.unlockStoryTitle() == null ? null
+                    : "%s 이야기를 끝까지 하면 열려요".formatted(item.unlockStoryTitle());
+            case STARDUST_CUMULATIVE -> item.unlockStardustTotal() == null ? null
+                    : "별가루를 모두 %d개 모으면 열려요".formatted(item.unlockStardustTotal());
         };
     }
 }

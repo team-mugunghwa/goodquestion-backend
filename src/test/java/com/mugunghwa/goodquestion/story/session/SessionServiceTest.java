@@ -7,6 +7,8 @@ import com.mugunghwa.goodquestion.story.session.dto.SessionResumeResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartRequest;
 import com.mugunghwa.goodquestion.story.session.dto.SessionStartResponse;
 import com.mugunghwa.goodquestion.support.IntegrationTest;
+import com.mugunghwa.goodquestion.support.TestSessions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,23 @@ class SessionServiceTest {
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private StorySessionRepository sessionRepository;
+
+    /**
+     * 데모 시드에 대화 장면에 멈춘 진행 중 세션이 있고, start()는 진행 중 세션을
+     * 이어받는다(#70). 치우지 않으면 "장면 1부터 시작"을 전제한 이 테스트들이
+     * 그 세션을 받아 깨진다.
+     *
+     * <p>지금까지는 앞서 실행된 다른 테스트가 우연히 치워 준 덕에 통과했다.
+     * 그래서 단독 실행하면 실패했고, 테스트를 하나 추가해 순서가 바뀌면 함께 깨졌다.
+     * 자기 전제는 자기가 세운다.
+     */
+    @BeforeEach
+    void 진행_중_세션을_치운다() {
+        TestSessions.stopAllInProgress(sessionRepository);
+    }
 
     @Test
     void 세션을_시작하면_첫_장면이_반환된다() {

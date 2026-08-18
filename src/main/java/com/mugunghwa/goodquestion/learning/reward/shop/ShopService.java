@@ -33,6 +33,7 @@ import java.util.UUID;
 public class ShopService {
 
     private final ItemRepository itemRepository;
+    private final ItemCatalog itemCatalog;
     private final ChildItemRepository childItemRepository;
     private final PlanetItemRepository planetItemRepository;
     private final StardustWalletRepository walletRepository;
@@ -45,7 +46,7 @@ public class ShopService {
         childService.getOwnedChild(parentId, childId);
         StardustWallet wallet = getWalletOf(childId);
 
-        return itemRepository.findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+        return itemCatalog.activeItems().stream()
                 .map(item -> toShopItem(item, childId, wallet))
                 .toList();
     }
@@ -87,13 +88,13 @@ public class ShopService {
                 .toList();
     }
 
-    private ShopItemResponse toShopItem(Item item, UUID childId, StardustWallet wallet) {
+    private ShopItemResponse toShopItem(ItemView item, UUID childId, StardustWallet wallet) {
         boolean unlocked = unlockPolicy.isUnlocked(item, childId, wallet.getTotalEarned());
-        int shortfall = Math.max(0, item.getPrice() - wallet.getBalance());
+        int shortfall = Math.max(0, item.price() - wallet.getBalance());
 
         return new ShopItemResponse(
-                item.getId(), item.getName(), item.getCategory(), item.getPrice(),
-                item.getModelUrl(), item.getThumbnailUrl(),
+                item.id(), item.name(), item.category(), item.price(),
+                item.modelUrl(), item.thumbnailUrl(),
                 unlocked,
                 // 잠긴 아이템은 실루엣으로 보여 준다. 무엇이 더 있는지 보여야 모으고 싶어진다.
                 !unlocked,
@@ -103,12 +104,12 @@ public class ShopService {
     }
 
     /** 이야기 완주로 열리는 아이템만 어떤 이야기인지 함께 안내한다. */
-    private ShopItemResponse.UnlockGuide unlockGuideOf(Item item) {
-        if (item.getUnlockType() != UnlockType.STORY_COMPLETE || item.getUnlockStory() == null) {
+    private ShopItemResponse.UnlockGuide unlockGuideOf(ItemView item) {
+        if (item.unlockType() != UnlockType.STORY_COMPLETE || item.unlockStoryTitle() == null) {
             return null;
         }
         return new ShopItemResponse.UnlockGuide(
-                item.getUnlockStory().getTitle(), item.getUnlockStory().getImageUrl());
+                item.unlockStoryTitle(), item.unlockStoryImageUrl());
     }
 
     private ChildItemResponse toChildItem(ChildItem childItem, boolean placed) {
