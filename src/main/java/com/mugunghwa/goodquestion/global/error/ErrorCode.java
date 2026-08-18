@@ -50,6 +50,10 @@ public enum ErrorCode {
     CONCURRENT_TURN(HttpStatus.CONFLICT, "앞선 발화를 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
     MAX_TURNS_EXCEEDED(HttpStatus.CONFLICT, "이 장면의 대화가 이미 끝났습니다."),
     MISSION_NOT_EXPOSED(HttpStatus.CONFLICT, "아직 노출되지 않은 미션입니다."),
+    // 자유 대화는 완주한 이야기에만 열린다. 있음을 알리지 않으려고 403이 아니라 404다 -
+    // "권한이 없다"고 답하면 아직 읽지 않은 이야기의 인물 구성이 드러난다(스포일러).
+    STORY_NOT_COMPLETED(HttpStatus.NOT_FOUND, "아직 완주하지 않은 이야기입니다."),
+    FREE_TALK_ENDED(HttpStatus.CONFLICT, "이미 끝난 대화입니다."),
     RETELLING_BEFORE_ORDER(HttpStatus.CONFLICT, "카드 순서를 맞춘 뒤에 이야기를 다시 들려줄 수 있습니다."),
 
     // ---- AI 벤더 연동 (08-15 감사: 전부 500으로 뭉개지던 것을 구분) ----

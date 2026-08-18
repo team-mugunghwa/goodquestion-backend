@@ -6,6 +6,9 @@ package com.mugunghwa.goodquestion.global.idempotency;
  * <p>{@code reexecutable}은 "실패한 요청을 같은 키로 다시 실행해도 되는가"다.
  * 작업이 한 트랜잭션 안에서 끝나면 실패 시 아무것도 남지 않으므로 다시 하면 되고,
  * 여러 트랜잭션에 걸쳐 있으면 앞부분이 이미 커밋됐을 수 있어 다시 하면 중복이 된다.
+ *
+ * <p>엔드포인트를 추가할 때 이 값을 반드시 정해야 한다. LLM 호출을 트랜잭션 밖에
+ * 두는 것은 이 서비스의 공통 패턴이라, "쓰기가 그 앞에 있는가"를 매번 확인해야 한다.
  */
 public enum IdempotentEndpoint {
 
@@ -25,7 +28,16 @@ public enum IdempotentEndpoint {
      * <p>재실행해도 된다. 해금 검증, 차감, 입고가 한 트랜잭션이라 실패하면 전부
      * 롤백된다. 정직한 재시도가 다시 실행될 수 있어야 한다.
      */
-    ITEM_PURCHASE(true);
+    ITEM_PURCHASE(true),
+
+    /**
+     * 자유 대화 발화 - 중복 처리 시 중복 턴 + LLM 요금 2배. scope는 대화.
+     *
+     * <p>재실행해도 된다. 이야기 턴과 달리 LLM 호출 앞 구간이 읽기 전용이고
+     * (FreeTalkTransactions.prepareTurn) 아이 발화와 캐릭터 대사를 commitTurn에서
+     * 함께 저장하므로, 어디서 실패하든 커밋된 것이 없다.
+     */
+    FREE_TALK_MESSAGE(true);
 
     private final boolean reexecutable;
 
