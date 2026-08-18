@@ -11,7 +11,6 @@ import tools.jackson.databind.JsonNode;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Google Cloud TTS Chirp 3: HD — 테스트 기간용 무료 벤더.
@@ -34,16 +33,12 @@ public class ChirpTtsClient implements TtsClient {
     /** ko-KR Chirp 3: HD 보이스 이름 접두사. 페르소나(Leda 등)는 Gemini 맵을 그대로 쓴다. */
     static final String VOICE_PREFIX = "ko-KR-Chirp3-HD-";
 
-    private static final int CACHE_MAX_ENTRIES = 512;
-
     private final WebClient webClient;
     private final String baseUrl;
     private final String apiKey;
     private final double speakingRate;
     private final GeminiVoiceProperties voices;
     private final Duration timeout;
-    private final ConcurrentHashMap<String, SynthesizedAudio> cache = new ConcurrentHashMap<>();
-
     public ChirpTtsClient(
             WebClient webClient,
             @Value("${external.tts.chirp.base-url:https://texttospeech.googleapis.com/v1}") String baseUrl,
@@ -68,19 +63,10 @@ public class ChirpTtsClient implements TtsClient {
         return VOICE_PREFIX + persona;
     }
 
+    /** 캐시는 벤더가 아니라 합성이라는 행위의 관심사다 - CachingTtsClient가 라우터 위에서 맡는다. */
     @Override
     public SynthesizedAudio synthesize(String text, String characterName) {
-        String key = voices.voiceFor(characterName) + "" + text;
-        SynthesizedAudio cached = cache.get(key);
-        if (cached != null) {
-            return cached;
-        }
-        SynthesizedAudio fresh = callVendor(text, characterName);
-        if (cache.size() >= CACHE_MAX_ENTRIES) {
-            cache.clear();
-        }
-        cache.put(key, fresh);
-        return fresh;
+        return callVendor(text, characterName);
     }
 
     private SynthesizedAudio callVendor(String text, String characterName) {

@@ -11,7 +11,6 @@ import reactor.netty.http.client.HttpClientRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * OpenAI 음성 합성 (gpt-4o-mini-tts).
@@ -51,28 +50,10 @@ public class OpenAiTtsClient implements TtsClient {
         this.timeout = Duration.ofMillis(timeoutMs);
     }
 
-    /**
-     * 같은 (보이스, 문장) 합성 결과 캐시. 이야기 고정 대사가 20개뿐인데 재생마다
-     * 벤더 과금 + 왕복 지연이 나가던 것을 막는다(08-15 감사). scene_audio 사전 렌더가
-     * 연결되면 이 캐시는 자연히 한산해진다 — 그 전까지의 최소 방어층이다.
-     * 상한을 두는 이유: 아이 이름이 들어간 문장 등 비고정 입력이 무한히 쌓이면 안 된다.
-     */
-    private static final int CACHE_MAX_ENTRIES = 512;
-    private final ConcurrentHashMap<String, SynthesizedAudio> cache = new ConcurrentHashMap<>();
-
+    /** 캐시는 벤더가 아니라 합성이라는 행위의 관심사다 - CachingTtsClient가 라우터 위에서 맡는다. */
     @Override
     public SynthesizedAudio synthesize(String text, String characterName) {
-        String key = voices.voiceFor(characterName) + " " + text;
-        SynthesizedAudio cached = cache.get(key);
-        if (cached != null) {
-            return cached;
-        }
-        SynthesizedAudio fresh = callVendor(text, characterName);
-        if (cache.size() >= CACHE_MAX_ENTRIES) {
-            cache.clear(); // 단순 정책. LRU가 필요할 규모면 scene_audio를 연결할 때다
-        }
-        cache.put(key, fresh);
-        return fresh;
+        return callVendor(text, characterName);
     }
 
     private SynthesizedAudio callVendor(String text, String characterName) {
