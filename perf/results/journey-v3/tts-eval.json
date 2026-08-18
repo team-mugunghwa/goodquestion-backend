@@ -1,0 +1,180 @@
+{
+  "summary": {
+    "short_miss": {
+      "count": 3,
+      "p50_ms": 1074.9,
+      "p95_ms": 1402.4
+    },
+    "short_hit": {
+      "count": 3,
+      "p50_ms": 9.6,
+      "p95_ms": 15.9
+    },
+    "medium_miss": {
+      "count": 3,
+      "p50_ms": 1384.7,
+      "p95_ms": 1454.6
+    },
+    "medium_hit": {
+      "count": 3,
+      "p50_ms": 8.2,
+      "p95_ms": 10.1
+    },
+    "long_miss": {
+      "count": 3,
+      "p50_ms": 2516.8,
+      "p95_ms": 2583.8
+    },
+    "long_hit": {
+      "count": 3,
+      "p50_ms": 8.5,
+      "p95_ms": 10.3
+    }
+  },
+  "rows": [
+    {
+      "round": 1,
+      "bucket": "short",
+      "text_chars": 13,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1037.5
+    },
+    {
+      "round": 1,
+      "bucket": "short",
+      "text_chars": 13,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 9.6
+    },
+    {
+      "round": 1,
+      "bucket": "medium",
+      "text_chars": 36,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1276.0
+    },
+    {
+      "round": 1,
+      "bucket": "medium",
+      "text_chars": 36,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 8.2
+    },
+    {
+      "round": 1,
+      "bucket": "long",
+      "text_chars": 92,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 2583.8
+    },
+    {
+      "round": 1,
+      "bucket": "long",
+      "text_chars": 92,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 10.3
+    },
+    {
+      "round": 2,
+      "bucket": "short",
+      "text_chars": 14,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1074.9
+    },
+    {
+      "round": 2,
+      "bucket": "short",
+      "text_chars": 14,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 9.1
+    },
+    {
+      "round": 2,
+      "bucket": "medium",
+      "text_chars": 35,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1454.6
+    },
+    {
+      "round": 2,
+      "bucket": "medium",
+      "text_chars": 35,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 8.2
+    },
+    {
+      "round": 2,
+      "bucket": "long",
+      "text_chars": 92,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 2481.3
+    },
+    {
+      "round": 2,
+      "bucket": "long",
+      "text_chars": 92,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 8.5
+    },
+    {
+      "round": 3,
+      "bucket": "short",
+      "text_chars": 15,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1402.4
+    },
+    {
+      "round": 3,
+      "bucket": "short",
+      "text_chars": 15,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 15.9
+    },
+    {
+      "round": 3,
+      "bucket": "medium",
+      "text_chars": 35,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 1384.7
+    },
+    {
+      "round": 3,
+      "bucket": "medium",
+      "text_chars": 35,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 10.1
+    },
+    {
+      "round": 3,
+      "bucket": "long",
+      "text_chars": 87,
+      "cache": "miss",
+      "status": 200,
+      "latency_ms": 2516.8
+    },
+    {
+      "round": 3,
+      "bucket": "long",
+      "text_chars": 87,
+      "cache": "hit",
+      "status": 200,
+      "latency_ms": 7.5
+    }
+  ]
+}

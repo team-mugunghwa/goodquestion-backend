@@ -1,0 +1,1802 @@
+{
+  "summary": {
+    "session_start": {
+      "count": 3,
+      "p50_ms": 19.9,
+      "p95_ms": 50.5
+    },
+    "turn": {
+      "count": 40,
+      "p50_ms": 4379.4,
+      "p95_ms": 6943.1
+    },
+    "tts": {
+      "count": 93,
+      "p50_ms": 1400.7,
+      "p95_ms": 2059.8
+    },
+    "story_advance": {
+      "count": 12,
+      "p50_ms": 12.2,
+      "p95_ms": 30.4
+    },
+    "pa_start": {
+      "count": 3,
+      "p50_ms": 15.2,
+      "p95_ms": 21.6
+    },
+    "pa_order": {
+      "count": 3,
+      "p50_ms": 7.3,
+      "p95_ms": 17.6
+    },
+    "pa_retelling": {
+      "count": 3,
+      "p50_ms": 13.9,
+      "p95_ms": 103.1
+    },
+    "stardust": {
+      "count": 3,
+      "p50_ms": 7.2,
+      "p95_ms": 15.4
+    },
+    "report_ready": {
+      "count": 3,
+      "p50_ms": 26244.7,
+      "p95_ms": 28291.8
+    },
+    "scene_fetch": {
+      "count": 1,
+      "p50_ms": 11.8,
+      "p95_ms": 11.8
+    },
+    "turn_short": {
+      "count": 14,
+      "p50_ms": 3789.4,
+      "p95_ms": 5437.7
+    },
+    "turn_medium": {
+      "count": 14,
+      "p50_ms": 4303.1,
+      "p95_ms": 5326.7
+    },
+    "turn_long": {
+      "count": 11,
+      "p50_ms": 5791.4,
+      "p95_ms": 6943.1
+    }
+  },
+  "rounds": [
+    {
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "completed": true,
+      "wall_ms": 119424.3,
+      "vendor_calls": 46
+    },
+    {
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "completed": true,
+      "wall_ms": 140206.3,
+      "vendor_calls": 65
+    },
+    {
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "completed": true,
+      "wall_ms": 140946.5,
+      "vendor_calls": 60
+    }
+  ],
+  "rows": [
+    {
+      "segment": "session_start",
+      "status": 201,
+      "latency_ms": 50.5,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4904.4,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 75,
+      "reply_sentences": 2,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 4888,
+        "준비": 10,
+        "분석": 3330,
+        "판단": 42,
+        "대사": 1496,
+        "반영": 8
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1671.7,
+      "text_chars": 26,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1581.2,
+      "text_chars": 48,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3783.2,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 44,
+      "reply_sentences": 1,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 3772,
+        "준비": 10,
+        "분석": 3687,
+        "판단": 37,
+        "대사": 0,
+        "반영": 37
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1523.9,
+      "text_chars": 44,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 42.4,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 6624.7,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 69,
+      "reply_sentences": 2,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 6614,
+        "준비": 8,
+        "분석": 4746,
+        "판단": 21,
+        "대사": 1817,
+        "반영": 20
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1442.6,
+      "text_chars": 39,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1247.3,
+      "text_chars": 29,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4223.9,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 152,
+      "reply_sentences": 3,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 4214,
+        "준비": 8,
+        "분석": 1866,
+        "판단": 27,
+        "대사": 2300,
+        "반영": 11
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1310.3,
+      "text_chars": 27,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1590.5,
+      "text_chars": 50,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2066.5,
+      "text_chars": 73,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3929.7,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 116,
+      "reply_sentences": 2,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 3914,
+        "준비": 10,
+        "분석": 2009,
+        "판단": 22,
+        "대사": 1853,
+        "반영": 18
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2308.5,
+      "text_chars": 44,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1983.4,
+      "text_chars": 71,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5791.4,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 95,
+      "reply_sentences": 2,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 5784,
+        "준비": 6,
+        "분석": 3840,
+        "판단": 29,
+        "대사": 1897,
+        "반영": 10
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1411.7,
+      "text_chars": 25,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1812.7,
+      "text_chars": 69,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3068.2,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 45,
+      "reply_sentences": 1,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 3063,
+        "준비": 6,
+        "분석": 1275,
+        "판단": 36,
+        "대사": 1723,
+        "반영": 21
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1651.0,
+      "text_chars": 45,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1673.2,
+      "text_chars": 45,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 30.4,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4241.0,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 87,
+      "reply_sentences": 3,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 4233,
+        "준비": 8,
+        "분석": 2408,
+        "판단": 15,
+        "대사": 1781,
+        "반영": 19
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 982.2,
+      "text_chars": 7,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1242.1,
+      "text_chars": 33,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1718.8,
+      "text_chars": 45,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 6943.1,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 71,
+      "reply_sentences": 3,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 6932,
+        "준비": 5,
+        "분석": 4364,
+        "판단": 35,
+        "대사": 2516,
+        "반영": 10
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1120.4,
+      "text_chars": 13,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1288.1,
+      "text_chars": 30,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1188.7,
+      "text_chars": 26,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4127.4,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 71,
+      "reply_sentences": 2,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 4119,
+        "준비": 8,
+        "분석": 2346,
+        "판단": 21,
+        "대사": 1728,
+        "반영": 14
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1257.2,
+      "text_chars": 34,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1915.8,
+      "text_chars": 36,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5625.9,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 35,
+      "reply_sentences": 1,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+      "server": {
+        "server_total_ms": 5616,
+        "준비": 7,
+        "분석": 3752,
+        "판단": 15,
+        "대사": 1815,
+        "반영": 26
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2024.7,
+      "text_chars": 60,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1387.2,
+      "text_chars": 35,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "pa_start",
+      "status": 200,
+      "latency_ms": 21.6,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "pa_order",
+      "status": 200,
+      "latency_ms": 17.6,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "pa_retelling",
+      "status": 200,
+      "latency_ms": 103.1,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "stardust",
+      "status": 200,
+      "latency_ms": 15.4,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "report_ready",
+      "status": 200,
+      "latency_ms": 28291.8,
+      "round": 1,
+      "session_id": "bbbbbbbb-bbbb-bbbb-bbbb-000000000002"
+    },
+    {
+      "segment": "session_start",
+      "status": 201,
+      "latency_ms": 19.8,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 11.2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 11.3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5437.7,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 62,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 5433,
+        "준비": 3,
+        "분석": 2401,
+        "판단": 18,
+        "대사": 2998,
+        "반영": 11
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1293.8,
+      "text_chars": 30,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1350.1,
+      "text_chars": 31,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4530.3,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 70,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4522,
+        "준비": 6,
+        "분석": 2454,
+        "판단": 19,
+        "대사": 2029,
+        "반영": 12
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1490.6,
+      "text_chars": 33,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1637.2,
+      "text_chars": 36,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3638.2,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 28,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 3628,
+        "준비": 9,
+        "분석": 3567,
+        "판단": 22,
+        "대사": 0,
+        "반영": 28
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1102.2,
+      "text_chars": 15,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1227.9,
+      "text_chars": 12,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 19.8,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3801.9,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 51,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 3797,
+        "준비": 6,
+        "분석": 2383,
+        "판단": 20,
+        "대사": 1377,
+        "반영": 9
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2642.4,
+      "text_chars": 13,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1294.3,
+      "text_chars": 26,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1270.8,
+      "text_chars": 10,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4637.7,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 81,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4629,
+        "준비": 5,
+        "분석": 2838,
+        "판단": 16,
+        "대사": 1751,
+        "반영": 16
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1421.8,
+      "text_chars": 17,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1400.7,
+      "text_chars": 34,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1304.8,
+      "text_chars": 28,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4388.0,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 44,
+      "reply_sentences": 1,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4373,
+        "준비": 5,
+        "분석": 4326,
+        "판단": 20,
+        "대사": 0,
+        "반영": 21
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 8.2,
+      "text_chars": 44,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 23.5,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3021.3,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 65,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 3016,
+        "준비": 5,
+        "분석": 1430,
+        "판단": 14,
+        "대사": 1556,
+        "반영": 10
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1179.0,
+      "text_chars": 13,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1360.2,
+      "text_chars": 32,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1145.8,
+      "text_chars": 18,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4228.9,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 119,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4221,
+        "준비": 6,
+        "분석": 1990,
+        "판단": 27,
+        "대사": 2185,
+        "반영": 11
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1576.5,
+      "text_chars": 58,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1887.3,
+      "text_chars": 60,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5424.9,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 110,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 5419,
+        "준비": 4,
+        "분석": 3428,
+        "판단": 20,
+        "대사": 1957,
+        "반영": 8
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1260.5,
+      "text_chars": 25,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1606.4,
+      "text_chars": 37,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2474.9,
+      "text_chars": 46,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3343.1,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 65,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 3335,
+        "준비": 7,
+        "분석": 1518,
+        "판단": 27,
+        "대사": 1766,
+        "반영": 15
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1218.7,
+      "text_chars": 31,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1623.0,
+      "text_chars": 33,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4054.0,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 45,
+      "reply_sentences": 1,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4046,
+        "준비": 7,
+        "분석": 2325,
+        "판단": 36,
+        "대사": 1634,
+        "반영": 41
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2642.3,
+      "text_chars": 82,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 7.0,
+      "text_chars": 45,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 17.2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 7467.5,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 80,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 7461,
+        "준비": 7,
+        "분석": 5106,
+        "판단": 21,
+        "대사": 2311,
+        "반영": 14
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1152.1,
+      "text_chars": 14,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1422.5,
+      "text_chars": 38,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1436.2,
+      "text_chars": 26,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3338.3,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 69,
+      "reply_sentences": 2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 3329,
+        "준비": 5,
+        "분석": 1657,
+        "판단": 24,
+        "대사": 1632,
+        "반영": 9
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1607.7,
+      "text_chars": 32,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1531.7,
+      "text_chars": 36,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4613.4,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 84,
+      "reply_sentences": 3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4605,
+        "준비": 6,
+        "분석": 2830,
+        "판단": 17,
+        "대사": 1735,
+        "반영": 15
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 9.1,
+      "text_chars": 7,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1143.6,
+      "text_chars": 27,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1416.0,
+      "text_chars": 48,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4723.1,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 35,
+      "reply_sentences": 1,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e",
+      "server": {
+        "server_total_ms": 4712,
+        "준비": 7,
+        "분석": 3122,
+        "판단": 15,
+        "대사": 1543,
+        "반영": 23
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1819.2,
+      "text_chars": 60,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 14.2,
+      "text_chars": 35,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "pa_start",
+      "status": 200,
+      "latency_ms": 15.2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "pa_order",
+      "status": 200,
+      "latency_ms": 7.3,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "pa_retelling",
+      "status": 200,
+      "latency_ms": 13.1,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "stardust",
+      "status": 200,
+      "latency_ms": 7.2,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "report_ready",
+      "status": 200,
+      "latency_ms": 26244.7,
+      "round": 2,
+      "session_id": "a18e107f-aa2c-4e4d-8131-92851d55c99e"
+    },
+    {
+      "segment": "session_start",
+      "status": 201,
+      "latency_ms": 19.9,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 11.1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 11.3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3789.4,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 82,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 3784,
+        "준비": 4,
+        "분석": 1980,
+        "판단": 17,
+        "대사": 1766,
+        "반영": 15
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1299.7,
+      "text_chars": 18,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1383.9,
+      "text_chars": 29,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1353.0,
+      "text_chars": 33,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5326.7,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 28,
+      "reply_sentences": 2,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 5319,
+        "준비": 5,
+        "분석": 5287,
+        "판단": 12,
+        "대사": 0,
+        "반영": 13
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 4.4,
+      "text_chars": 15,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 3.5,
+      "text_chars": 12,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 12.2,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 6337.3,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 83,
+      "reply_sentences": 4,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 6333,
+        "준비": 4,
+        "분석": 4617,
+        "판단": 12,
+        "대사": 1689,
+        "반영": 9
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 2059.8,
+      "text_chars": 8,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1787.9,
+      "text_chars": 5,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1180.9,
+      "text_chars": 25,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1459.0,
+      "text_chars": 42,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 2394.0,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 44,
+      "reply_sentences": 1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 2387,
+        "준비": 6,
+        "분석": 2355,
+        "판단": 13,
+        "대사": 0,
+        "반영": 12
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 6.3,
+      "text_chars": 44,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 11.9,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4379.4,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 110,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 4374,
+        "준비": 3,
+        "분석": 2591,
+        "판단": 10,
+        "대사": 1751,
+        "반영": 16
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1191.4,
+      "text_chars": 12,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1564.5,
+      "text_chars": 43,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1734.5,
+      "text_chars": 53,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5438.3,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 94,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 5431,
+        "준비": 8,
+        "분석": 3649,
+        "판단": 21,
+        "대사": 1738,
+        "반영": 13
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1262.6,
+      "text_chars": 24,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1310.9,
+      "text_chars": 26,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1450.8,
+      "text_chars": 42,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 8299.7,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 85,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 8292,
+        "준비": 7,
+        "분석": 1247,
+        "판단": 15,
+        "대사": 7010,
+        "반영": 11
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1123.5,
+      "text_chars": 17,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1360.8,
+      "text_chars": 25,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1580.1,
+      "text_chars": 41,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3819.4,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 86,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 3807,
+        "준비": 8,
+        "분석": 1927,
+        "판단": 18,
+        "대사": 1838,
+        "반영": 13
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 971.7,
+      "text_chars": 10,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1474.7,
+      "text_chars": 43,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1450.1,
+      "text_chars": 31,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 5854.9,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "reply_chars": 45,
+      "reply_sentences": 1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 5848,
+        "준비": 5,
+        "분석": 4286,
+        "판단": 12,
+        "대사": 1519,
+        "반영": 24
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1682.8,
+      "text_chars": 60,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 7.8,
+      "text_chars": 45,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "story_advance",
+      "status": 200,
+      "latency_ms": 14.1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3403.7,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 95,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 3400,
+        "준비": 6,
+        "분석": 1584,
+        "판단": 17,
+        "대사": 1782,
+        "반영": 9
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1286.7,
+      "text_chars": 29,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1541.1,
+      "text_chars": 20,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1559.1,
+      "text_chars": 44,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4303.1,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 54,
+      "reply_sentences": 2,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 4297,
+        "준비": 4,
+        "분석": 2800,
+        "판단": 20,
+        "대사": 1460,
+        "반영": 11
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1511.9,
+      "text_chars": 31,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1348.0,
+      "text_chars": 22,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 503,
+      "latency_ms": 10030.4,
+      "bucket": "long",
+      "utterance_chars": 117,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "scene_fetch",
+      "status": 200,
+      "latency_ms": 11.8,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 3919.0,
+      "bucket": "short",
+      "utterance_chars": 12,
+      "reply_chars": 72,
+      "reply_sentences": 3,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 3915,
+        "준비": 5,
+        "분석": 2257,
+        "판단": 20,
+        "대사": 1621,
+        "반영": 9
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1449.3,
+      "text_chars": 18,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1255.9,
+      "text_chars": 25,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1773.4,
+      "text_chars": 27,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "turn",
+      "status": 200,
+      "latency_ms": 4792.9,
+      "bucket": "medium",
+      "utterance_chars": 47,
+      "reply_chars": 35,
+      "reply_sentences": 1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c",
+      "server": {
+        "server_total_ms": 4786,
+        "준비": 8,
+        "분석": 2999,
+        "판단": 17,
+        "대사": 1721,
+        "반영": 38
+      }
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 1886.6,
+      "text_chars": 65,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "tts",
+      "status": 200,
+      "latency_ms": 8.6,
+      "text_chars": 35,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "pa_start",
+      "status": 200,
+      "latency_ms": 13.7,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "pa_order",
+      "status": 200,
+      "latency_ms": 7.1,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "pa_retelling",
+      "status": 200,
+      "latency_ms": 13.9,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "stardust",
+      "status": 200,
+      "latency_ms": 4.9,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    },
+    {
+      "segment": "report_ready",
+      "status": 200,
+      "latency_ms": 26211.2,
+      "round": 3,
+      "session_id": "7176ce2c-4f97-4e1d-9895-0fba9a42c85c"
+    }
+  ]
+}
