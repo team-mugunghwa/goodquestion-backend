@@ -17,7 +17,10 @@ public record ItemView(UUID id, String name, ItemCategory category, int price,
                        String unlockStoryImageUrl, Integer unlockStardustTotal,
                        String modelUrl, String thumbnailUrl) {
 
-    /** LAZY unlockStory를 초기화하므로 트랜잭션 안에서 불러야 한다. */
+    /**
+     * unlockStory를 읽는다. 목록 경로는 페치 조인으로 이미 채워진 엔티티를 넘기고
+     * (ItemRepository), 단건 검증 경로는 트랜잭션 안에서 부른다.
+     */
     static ItemView from(Item item) {
         Story story = item.getUnlockStory();
         return new ItemView(

@@ -4,7 +4,6 @@ import com.mugunghwa.goodquestion.global.config.CacheConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +17,12 @@ import java.util.List;
  * <p>해금 여부는 여기 없다. 목록은 모든 아이에게 같고, 해금은 아이마다 달라 매번
  * 계산한다(ItemUnlockPolicy). 이 경계가 무너지면 한 아이의 해금 상태가 캐시를 타고
  * 다른 아이에게 보인다.
+ *
+ * <p><b>{@code @Transactional}을 걸지 않는다.</b> 캐시 메서드에 트랜잭션을 함께 걸면
+ * 두 어드바이저의 순서에 결과가 딸려간다 - 트랜잭션이 바깥이면 캐시가 맞는 요청도
+ * 매번 커넥션을 얻는다. 순서에 기대는 대신 트랜잭션이 필요할 이유 자체를 없앴다.
+ * 리포지토리가 해금 이야기까지 페치 조인으로 읽어 오므로 LAZY 초기화가 없고,
+ * 조회 자체는 Spring Data 리포지토리가 자기 트랜잭션에서 처리한다.
  */
 @Service
 @RequiredArgsConstructor
@@ -25,11 +30,10 @@ public class ItemCatalog {
 
     private final ItemRepository itemRepository;
 
-    /** 진열 순서대로. LAZY 해금 이야기까지 적재 시점에 풀어 두므로 트랜잭션이 필요하다. */
+    /** 진열 순서대로. 캐시가 맞으면 DB도 트랜잭션도 건드리지 않는다. */
     @Cacheable(CacheConfig.ITEMS)
-    @Transactional(readOnly = true)
     public List<ItemView> activeItems() {
-        return itemRepository.findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+        return itemRepository.findAllActiveWithUnlockStory(ItemStatus.ACTIVE).stream()
                 .map(ItemView::from).toList();
     }
 }
