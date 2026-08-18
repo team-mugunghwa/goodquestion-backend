@@ -48,11 +48,22 @@ public class SessionController {
         return messageService.getMessages(sessionId, sceneId);
     }
 
-    /** STORY 장면(도입·전개) 재생 완료 통지 → 다음 장면 이동 */
+    /**
+     * STORY 장면(도입, 전개) 재생 완료 통지 -> 다음 장면 이동.
+     *
+     * <p>{@code sceneId}는 방금 다 본 장면이다. 이 값으로 중복 호출을 가려낸다 -
+     * 재전송이나 두 번 누름으로 같은 요청이 두 번 오면, 두 번째는 이미 다음 장면에
+     * 와 있으므로 전진하지 않고 현재 상태를 그대로 돌려준다. 없으면 장면 하나를
+     * 통째로 건너뛰어 아이가 그 대목을 못 본다.
+     *
+     * <p>선택 파라미터다 - 구버전 클라이언트는 지금까지처럼 무조건 전진한다.
+     * 클라이언트가 모두 올라오면 필수로 바꾼다.
+     */
     @PostMapping("/api/sessions/{sessionId}/scenes/current/story-complete")
     public SceneAdvanceResponse completeStoryScene(@CurrentParentId UUID parentId,
-                                                   @PathVariable UUID sessionId) {
-        return sessionService.completeStoryScene(parentId, sessionId);
+                                                   @PathVariable UUID sessionId,
+                                                   @RequestParam(required = false) UUID sceneId) {
+        return sessionService.completeStoryScene(parentId, sessionId, sceneId);
     }
 
     @PostMapping("/api/sessions/{sessionId}/stop")

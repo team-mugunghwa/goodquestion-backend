@@ -183,14 +183,30 @@ public class SessionService {
      * STORY 장면(도입·전개) 재생 완료 → 다음 장면 이동.
      * 대화 장면은 이 API가 아니라 CLOSING 파이프라인으로 이동한다.
      */
+    /** 다 본 장면을 지정하지 않는 호출 - 지금까지처럼 무조건 전진한다. */
     @Transactional
     public SceneAdvanceResponse completeStoryScene(UUID parentId, UUID sessionId) {
+        return completeStoryScene(parentId, sessionId, null);
+    }
+
+    @Transactional
+    public SceneAdvanceResponse completeStoryScene(UUID parentId, UUID sessionId,
+                                                   UUID completedSceneId) {
         StorySession session = getOwnedSession(parentId, sessionId);
 
         if (!session.isInProgress()) {
             throw new BusinessException(ErrorCode.SESSION_NOT_IN_PROGRESS);
         }
         StoryScene currentScene = session.getCurrentScene();
+
+        // 다 본 장면이 이미 지나간 장면이면 중복 호출이다. 전진하지 않고 지금 상태를
+        // 그대로 돌려준다 - 재전송이나 두 번 누름에 장면 하나를 건너뛰면 아이가 그
+        // 대목을 영영 못 본다. 멱등키와 달리 클라이언트의 협조(헤더)가 필요 없다.
+        if (completedSceneId != null && currentScene != null
+                && !completedSceneId.equals(currentScene.getId())) {
+            return new SceneAdvanceResponse(
+                    session.resolvePhase(), toContent(currentScene), null);
+        }
         if (currentScene.isDialogue()) {
             throw new BusinessException(ErrorCode.SCENE_NOT_STORY);
         }
@@ -229,9 +245,20 @@ public class SessionService {
                 ? toMessage(appendOpening(session, nextScene)) : null;
     }
 
+    /**
+     * 세션 중단. 진행 중일 때만 멈춘다.
+     *
+     * <p>가드가 없으면 이미 완주한 세션에 stop이 들어와 COMPLETED를 STOPPED로 덮는다.
+     * completedAt은 남아 있어 "끝냈는데 중단됨"이라는 모순 상태가 되고, 홈의 이어하기와
+     * 리포트가 서로 다른 이야기를 하게 된다. 중단할 것이 없으면 조용히 넘어간다 -
+     * 이미 끝난 세션을 닫으려는 것은 오류가 아니라 늦은 요청이다.
+     */
     @Transactional
     public void stop(UUID parentId, UUID sessionId) {
-        getOwnedSession(parentId, sessionId).stop();
+        StorySession session = getOwnedSession(parentId, sessionId);
+        if (session.isInProgress()) {
+            session.stop();
+        }
     }
 
     /**

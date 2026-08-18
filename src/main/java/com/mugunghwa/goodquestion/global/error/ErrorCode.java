@@ -42,6 +42,8 @@ public enum ErrorCode {
 
     // ---- 멱등키 ----
     REQUEST_IN_PROGRESS(HttpStatus.CONFLICT, "같은 요청을 처리하는 중입니다. 잠시 후 다시 시도해 주세요."),
+    REQUEST_ALREADY_FAILED(HttpStatus.CONFLICT,
+            "이전 시도가 실패했습니다. 진행 상태를 확인한 뒤 새로 요청해 주세요."),
     INVALID_IDEMPOTENCY_KEY(HttpStatus.BAD_REQUEST, "Idempotency-Key는 64자 이하여야 합니다."),
 
     // ---- 진행 단계 충돌 ----

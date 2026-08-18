@@ -22,7 +22,11 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IdempotentRequest {
 
-    public enum Status { IN_PROGRESS, COMPLETED }
+    /**
+     * FAILED는 "실패했고 다시 실행하면 안 된다"는 뜻이다. 다시 해도 되는 작업은
+     * 행을 남기지 않고 지운다(IdempotentEndpoint.isReexecutable).
+     */
+    public enum Status { IN_PROGRESS, COMPLETED, FAILED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -56,6 +60,10 @@ public class IdempotentRequest {
     @Column(name = "completed_at")
     private OffsetDateTime completedAt;
 
+    /** 실패 사유. 클라이언트에 내리지 않고 운영자가 로그와 대조할 때 쓴다. */
+    @Column(name = "failure_reason", length = 200)
+    private String failureReason;
+
     @Builder
     public IdempotentRequest(IdempotentEndpoint endpoint, UUID scopeId, UUID parentId,
                              String idempotencyKey) {
@@ -74,6 +82,14 @@ public class IdempotentRequest {
     public void complete(String responseJson) {
         this.status = Status.COMPLETED;
         this.response = responseJson;
+        this.completedAt = OffsetDateTime.now();
+    }
+
+    /** 실패로 닫는다. 같은 키의 재시도는 재실행되지 않고 상태 확인 안내를 받는다. */
+    public void fail(String reason) {
+        this.status = Status.FAILED;
+        this.failureReason = reason == null ? null
+                : reason.substring(0, Math.min(reason.length(), 200));
         this.completedAt = OffsetDateTime.now();
     }
 }
