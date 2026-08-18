@@ -51,7 +51,17 @@ public class IdempotencyService {
             store.complete(record.getId(), objectMapper.writeValueAsString(result));
             return result;
         } catch (RuntimeException e) {
-            store.abandon(record.getId());
+            // 재실행이 안전한 작업만 키를 비운다. 여러 트랜잭션에 걸친 작업은 앞부분이
+            // 이미 커밋됐을 수 있어, 키를 비우면 같은 키의 재시도가 그 앞부분을 한 번 더
+            // 실행한다 - 멱등키가 막겠다고 한 중복이 멱등키 때문에 생기는 셈이다.
+            //
+            // complete()가 던진 경우도 여기로 온다. 그때는 작업이 이미 끝난 뒤라 더더욱
+            // 다시 실행하면 안 된다.
+            if (endpoint.isReexecutable()) {
+                store.abandon(record.getId());
+            } else {
+                store.fail(record.getId(), e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
             throw e;
         }
     }

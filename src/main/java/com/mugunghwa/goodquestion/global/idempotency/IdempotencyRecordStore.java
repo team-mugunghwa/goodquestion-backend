@@ -49,6 +49,12 @@ public class IdempotencyRecordStore {
         if (!record.getParentId().equals(parentId)) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
+        // 앞선 시도가 실패로 닫혔다. 다시 실행하지 않는다 - 재실행이 위험해서 지우지 않고
+        // 남긴 기록이다(IdempotentEndpoint.isReexecutable). 일부가 이미 반영됐을 수 있으니
+        // 클라이언트는 실제 상태를 확인한 뒤, 새 작업이 필요하면 새 키로 보낸다.
+        if (record.getStatus() == IdempotentRequest.Status.FAILED) {
+            throw new BusinessException(ErrorCode.REQUEST_ALREADY_FAILED);
+        }
         if (!record.isCompleted()) {
             // 처리 중이면 기다리게 한다. 완료 기록 전에 서버가 죽은 극단 케이스는 이 키가
             // 청소 전까지 409로 남는데, 그때의 복구는 기존 절차(turn-state 확인)를 쓴다 -
@@ -63,10 +69,21 @@ public class IdempotencyRecordStore {
         repository.findById(recordId).ifPresent(record -> record.complete(responseJson));
     }
 
-    /** 작업 실패 시 키를 비운다 - 정직한 재시도가 다시 실행될 수 있어야 한다. */
+    /**
+     * 작업 실패 시 키를 비운다 - 정직한 재시도가 다시 실행될 수 있어야 한다.
+     *
+     * <p>재실행이 안전한 엔드포인트에만 쓴다. 여러 트랜잭션에 걸친 작업은 앞부분이
+     * 이미 커밋됐을 수 있어 다시 실행하면 중복이 되므로 {@link #fail}로 남긴다.
+     */
     @Transactional
     public void abandon(UUID recordId) {
         repository.deleteById(recordId);
+    }
+
+    /** 작업 실패를 기록으로 남긴다 - 같은 키의 재시도가 재실행되지 않게 한다. */
+    @Transactional
+    public void fail(UUID recordId, String reason) {
+        repository.findById(recordId).ifPresent(record -> record.fail(reason));
     }
 
     @Scheduled(fixedDelayString = "PT1H")

@@ -141,17 +141,61 @@ class IdempotencyIntegrationTest {
                         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REQUEST_IN_PROGRESS));
     }
 
+    /**
+     * 발화는 실패해도 키를 비우지 않는다.
+     *
+     * <p>턴 처리는 트랜잭션 셋으로 쪼개져 있어(TurnTransactions) 아이 발화가 커밋된 뒤
+     * 캐릭터 대사 생성이 실패할 수 있다. 그때 키를 비우면 같은 키의 재시도가 발화를 한 번
+     * 더 저장한다 - 멱등키가 막겠다고 한 중복 턴이 멱등키 때문에 생긴다.
+     *
+     * <p>서버는 어느 구간에서 실패했는지 모르므로 보수적으로 전부 남긴다. 실제로 아무것도
+     * 커밋되지 않은 실패(여기처럼 분석 단계)도 재실행하지 않는다 - 클라이언트는
+     * turn-state로 확인한 뒤 필요하면 새 키로 보낸다.
+     */
     @Test
-    void 실패한_작업의_키는_비워져_재시도가_다시_실행된다() {
+    void 실패한_발화의_키는_남아_같은_키의_재시도가_재실행되지_않는다() {
         // 대본이 없어 분석 대역이 예외를 던진다 - 작업 실패.
         assertThatThrownBy(() -> submit("key-fail", "며느리가 힘들 것 같아요"))
                 .isInstanceOf(IllegalStateException.class);
 
-        // 키가 지워졌으므로 같은 키의 정직한 재시도는 다시 실행된다.
+        // 대본을 준비해 둬도 다시 실행되지 않는다 - 실행됐다면 턴이 생겼을 것이다.
         analysisLlmClient.willDetect(UtteranceValidity.VALID, ThinkingElement.EMOTION);
-        UtteranceResponse retried = submit("key-fail", "며느리가 힘들 것 같아요");
+        assertThatThrownBy(() -> submit("key-fail", "며느리가 힘들 것 같아요"))
+                .isInstanceOfSatisfying(BusinessException.class, e ->
+                        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REQUEST_ALREADY_FAILED));
+
+        assertThat(sessionService.getTurnState(PARENT_ID, sessionId).progress().turnCount())
+                .isZero();
+    }
+
+    /** 새 키는 막지 않는다 - 실패한 것은 그 시도이지 아이의 발화가 아니다. */
+    @Test
+    void 실패_뒤_새_키로_보내면_정상_처리된다() {
+        assertThatThrownBy(() -> submit("key-fail", "며느리가 힘들 것 같아요"))
+                .isInstanceOf(IllegalStateException.class);
+
+        analysisLlmClient.willDetect(UtteranceValidity.VALID, ThinkingElement.EMOTION);
+        UtteranceResponse retried = submit("key-retry", "며느리가 힘들 것 같아요");
 
         assertThat(retried.progress().turnCount()).isEqualTo(1);
+    }
+
+    /**
+     * 구매는 실패하면 키를 비운다 - 한 트랜잭션이라 실패하면 아무것도 남지 않는다.
+     * 재실행이 안전한 작업까지 막으면 정직한 재시도가 영영 불가능해진다.
+     */
+    @Test
+    void 실패한_구매의_키는_비워져_재시도가_다시_실행된다() {
+        UUID missingItem = UUID.fromString("44444444-4444-4444-4444-999999999999");
+        assertThatThrownBy(() -> idempotencyService.execute(
+                IdempotentEndpoint.ITEM_PURCHASE, CHILD_ID, PARENT_ID, "buy-fail",
+                ItemPurchaseResponse.class,
+                () -> shopService.purchase(PARENT_ID, CHILD_ID,
+                        new ItemPurchaseRequest(missingItem))))
+                .isInstanceOf(BusinessException.class);
+
+        // 같은 키로 실재하는 아이템을 사면 실행된다 - 키가 비워졌다는 증거다.
+        assertThat(purchase("buy-fail")).isNotNull();
     }
 
     @Test
