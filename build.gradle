@@ -40,6 +40,10 @@ dependencies {
     // 선정 근거: 프론트 docs/단어_저장_비용_속도_설계_조사.md 3절
     implementation 'org.apache.lucene:lucene-analysis-nori:10.4.0'
 
+    // 콘텐츠 마스터(topics, items) 조회 캐시. 버전은 Boot BOM이 관리한다.
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     implementation 'io.github.cdimascio:dotenv-java:3.2.0'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.12.7'

@@ -13,11 +13,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TopicController {
 
-    private final TopicRepository topicRepository;
+    private final TopicService topicService;
 
     @GetMapping
     public List<TopicResponse> getTopics() {
-        return topicRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .map(TopicResponse::from).toList();
+        return topicService.getTopics();
     }
 }

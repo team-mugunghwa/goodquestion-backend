@@ -9,10 +9,9 @@ import com.mugunghwa.goodquestion.learning.postactivity.dto.PostActivityStatusRe
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingRequest;
 import com.mugunghwa.goodquestion.learning.postactivity.dto.RetellingResponse;
 import com.mugunghwa.goodquestion.learning.report.ReportService;
-import com.mugunghwa.goodquestion.learning.reward.shop.Item;
-import com.mugunghwa.goodquestion.learning.reward.shop.ItemRepository;
-import com.mugunghwa.goodquestion.learning.reward.shop.ItemStatus;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemCatalog;
 import com.mugunghwa.goodquestion.learning.reward.shop.ItemUnlockPolicy;
+import com.mugunghwa.goodquestion.learning.reward.shop.ItemView;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustService;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransaction;
 import com.mugunghwa.goodquestion.learning.reward.stardust.StardustTransactionRepository;
@@ -58,7 +57,7 @@ public class PostActivityService {
     private final StardustService stardustService;
     private final StardustWalletRepository walletRepository;
     private final StardustTransactionRepository transactionRepository;
-    private final ItemRepository itemRepository;
+    private final ItemCatalog itemCatalog;
     private final ItemUnlockPolicy unlockPolicy;
 
     /**
@@ -139,10 +138,11 @@ public class PostActivityService {
         // 지급 전후로 해금이 달라질 수 있어(완주 횟수·누적 획득량) 먼저 지금 열린 것을 적어 둔다.
         Set<UUID> unlockedBefore = unlockedItemIds(session.getChild().getId());
         stardustService.awardStoryCompleted(session);
-        List<Item> newlyUnlocked = itemRepository
-                .findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
-                .filter(item -> !unlockedBefore.contains(item.getId()))
-                .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedOf(session)))
+        // 지갑은 지급 후 한 번만 읽는다 - 필터 안에서 읽으면 아이템마다 지갑 조회가 나간다.
+        int totalEarnedAfterAward = totalEarnedOf(session);
+        List<ItemView> newlyUnlocked = itemCatalog.activeItems().stream()
+                .filter(item -> !unlockedBefore.contains(item.id()))
+                .filter(item -> unlockPolicy.isUnlocked(item, session.getChild().getId(), totalEarnedAfterAward))
                 .toList();
 
         // 리포트 생성은 SessionCompletedEvent를 듣는 ReportGenerationListener가 맡는다.
@@ -161,7 +161,7 @@ public class PostActivityService {
                 sessionStardust(session),
                 newlyUnlocked.stream()
                         .map(item -> new RetellingResponse.UnlockedItem(
-                                item.getId(), item.getName(), item.getThumbnailUrl()))
+                                item.id(), item.name(), item.thumbnailUrl()))
                         .toList());
     }
 
@@ -188,9 +188,9 @@ public class PostActivityService {
     private Set<UUID> unlockedItemIds(UUID childId) {
         int totalEarned = walletRepository.findByChildId(childId)
                 .map(StardustWallet::getTotalEarned).orElse(0);
-        return itemRepository.findAllByStatusOrderByDisplayOrderAsc(ItemStatus.ACTIVE).stream()
+        return itemCatalog.activeItems().stream()
                 .filter(item -> unlockPolicy.isUnlocked(item, childId, totalEarned))
-                .map(Item::getId)
+                .map(ItemView::id)
                 .collect(Collectors.toSet());
     }
 

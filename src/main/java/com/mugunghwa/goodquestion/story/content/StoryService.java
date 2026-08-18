@@ -5,6 +5,7 @@ import com.mugunghwa.goodquestion.global.error.ErrorCode;
 import com.mugunghwa.goodquestion.story.content.dto.StoryCardResponse;
 import com.mugunghwa.goodquestion.story.content.dto.StoryDetailResponse;
 import com.mugunghwa.goodquestion.story.content.dto.StoryListResponse;
+import com.mugunghwa.goodquestion.story.content.dto.TopicResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class StoryService {
     private final StoryRepository storyRepository;
     private final StorySceneRepository sceneRepository;
     private final StoryTopicRepository storyTopicRepository;
-    private final TopicRepository topicRepository;
+    private final TopicService topicService;
 
     /** 공개된 이야기만 노출한다(선택-05). 페이징은 적용하지 않고 전체를 반환한다. */
     public StoryListResponse getStories(String topic) {
@@ -39,8 +40,8 @@ public class StoryService {
                 .map(s -> toCard(s, topicNames.getOrDefault(s.getId(), List.of())))
                 .toList();
 
-        List<String> allTopics = topicRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .map(Topic::getName)
+        List<String> allTopics = topicService.getTopics().stream()
+                .map(TopicResponse::name)
                 .toList();
 
         return new StoryListResponse(cards, allTopics);
