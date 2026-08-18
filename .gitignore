@@ -47,3 +47,8 @@ out/
 
 # Local Codex/dev server logs
 .codex-*.log
+
+### 성능 측정 산출물
+# 서버 로그는 재현 가능한 부산물이고 용량 대부분(3.1MB)을 차지한다.
+# 측정 결과(JSON)와 리포트만 남긴다.
+perf/results/*/server.log

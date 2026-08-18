@@ -1,0 +1,346 @@
+{
+  "summary": {
+    "samples": 33,
+    "rounds": 3,
+    "latency_p50_ms": 1644.3,
+    "latency_p95_ms": 3031.6,
+    "reject_count": 0,
+    "over_20chars": 0,
+    "eojeol_in_range": 17,
+    "avg_chars": 16.6,
+    "avg_eojeol": 4.6,
+    "examples_full": 32
+  },
+  "rows": [
+    {
+      "word": "부뚜막",
+      "status": 201,
+      "latency_ms": 3031.6,
+      "meaning": "부엌 한쪽에 있는 아궁이 자리예요",
+      "meaning_chars": 18,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "다듬이",
+      "status": 201,
+      "latency_ms": 3140.4,
+      "meaning": "천을 두드려 매끈하게 하는 도구예요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "아궁이",
+      "status": 201,
+      "latency_ms": 1516.9,
+      "meaning": "불을 피우는 작은 화덕이에요",
+      "meaning_chars": 15,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "가마솥",
+      "status": 201,
+      "latency_ms": 2098.4,
+      "meaning": "밥을 크게 지을 수 있는 큰 솥이에요",
+      "meaning_chars": 20,
+      "meaning_eojeol": 7,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "우물",
+      "status": 201,
+      "latency_ms": 1475.9,
+      "meaning": "땅에 판 물을 담는 구덩이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "소쿠리",
+      "status": 201,
+      "latency_ms": 1732.4,
+      "meaning": "채소나 과일을 담는 바구니예요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "부지깽이",
+      "status": 201,
+      "latency_ms": 1645.7,
+      "meaning": "아궁이 불을 건드리는 막대예요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "사랑방",
+      "status": 201,
+      "latency_ms": 10042.0,
+      "meaning": "지금은 뜻을 알려줄 수 없어요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 5,
+      "examples": 0,
+      "round": 1
+    },
+    {
+      "word": "곳간",
+      "status": 201,
+      "latency_ms": 2319.0,
+      "meaning": "곡식을 보관하는 방이에요",
+      "meaning_chars": 13,
+      "meaning_eojeol": 3,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "절구",
+      "status": 201,
+      "latency_ms": 1500.2,
+      "meaning": "곡식을 찧는 넓고 둥근 그릇이에요",
+      "meaning_chars": 18,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "두레박",
+      "status": 201,
+      "latency_ms": 1797.3,
+      "meaning": "우물에서 물을 뜨는 그릇이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 1
+    },
+    {
+      "word": "부뚜막",
+      "status": 201,
+      "latency_ms": 1450.1,
+      "meaning": "부엌 아궁이 위의 넓은 마루예요",
+      "meaning_chars": 17,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "다듬이",
+      "status": 201,
+      "latency_ms": 1522.9,
+      "meaning": "옷감을 주물러 매만져 주는 일이에요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "아궁이",
+      "status": 201,
+      "latency_ms": 1381.7,
+      "meaning": "불을 피우는 곳이에요",
+      "meaning_chars": 11,
+      "meaning_eojeol": 3,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "가마솥",
+      "status": 201,
+      "latency_ms": 1568.1,
+      "meaning": "불 위에서 음식을 끓이는 큰 솥이에요",
+      "meaning_chars": 20,
+      "meaning_eojeol": 6,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "우물",
+      "status": 201,
+      "latency_ms": 1644.3,
+      "meaning": "땅을 파서 만든 물 마시는 곳이에요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 6,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "소쿠리",
+      "status": 201,
+      "latency_ms": 1483.1,
+      "meaning": "물건을 담는 바구니예요",
+      "meaning_chars": 12,
+      "meaning_eojeol": 3,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "부지깽이",
+      "status": 201,
+      "latency_ms": 1884.6,
+      "meaning": "불을 보살피는 기다란 막대예요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "사랑방",
+      "status": 201,
+      "latency_ms": 1356.9,
+      "meaning": "손님을 맞이하는 큰 방이에요",
+      "meaning_chars": 15,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "곳간",
+      "status": 201,
+      "latency_ms": 1389.9,
+      "meaning": "곡식이나 물건을 넣어 두는 방이에요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "절구",
+      "status": 201,
+      "latency_ms": 1792.8,
+      "meaning": "곡식을 빻는 큰 바가지예요",
+      "meaning_chars": 14,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "두레박",
+      "status": 201,
+      "latency_ms": 1703.4,
+      "meaning": "우물에서 물을 뜨는 그릇이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 2
+    },
+    {
+      "word": "부뚜막",
+      "status": 201,
+      "latency_ms": 1644.6,
+      "meaning": "부엌 안에 있는 큰 아궁이 자리예요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 6,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "다듬이",
+      "status": 201,
+      "latency_ms": 1554.8,
+      "meaning": "천을 두드려 결을 고르는 도구예요",
+      "meaning_chars": 18,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "아궁이",
+      "status": 201,
+      "latency_ms": 1701.7,
+      "meaning": "불을 피우는 돌로 된 곳이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "가마솥",
+      "status": 201,
+      "latency_ms": 1481.7,
+      "meaning": "밥이나 국을 크게 끓이는 큰 솥이에요",
+      "meaning_chars": 20,
+      "meaning_eojeol": 6,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "우물",
+      "status": 201,
+      "latency_ms": 1632.2,
+      "meaning": "땅속에서 물이 나오는 곳이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "소쿠리",
+      "status": 201,
+      "latency_ms": 1391.2,
+      "meaning": "곡식이나 과일을 담는 바구니예요",
+      "meaning_chars": 17,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "부지깽이",
+      "status": 201,
+      "latency_ms": 1880.3,
+      "meaning": "화로나 불을 쓸 때 쓰는 도구예요",
+      "meaning_chars": 18,
+      "meaning_eojeol": 6,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "사랑방",
+      "status": 201,
+      "latency_ms": 1761.5,
+      "meaning": "손님을 맞이하는 큰 방이에요",
+      "meaning_chars": 15,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "곳간",
+      "status": 201,
+      "latency_ms": 2173.1,
+      "meaning": "곡식이나 물건을 넣어 두는 곳이에요",
+      "meaning_chars": 19,
+      "meaning_eojeol": 5,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "절구",
+      "status": 201,
+      "latency_ms": 1894.2,
+      "meaning": "곡식을 빻는 큰 그릇이에요",
+      "meaning_chars": 14,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 3
+    },
+    {
+      "word": "두레박",
+      "status": 201,
+      "latency_ms": 1475.3,
+      "meaning": "우물에서 물을 뜨는 그릇이에요",
+      "meaning_chars": 16,
+      "meaning_eojeol": 4,
+      "examples": 3,
+      "round": 3
+    }
+  ]
+}

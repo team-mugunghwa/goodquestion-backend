@@ -1,0 +1,182 @@
+{
+  "summary": {
+    "rounds": 3,
+    "non_speech_samples": 15,
+    "hallucination_rate": 1.0,
+    "hallucinated_texts": [
+      "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장"
+    ],
+    "real_samples": 0,
+    "real_cer_avg": null,
+    "confidence_avg": 1.0,
+    "latency_p50_ms": 623.9,
+    "latency_p95_ms": 1192.7
+  },
+  "rows": [
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 1192.7,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 742.3,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 951.0,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 200,
+      "latency_ms": 634.7,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 200,
+      "latency_ms": 641.2,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 561.0,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 623.9,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 573.5,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 200,
+      "latency_ms": 569.6,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 200,
+      "latency_ms": 572.2,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 576.8,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 1621.8,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 200,
+      "latency_ms": 556.5,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 200,
+      "latency_ms": 577.6,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 200,
+      "latency_ms": 665.1,
+      "text": "며느리, 시아버지, 방귀, 친정, 갓, 이장, 배나무, 장대, 기왓장",
+      "confidence": 1.0,
+      "lowConfidence": false,
+      "round": 3,
+      "kind": "non_speech"
+    }
+  ]
+}

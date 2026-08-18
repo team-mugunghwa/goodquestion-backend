@@ -1,0 +1,150 @@
+{
+  "summary": {
+    "rounds": 3,
+    "non_speech_samples": 15,
+    "hallucination_rate": 0.0,
+    "hallucinated_texts": [],
+    "real_samples": 0,
+    "real_cer_avg": null,
+    "confidence_avg": null,
+    "latency_p50_ms": 800.7,
+    "latency_p95_ms": 873.1
+  },
+  "rows": [
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 873.1,
+      "code": "STT_EMPTY_TEXT",
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 796.5,
+      "code": "STT_EMPTY_TEXT",
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 734.5,
+      "code": "STT_EMPTY_TEXT",
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 422,
+      "latency_ms": 803.5,
+      "code": "STT_EMPTY_TEXT",
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 422,
+      "latency_ms": 819.7,
+      "code": "STT_EMPTY_TEXT",
+      "round": 1,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 761.9,
+      "code": "STT_EMPTY_TEXT",
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 756.6,
+      "code": "STT_EMPTY_TEXT",
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 770.4,
+      "code": "STT_EMPTY_TEXT",
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 422,
+      "latency_ms": 800.7,
+      "code": "STT_EMPTY_TEXT",
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 422,
+      "latency_ms": 861.3,
+      "code": "STT_EMPTY_TEXT",
+      "round": 2,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "silence.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 760.6,
+      "code": "STT_EMPTY_TEXT",
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 983.0,
+      "code": "STT_EMPTY_TEXT",
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "tone.wav",
+      "audio_seconds": 2.0,
+      "status": 422,
+      "latency_ms": 786.3,
+      "code": "STT_EMPTY_TEXT",
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_5s.wav",
+      "audio_seconds": 5.0,
+      "status": 422,
+      "latency_ms": 834.5,
+      "code": "STT_EMPTY_TEXT",
+      "round": 3,
+      "kind": "non_speech"
+    },
+    {
+      "sample": "noise_10s.wav",
+      "audio_seconds": 10.0,
+      "status": 422,
+      "latency_ms": 826.1,
+      "code": "STT_EMPTY_TEXT",
+      "round": 3,
+      "kind": "non_speech"
+    }
+  ]
+}
