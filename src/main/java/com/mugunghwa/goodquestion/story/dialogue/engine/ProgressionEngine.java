@@ -37,6 +37,13 @@ public class ProgressionEngine {
      * 1. 종료 — (필수 요소 충족 && 최소 대화량[preferred_turns] 충족) → CLOSING(GOAL_MET)
      *          / 최대 대화 범위[max_turns] 도달 → CLOSING(MAX_TURNS)
      * 2. 강한 유도 제한 — 첫 발화 / 이번 턴 새 요소 확인됨 / 직전 턴이 GUIDED → GUIDED 금지
+     * <p><b>2026-08-17 기본값 변경</b> - {@code progression.guidance.always-guide}가 켜져 있으면
+     * 2·3의 제한을 건너뛰고 <b>필수 요소가 남는 한 매 턴 유도</b>한다(첫 발화 제외).
+     * 원 규칙(진행-09/10)은 "무진전 2연속 등"이었는데, 실제로는 요소를 하나만 채워도 그 턴
+     * 유도가 꺼지고 직전 유도 다음 턴도 꺼져서 4~5턴 장면에서 유도가 한두 번밖에 걸리지
+     * 않았다. 성인 테스트와 팀 시연에서 "유도가 안 된다"는 지적이 반복돼 기본값을 바꿨다.
+     * 설정을 false로 두면 문서의 원 규칙으로 돌아간다.
+     *
      * 3. 유도 필요성 — 필수 요소 잔여 && (무진전 2연속 || 저정보 2연속 || 남은 턴 <= 2) → GUIDED
      * 4. 약한 유도(soft-cue, 진행-13) — NORMAL이지만 이번 턴 신규 요소 확인 && 필수 요소 잔여
      *    && 반응이 장난/질문/불명확이 아니면 걱정을 가볍게 얹는다
@@ -94,10 +101,18 @@ public class ProgressionEngine {
      */
     private boolean isGuidanceAllowed(StorySession session, int turnCount, ResponseMode previousMode) {
         boolean firstUtterance = turnCount <= 1;
+        if (firstUtterance) {
+            // 첫 발화는 아이가 스스로 꺼내는 자리다. 여기까지 밀면 추궁이 된다.
+            return false;
+        }
+        if (properties.guidesAlways()) {
+            // 강한 유도 기본 모드: 요소가 남아 있는 한 매 턴 이끈다.
+            return true;
+        }
         boolean newElementThisTurn = session.getTurnsWithoutNewElement() == 0;
         boolean guidedLastTurn = previousMode == ResponseMode.GUIDED;
 
-        return !firstUtterance && !newElementThisTurn && !guidedLastTurn;
+        return !newElementThisTurn && !guidedLastTurn;
     }
 
     /**
@@ -107,6 +122,10 @@ public class ProgressionEngine {
      * "남은 턴 <= 2"). 요소 수와 비교하면 요소가 많은 장면에서 유도가 너무 이르게 걸린다.
      */
     private boolean isGuidanceNeeded(StorySession session, StoryScene scene, int turnCount) {
+        if (properties.guidesAlways()) {
+            // 필요성 판정도 생략한다 - 호출부가 이미 "필수 요소가 남았는가"를 확인했다.
+            return true;
+        }
         boolean stalled = session.getTurnsWithoutNewElement() >= properties.stalledTurns();
         boolean lowInformation =
                 session.getConsecutiveLowInformationTurns() >= properties.lowInformationTurns();

@@ -207,6 +207,9 @@ progression:
     stalled-turns: ${GUIDANCE_STALLED_TURNS:2}
     low-information-turns: ${GUIDANCE_LOW_INFO_TURNS:2}
     remaining-turns: ${GUIDANCE_REMAINING_TURNS:2}
+    # 켜면 필수 요소가 남는 한 매 턴 유도한다(첫 발화 제외). 2026-08-17 기본 켜짐 -
+    # 위 세 임계값은 always-guide를 끌 때만 쓰인다.
+    always-guide: ${GUIDANCE_ALWAYS:true}
 
 app:
   # 비밀번호 재설정 메일의 링크가 가리킬 프론트엔드 주소
