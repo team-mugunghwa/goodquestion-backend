@@ -36,13 +36,15 @@ public class ProgressionEngine {
      * 판단 순서 (대화 작동 규칙 2.2, 발화 분석 문서 11장):
      * 1. 종료 — (필수 요소 충족 && 최소 대화량[preferred_turns] 충족) → CLOSING(GOAL_MET)
      *          / 최대 대화 범위[max_turns] 도달 → CLOSING(MAX_TURNS)
-     * 2. 강한 유도 제한 — 첫 발화 / 이번 턴 새 요소 확인됨 / 직전 턴이 GUIDED → GUIDED 금지
+     * 2. 강한 유도 제한 — 반응이 장난/질문/불명확(진행-14) / 첫 발화 / 이번 턴 새 요소 확인됨
+     *    / 직전 턴이 GUIDED → GUIDED 금지
      * <p><b>2026-08-17 기본값 변경</b> - {@code progression.guidance.always-guide}가 켜져 있으면
      * 2·3의 제한을 건너뛰고 <b>필수 요소가 남는 한 매 턴 유도</b>한다(첫 발화 제외).
      * 원 규칙(진행-09/10)은 "무진전 2연속 등"이었는데, 실제로는 요소를 하나만 채워도 그 턴
      * 유도가 꺼지고 직전 유도 다음 턴도 꺼져서 4~5턴 장면에서 유도가 한두 번밖에 걸리지
      * 않았다. 성인 테스트와 팀 시연에서 "유도가 안 된다"는 지적이 반복돼 기본값을 바꿨다.
-     * 설정을 false로 두면 문서의 원 규칙으로 돌아간다.
+     * 설정을 false로 두면 문서의 원 규칙으로 돌아간다. 단 진행-14(장난/질문/불명확)는
+     * always-guide와 무관하게 유지한다 — 유도 빈도의 문제가 아니라 아이 말을 받는 문제다.
      *
      * 3. 유도 필요성 — 필수 요소 잔여 && (무진전 2연속 || 저정보 2연속 || 남은 턴 <= 2) → GUIDED
      * 4. 약한 유도(soft-cue, 진행-13) — NORMAL이지만 이번 턴 신규 요소 확인 && 필수 요소 잔여
@@ -72,7 +74,8 @@ public class ProgressionEngine {
         }
 
         // 2 + 3. 강한 유도는 "해도 되는가"와 "해야 하는가"를 모두 만족할 때만 한다.
-        if (!missing.isEmpty() && isGuidanceAllowed(session, turnCount, previousMode)
+        if (!missing.isEmpty() && !reactionBlocksGuidance(session, scene, turnCount, analysis)
+                && isGuidanceAllowed(session, turnCount, previousMode)
                 && isGuidanceNeeded(session, scene, turnCount)) {
             ThinkingElement target = guidanceTargetSelector.select(session, scene);
             if (target != null) {
@@ -91,6 +94,28 @@ public class ProgressionEngine {
         }
 
         return ProgressionDecision.normal();
+    }
+
+    /**
+     * 반응에 따른 유도 보류(진행-14). 장난 / 질문 / 불명확에는 걱정을 들이밀지 않는다 —
+     * 아이가 물어봤는데 캐릭터가 제 걱정부터 꺼내면 아이 말이 통째로 무시된다.
+     *
+     * <p>이 규칙은 원래 약한 유도 분기에만 걸려 있었다. always-guide가 켜지면서 강한 유도가
+     * 그 분기보다 앞에서 매 턴 반환되어 규칙이 조용히 꺼졌다(2026-08-18 발견).
+     *
+     * <p>진행-14를 강한 유도까지 넓히면 진행-10(저정보 2연속이면 유도)과 정면으로 부딪친다 -
+     * 저정보 발화는 대개 불명확으로 찍히기 때문이다. 둘의 우선순위를 여기서 정한다:
+     * <b>진행-10의 필요 신호(무진전/저정보/남은 턴)가 서 있으면 보류를 풀고 유도한다.</b>
+     * 진행-14가 막는 것은 지금이 아니어도 되는데 걱정부터 들이미는 턴이다.
+     * 이 조정이 없으면 짧게만 답하는 아이에게 유도가 영영 걸리지 않는다.
+     */
+    private boolean reactionBlocksGuidance(StorySession session, StoryScene scene,
+                                           int turnCount, UtteranceAnalysis analysis) {
+        ReactionKey key = reactionKeyResolver.resolve(analysis, false);
+        if (reactionKeyResolver.allowsSoftCue(key)) {
+            return false;
+        }
+        return !documentedGuidanceNeeded(session, scene, turnCount);
     }
 
     /**
@@ -126,6 +151,11 @@ public class ProgressionEngine {
             // 필요성 판정도 생략한다 - 호출부가 이미 "필수 요소가 남았는가"를 확인했다.
             return true;
         }
+        return documentedGuidanceNeeded(session, scene, turnCount);
+    }
+
+    /** 진행-10의 원 신호. always-guide가 켜져도 진행-14와의 우선순위 판정에는 이 값을 쓴다. */
+    private boolean documentedGuidanceNeeded(StorySession session, StoryScene scene, int turnCount) {
         boolean stalled = session.getTurnsWithoutNewElement() >= properties.stalledTurns();
         boolean lowInformation =
                 session.getConsecutiveLowInformationTurns() >= properties.lowInformationTurns();

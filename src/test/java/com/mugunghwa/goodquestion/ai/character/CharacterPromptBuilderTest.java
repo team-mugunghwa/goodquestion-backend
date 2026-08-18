@@ -23,14 +23,18 @@ class CharacterPromptBuilderTest {
     }
 
     @Test
-    void 강한_유도는_물음으로_끝내라는_지시와_대비쌍_예시를_담는다() {
+    void 강한_유도는_물음_하나로_끝내라는_지시와_주어_혼용_금지를_담는다() {
         String prompt = builder.systemPrompt(
                 input("NORMAL", "어떻게 하면 좋을지 모르겠어.", false, null));
 
         assertThat(prompt).contains("[강한 유도]");
-        assertThat(prompt).contains("물음으로 끝낸다");
+        assertThat(prompt).contains("물음 하나로 끝낸다");
+        // 주어를 겹쳐 세워 문장이 깨지던 것이 실제 사고였다(2026-08-18). 금지선과 깨진 예를 함께 박는다.
+        assertThat(prompt).contains("아이와 캐릭터를 한 물음의 주어로 겹쳐 세우지 않는다");
+        assertThat(prompt).contains("너는 내가 그렇게 생각하는 모습 보면 어떨까?");
+        // 걱정 문안 자체가 자문 형태라 물음이 둘로 쌓이던 것도 함께 막는다.
+        assertThat(prompt).contains("한 대사에 물음표는 하나만 쓴다");
         assertThat(prompt).contains("안 되는 물음: \"해결 방법을 말해 봐.\"");
-        assertThat(prompt).contains("되는 물음: \"그런데 다음에도 같은 일이 생기면 어떡하지?\"");
         assertThat(prompt).doesNotContain("[약한 유도]");
     }
 
@@ -42,7 +46,7 @@ class CharacterPromptBuilderTest {
         assertThat(prompt).contains("[약한 유도]");
         assertThat(prompt).contains("가볍게 흘리듯");
         assertThat(prompt).doesNotContain("[강한 유도]");
-        assertThat(prompt).doesNotContain("물음으로 끝낸다");
+        assertThat(prompt).doesNotContain("물음 하나로 끝낸다");
     }
 
     @Test
@@ -51,7 +55,7 @@ class CharacterPromptBuilderTest {
 
         assertThat(prompt).doesNotContain("[강한 유도]");
         assertThat(prompt).doesNotContain("[약한 유도]");
-        assertThat(prompt).doesNotContain("물음으로 끝낸다");
+        assertThat(prompt).doesNotContain("물음 하나로 끝낸다");
     }
 
     @Test
