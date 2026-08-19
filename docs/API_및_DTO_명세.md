@@ -278,7 +278,8 @@ PENDING 상태에서만 허용한다.
 | GET | `/api/children/{childId}/stories/{storyId}/free-talk/characters` | 완주한 이야기의 대화 가능 인물 | — | `List<FreeTalkCharacterResponse>` | ✅ |
 | POST | `/api/children/{childId}/free-talk` | 대화를 열고 첫 인사를 받는다 (201) | `FreeTalkStartRequest` | `FreeTalkStartResponse` | ✅ |
 | POST | `/api/free-talk/{freeTalkId}/messages` | 아이의 말을 제출한다. `Idempotency-Key` 헤더(선택) | `FreeTalkMessageRequest` | `FreeTalkTurnResponse` | ✅ |
-| POST | `/api/free-talk/{freeTalkId}/end` | 아이가 먼저 그만둔다 | — | `FreeTalkEndResponse` | ✅ |
+| POST | `/api/free-talk/{freeTalkId}/end` | 아이가 먼저 그만둔다. 캐릭터가 작별 인사를 남긴다 | — | `FreeTalkEndResponse` | ✅ |
+| POST | `/api/free-talk/{freeTalkId}/leave` | 인사 없이 그냥 나간다. 대화만 닫는다 (204) | — | — | ✅ |
 
 음성 인식은 기존 `POST /api/stt`를 그대로 쓴다. **아이 음성 원본은 저장하지 않는다.**
 
@@ -299,13 +300,24 @@ PENDING 상태에서만 허용한다.
 돌려준다. 끝난 대화에 "그만하기"가 한 번 더 들어오는 것은 흔한 일이고, 그때마다 대사를
 새로 만들면 요금만 두 배가 된다.
 
+**끝내는 길이 둘이다 — `/end`와 `/leave`.** 화면의 "마무리하기"가 `/end`, "나가기"가
+`/leave`다. 갈라 둔 이유는 하나뿐이다 — `/end`는 작별 대사를 LLM으로 만들고 TTS로 읽어
+주므로, 나가려는 아이가 낭독이 끝날 때까지 붙잡힌다. `/leave`는 **LLM도 TTS도 부르지
+않고** `ended_at`만 채운다. 대사가 새로 생기지 않으므로 남는 마지막 대사는 나가기 직전의
+그 대사다.
+
+`POST /leave`는 **응답 본문이 없고 204**다. 이미 닫힌 대화에 다시 들어와도 **204**이며
+`FREE_TALK_ENDED`(409)를 돌려주지 않는다 — 아이는 이 응답을 기다리지 않고 이미 화면을
+떠난 뒤라 실패를 보여 줄 곳이 없고, 나가기가 거절로 막히면 그것 자체가 결함이다.
+클라이언트도 응답을 기다리지 말고 바로 홈으로 나가면 된다.
+
 ---
 
 ## 3. DTO 상세
 
 각 DTO 아래의 **사용처**가 그 DTO를 주고받는 엔드포인트다. `X에 중첩`은 단독 응답이 아니라 다른 DTO의 필드로만 실려 나간다는 뜻이고, 그때는 최종적으로 어느 엔드포인트가 전달하는지도 함께 적었다.
 
-여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 둘**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문)과 `DELETE /api/children/{childId}/words/{wordId}`(204).
+여기에 없는 엔드포인트는 **요청·응답 본문이 아예 없는 셋**뿐이다 — `POST /api/sessions/{sessionId}/stop`(200, 빈 본문), `DELETE /api/children/{childId}/words/{wordId}`(204), `POST /api/free-talk/{freeTalkId}/leave`(204).
 
 ### 3.1 공통
 

@@ -69,4 +69,21 @@ public class FreeTalkController {
                                    @PathVariable UUID freeTalkId) {
         return freeTalkService.end(parentId, freeTalkId);
     }
+
+    /**
+     * 아이가 인사 없이 나갈 때. 대화만 닫고 작별 대사도 음성도 만들지 않는다.
+     *
+     * <p>{@code /end}와 나란히 두는 이유 - 화면의 "마무리하기"가 저쪽이고 "나가기"가
+     * 여기다. 나가려는 아이에게 작별 낭독을 끝까지 들려주는 것이 지루하다는 지적이
+     * 갈래를 만든 계기다.
+     *
+     * <p>돌려줄 것이 없어 204다. <b>클라이언트는 이 응답을 기다리지 말고 바로 화면을
+     * 떠나도 된다</b> - 요청이 실패해도 아이는 나가야 하고, 닫기는 다시 불러도 안전하다.
+     */
+    @PostMapping("/api/free-talk/{freeTalkId}/leave")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leave(@CurrentParentId UUID parentId,
+                      @PathVariable UUID freeTalkId) {
+        freeTalkService.leave(parentId, freeTalkId);
+    }
 }

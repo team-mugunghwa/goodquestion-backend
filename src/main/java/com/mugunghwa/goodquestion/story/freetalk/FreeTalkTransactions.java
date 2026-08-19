@@ -177,6 +177,25 @@ public class FreeTalkTransactions {
         return closing;
     }
 
+    /**
+     * 인사 없이 나갈 때. 대화를 <b>닫기만</b> 한다.
+     *
+     * <p>{@link #prepareEnd}·{@link #commitEnd}처럼 둘로 쪼개지 않았다 - 그 둘이 갈린 것은
+     * 사이에 LLM 왕복이 끼기 때문인데 여기에는 그 왕복이 없다. 자격 확인과 쓰기를 한
+     * 트랜잭션에 두는 {@link #openWithGreeting} 쪽 모양이다.
+     *
+     * <p><b>닫기 결과는 보지 않는다.</b> 그사이 마지막 턴이나 "마무리하기"가 먼저 닫았어도
+     * 아이가 나가려던 목적은 이미 이뤄졌다. 여기서 409를 돌려주면 나가기가 실패로 막히는데,
+     * 아이는 응답을 기다리지 않고 이미 화면을 떠난 뒤라 그 실패를 보여 줄 곳도 없다.
+     */
+    @Transactional
+    public void leave(UUID parentId, UUID freeTalkId) {
+        // 남의 대화를 대신 닫아 주지 않으려면 자격은 여기서 본다. 돌려받은 엔티티는 쓰지 않는다 -
+        // endIfOpen의 clearAutomatically가 영속성 컨텍스트를 비워 바로 detach되기 때문이다.
+        ownedTalk(parentId, freeTalkId);
+        freeTalkRepository.endIfOpen(freeTalkId, OffsetDateTime.now());
+    }
+
     // ----- 내부 -----
 
     /**
