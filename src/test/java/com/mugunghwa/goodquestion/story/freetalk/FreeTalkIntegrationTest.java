@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -63,6 +64,9 @@ class FreeTalkIntegrationTest {
     private StubFreeTalkLlmClient llmClient;
 
     @Autowired
+    private StubFreeTalkVoice voice;
+
+    @Autowired
     private StardustWalletRepository walletRepository;
 
     @Autowired
@@ -83,6 +87,7 @@ class FreeTalkIntegrationTest {
     @BeforeEach
     void 대역을_비운다() {
         llmClient.reset();
+        voice.reset();
     }
 
     private UUID 대화를_연다() {
@@ -343,6 +348,81 @@ class FreeTalkIntegrationTest {
 
         // 진 쪽은 아무것도 남기지 않는다 - 첫 인사 + 이긴 턴의 두 줄이 전부다.
         assertThat(messageCount(freeTalkId)).isEqualTo(3);
+    }
+
+    @Test
+    void 인사_없이_나가면_대사도_음성도_만들지_않고_대화가_닫힌다() {
+        UUID freeTalkId = 대화를_연다();
+        말한다(freeTalkId, "안녕!");
+        int llmCallsBefore = llmClient.calls;
+        int voiceCallsBefore = voice.calls;
+        int messagesBefore = messageCount(freeTalkId);
+
+        freeTalkService.leave(PARENT_ID, freeTalkId);
+
+        // 이 기능의 존재 이유다 - 나가려는 아이를 작별 낭독이 끝날 때까지 붙잡지 않는다.
+        assertThat(llmClient.calls).isEqualTo(llmCallsBefore);
+        assertThat(voice.calls).isEqualTo(voiceCallsBefore);
+        // 횟수만 같은 것이 아니라 마무리 프롬프트가 조립조차 되지 않았다.
+        assertThat(llmClient.lastStage).isEqualTo(FreeTalkPromptBuilder.STAGE_TALK);
+        // 작별 대사 줄도 남지 않았다.
+        assertThat(messageCount(freeTalkId)).isEqualTo(messagesBefore);
+
+        // 그래도 대화는 닫혔다 - 안 닫으면 ended_at이 빈 행이 영원히 열린 채 남는다.
+        assertThat(freeTalkRepository.findById(freeTalkId).orElseThrow().isEnded()).isTrue();
+        assertThatThrownBy(() -> 말한다(freeTalkId, "역시 더 이야기할래"))
+                .isInstanceOfSatisfying(BusinessException.class, e ->
+                        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.FREE_TALK_ENDED));
+    }
+
+    @Test
+    void 이미_닫힌_대화에_다시_나가도_성공한다() {
+        UUID freeTalkId = 대화를_연다();
+        freeTalkService.leave(PARENT_ID, freeTalkId);
+        int llmCallsBefore = llmClient.calls;
+        int voiceCallsBefore = voice.calls;
+
+        // 아이는 응답을 기다리지 않고 나가므로 재전송이 흔하다. 여기서 409를 던지면 못 나간다.
+        assertThatCode(() -> freeTalkService.leave(PARENT_ID, freeTalkId))
+                .doesNotThrowAnyException();
+
+        assertThat(llmClient.calls).isEqualTo(llmCallsBefore);
+        assertThat(voice.calls).isEqualTo(voiceCallsBefore);
+        assertThat(freeTalkRepository.findById(freeTalkId).orElseThrow().isEnded()).isTrue();
+    }
+
+    @Test
+    void 남의_대화는_나가기로도_닫을_수_없다() {
+        UUID freeTalkId = 대화를_연다();
+
+        assertThatThrownBy(() -> freeTalkService.leave(UUID.randomUUID(), freeTalkId))
+                .isInstanceOfSatisfying(BusinessException.class, e ->
+                        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN));
+
+        // 거절만 한 것이 아니라 남의 대화를 닫아 주지도 않았다.
+        assertThat(freeTalkRepository.findById(freeTalkId).orElseThrow().isEnded()).isFalse();
+    }
+
+    @Test
+    void 없는_대화는_나갈_수_없다() {
+        assertThatThrownBy(() -> freeTalkService.leave(PARENT_ID, UUID.randomUUID()))
+                .isInstanceOfSatisfying(BusinessException.class, e ->
+                        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
+    }
+
+    @Test
+    void 나간_뒤에_들어온_마무리하기는_저장된_마지막_대사를_그대로_돌려준다() {
+        UUID freeTalkId = 대화를_연다();
+        FreeTalkTurnResponse turn = 말한다(freeTalkId, "안녕!");
+        freeTalkService.leave(PARENT_ID, freeTalkId);
+        int llmCallsBefore = llmClient.calls;
+
+        // 나가기와 마무리하기가 겹쳐 들어올 수 있다. 뒤늦은 쪽이 새 작별 대사를 만들면
+        // 아이는 이미 나간 뒤인데 요금만 나간다 - 기존 end()의 "이미 닫힘" 갈래가 물려야 한다.
+        FreeTalkEndResponse response = freeTalkService.end(PARENT_ID, freeTalkId);
+
+        assertThat(response.closing().text()).isEqualTo(turn.characterMessage().text());
+        assertThat(llmClient.calls).isEqualTo(llmCallsBefore);
     }
 
     // ----- 도우미 -----

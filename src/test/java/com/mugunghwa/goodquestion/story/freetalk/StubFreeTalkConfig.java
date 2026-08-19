@@ -28,12 +28,7 @@ class StubFreeTalkConfig {
     /** 벤더를 부르지 않는다. 합성 성공 경로만 있으면 되고 실패 경로는 별도 관심사다. */
     @Bean
     @Primary
-    FreeTalkVoice stubFreeTalkVoice() {
-        return new FreeTalkVoice(null) {
-            @Override
-            public String synthesize(String text, String characterName) {
-                return STUB_AUDIO_URL;
-            }
-        };
+    StubFreeTalkVoice stubFreeTalkVoice() {
+        return new StubFreeTalkVoice();
     }
 }
