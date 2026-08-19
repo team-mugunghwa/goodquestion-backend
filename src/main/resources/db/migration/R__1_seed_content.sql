@@ -602,7 +602,18 @@ insert into items (id, name, category, price, unlock_type, unlock_story_id, unlo
 ('873ccc94-dc7a-59c6-beca-4f0333f7e1ca', '사슴', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 14, '/items/models/pets/animal-deer.glb', null, 42),
 ('d8e565b7-1efa-57d2-88af-68f49c9fde99', '돼지', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 18, '/items/models/pets/animal-pig.glb', null, 43),
 ('e3230e20-b6e0-5a2b-9f4b-9ac3d5ccb62a', '펭귄', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 22, '/items/models/pets/animal-penguin.glb', null, 44),
-('50d78626-5754-5351-ba1b-c85793d80b0f', '판다', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 25, '/items/models/pets/animal-panda.glb', null, 45)
+('50d78626-5754-5351-ba1b-c85793d80b0f', '판다', 'ANIMAL', 2, 'STARDUST_CUMULATIVE', null, 25, '/items/models/pets/animal-panda.glb', null, 45),
+-- 기념 아이템 3종 (2026-08-19) — Meshy AI 생성. 행성에서 **6x6 칸**을 차지한다.
+--
+-- 발판(footprint)은 서버가 모르는 값이다. 행성 앱의 config/catalog.ts 에만 있고
+-- 서버는 앵커 좌표 한 칸만 저장한다(planet_items.placed_q/r). 기존 2x2 아이템
+-- (모닥불·텐트·집·분수대·풍차)도 같은 방식이라 새로 생기는 문제는 아니다.
+--
+-- model_url 의 경로가 곧 카탈로그와의 연결고리다. `gift/` 폴더명까지 정확해야
+-- 행성 앱이 이 아이템을 알아본다 — 어긋나면 조용히 화면에서 빠진다.
+('44444444-4444-4444-4444-000000000046', '무궁화나무', 'PLANT', 2, 'ALWAYS', null, null, '/items/models/gift/mugunghwa_tree.glb', null, 46),
+('44444444-4444-4444-4444-000000000047', '생일 케이크', 'STRUCTURE', 2, 'ALWAYS', null, null, '/items/models/gift/birthday_cake.glb', null, 47),
+('44444444-4444-4444-4444-000000000048', '졸업 축하', 'STRUCTURE', 2, 'ALWAYS', null, null, '/items/models/gift/graduation_cap.glb', null, 48)
 on conflict (id) do update set
     name = excluded.name,
     category = excluded.category,
