@@ -41,6 +41,13 @@ public class StardustService {
      */
     private static final int WELCOME_AWARD = 3;
 
+    /**
+     * 계정당 최초 로그인 1회 지급. 학습 보상(1~3)과 자릿수가 다르다 — 학습으로 쌓는 양이
+     * 아니라 시작 밑천이고, 지급 기회가 계정당 한 번뿐이라 반복해서 벌 수 없다.
+     * totalEarned에도 잡혀 상점 누적 해금이 이 한 번으로 전부 열린다는 점은 감수한 것이다.
+     */
+    private static final int FIRST_LOGIN_AWARD = 100;
+
     /** 단어 말하기 연습 1건. 소품 하나(1~2)에 못 미치는 잔돈이라 매일 해도 이야기 보상을 넘지 않는다. */
     private static final int WORD_PRACTICED_AWARD = 1;
 
@@ -99,6 +106,15 @@ public class StardustService {
     @Transactional
     public StardustTransaction awardWelcome(Child child) {
         return earn(child.getId(), WELCOME_AWARD, StardustReason.WELCOME, null, null, null);
+    }
+
+    /**
+     * 최초 로그인 지급. 계정당 1회 선점은 호출자(FirstLoginBonusService)가 끝냈다 —
+     * 여기서는 아이 한 명분 지급만 한다. 아이가 여럿이면 그만큼 호출된다.
+     */
+    @Transactional
+    public StardustTransaction awardFirstLogin(Child child) {
+        return earn(child.getId(), FIRST_LOGIN_AWARD, StardustReason.FIRST_LOGIN, null, null, null);
     }
 
     /**

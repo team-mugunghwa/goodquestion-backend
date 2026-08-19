@@ -11,6 +11,7 @@ import com.mugunghwa.goodquestion.user.auth.google.GoogleProfile;
 import com.mugunghwa.goodquestion.user.parent.Parent;
 import com.mugunghwa.goodquestion.user.parent.ParentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final GoogleClient googleClient;
     private final LoginAttemptService loginAttemptService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request, String clientIp) {
@@ -36,7 +38,7 @@ public class AuthService {
         }
         Parent parent = parentRepository.save(
                 Parent.ofLocal(request.email(), passwordEncoder.encode(request.password()), request.name()));
-        parent.recordLoginSuccess(clientIp);
+        recordLogin(parent, clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
@@ -56,7 +58,7 @@ public class AuthService {
             loginAttemptService.recordFailure(parent.getId());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
-        parent.recordLoginSuccess(clientIp);
+        recordLogin(parent, clientIp);
         return AuthResponse.of(issueTokens(parent), parent);
     }
 
@@ -80,7 +82,7 @@ public class AuthService {
         // 소셜 로그인도 정지를 거친다. 여기를 빠뜨리면 카카오로 다시 들어오는 것만으로
         // 정지가 무력화된다.
         requireNotSuspended(parent);
-        parent.recordLoginSuccess(clientIp);
+        recordLogin(parent, clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 
@@ -114,6 +116,17 @@ public class AuthService {
         }
     }
 
+    /**
+     * 접속 기록 + 인증 성공 알림. 가입·이메일·소셜이 모두 이 자리를 지난다.
+     *
+     * <p>이벤트를 여기 한 곳에서만 발행한다 — 로그인 경로가 넷이라 호출부마다 흩어 두면
+     * 나중에 경로가 하나 더 붙을 때 조용히 빠진다.
+     */
+    private void recordLogin(Parent parent, String clientIp) {
+        parent.recordLoginSuccess(clientIp);
+        eventPublisher.publishEvent(new ParentLoggedInEvent(parent.getId()));
+    }
+
     private TokenResponse issueTokens(Parent parent) {
         return TokenResponse.of(
                 jwtProvider.issue(parent.getId()),
@@ -135,7 +148,7 @@ public class AuthService {
                 ? parentRepository.save(Parent.ofGoogle(profile.providerId(), profile.email(), profile.name()))
                 : existing;
         requireNotSuspended(parent);
-        parent.recordLoginSuccess(clientIp);
+        recordLogin(parent, clientIp);
         return SocialAuthResponse.of(issueTokens(parent), parent, isNewUser);
     }
 }
