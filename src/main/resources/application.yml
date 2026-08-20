@@ -187,6 +187,12 @@ external:
       # 기본값을 비워 둔다 - 벤더가 상시 빈이 되면서(RoutingTtsClient) 키 없는 환경도
       # 기동은 되고, GEMINI 선택 시에만 503으로 안내한다.
       api-key: ${GEMINI_API_KEY:}
+      # 경로를 환경변수로 가른다. 기본은 AI Studio(미리보기)이고, Vertex GA 로 가려면
+      # 아래 둘을 함께 바꾼다 — 하나만 바꾸면 없는 모델을 부르거나 404 가 난다.
+      #   GEMINI_TTS_BASE_URL=https://aiplatform.googleapis.com/v1/publishers/google
+      #   GEMINI_TTS_MODEL=gemini-2.5-flash-tts
+      # GA 는 무료 한도가 없다(호출당 과금). 대신 미리보기의 일일 한도와 별개 풀이다.
+      base-url: ${GEMINI_TTS_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
       model: ${GEMINI_TTS_MODEL:gemini-2.5-flash-preview-tts}
       # 사전 렌더에 쓴 것과 같은 보이스여야 한 캐릭터로 들린다.
       default-voice: Kore
