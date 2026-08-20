@@ -559,6 +559,11 @@ where id = '33333333-3333-3333-3333-000000000007';
 -- **시연용: 모든 아이템 값을 0으로 둔다(2026-08-20).** 심사위원이 별가루를 모으는
 -- 과정 없이 꾸미기를 바로 볼 수 있어야 한다. 시연이 끝나면 아래 값을 되돌린다
 -- (원래는 대부분 1, 기념 아이템 3종만 2였다).
+--
+-- **해금 조건도 전부 ALWAYS 로 연다.** 값이 0 이어도 잠긴 아이템은 ITEM_LOCKED 로
+-- 막힌다. 최초 로그인 별가루 100 이 아직 안 붙어서 누적 해금(문턱 4~25)이 실제로
+-- 안 열린다. unlock_stardust_total 과 unlock_story_id 는 **지우지 않고 남겨 둔다** -
+-- 제약이 단방향이라 값이 남아도 통과하고, 되돌릴 때 unlock_type 한 칸만 뒤집으면 된다.
 insert into items (id, name, category, price, unlock_type, unlock_story_id, unlock_stardust_total,
                    model_url, thumbnail_url, display_order) values
 ('44444444-4444-4444-4444-000000000001', '작은 돌', 'TERRAIN_PROP', 0, 'ALWAYS', null, null, '/items/models/rock_smallA.glb', null, 1),
@@ -578,12 +583,12 @@ insert into items (id, name, category, price, unlock_type, unlock_story_id, unlo
 ('4ebfa1f3-70ff-5f92-87de-8e61eca016ea', '나무', 'STRUCTURE', 0, 'ALWAYS', null, null, '/items/models/tree_default.glb', null, 15),
 ('e52adb24-0b4c-5925-8aa0-2fd57c169d89', '울타리', 'STRUCTURE', 0, 'ALWAYS', null, null, '/items/models/fence_simple.glb', null, 16),
 ('86d95881-2e92-5a0e-a262-ad22a57bebd6', '가로등', 'STRUCTURE', 0, 'ALWAYS', null, null, '/items/models/town/lantern.glb', null, 17),
-('78de4d62-e656-5e98-960b-c596f4a5d964', '모닥불', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 4, '/items/models/campfire_stones.glb', null, 18),
-('158c687a-b363-5afe-94f1-8dbfc90e0551', '텐트', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 6, '/items/models/tent_smallOpen.glb', null, 19),
-('44444444-4444-4444-4444-00000000000d', '우리 집', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 9, '/items/models/city/building-type-a.glb', null, 20),
-('4bf48af0-5cef-56db-a507-90848e5b7668', '이웃 집', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 12, '/items/models/city/building-type-e.glb', null, 21),
-('2012eb9a-4d30-528a-84af-1b97d46e8b83', '분수대', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 16, '/items/models/town/fountain-round.glb', null, 22),
-('9e710e15-059c-5c38-962f-b6f5d7263eb2', '풍차', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 20, '/items/models/town/windmill.glb', null, 23),
+('78de4d62-e656-5e98-960b-c596f4a5d964', '모닥불', 'STRUCTURE', 0, 'ALWAYS', null, 4, '/items/models/campfire_stones.glb', null, 18),
+('158c687a-b363-5afe-94f1-8dbfc90e0551', '텐트', 'STRUCTURE', 0, 'ALWAYS', null, 6, '/items/models/tent_smallOpen.glb', null, 19),
+('44444444-4444-4444-4444-00000000000d', '우리 집', 'STRUCTURE', 0, 'ALWAYS', null, 9, '/items/models/city/building-type-a.glb', null, 20),
+('4bf48af0-5cef-56db-a507-90848e5b7668', '이웃 집', 'STRUCTURE', 0, 'ALWAYS', null, 12, '/items/models/city/building-type-e.glb', null, 21),
+('2012eb9a-4d30-528a-84af-1b97d46e8b83', '분수대', 'STRUCTURE', 0, 'ALWAYS', null, 16, '/items/models/town/fountain-round.glb', null, 22),
+('9e710e15-059c-5c38-962f-b6f5d7263eb2', '풍차', 'STRUCTURE', 0, 'ALWAYS', null, 20, '/items/models/town/windmill.glb', null, 23),
 ('7ee5477f-435b-52c0-8d9b-99be60551ff5', '당근', 'PLANT', 0, 'ALWAYS', null, null, '/items/models/nature/crop_carrot.glb', null, 24),
 ('3c452708-e764-578d-a883-7eccd0dee5f5', '호박', 'PLANT', 0, 'ALWAYS', null, null, '/items/models/nature/crop_pumpkin.glb', null, 25),
 ('3ee27e55-efae-5b97-8c2c-7c559c665b7d', '수박', 'PLANT', 0, 'ALWAYS', null, null, '/items/models/nature/crop_melon.glb', null, 26),
@@ -597,15 +602,15 @@ insert into items (id, name, category, price, unlock_type, unlock_story_id, unlo
 ('513723fe-3c47-59af-9182-b4c19666c799', '연꽃', 'PLANT', 0, 'ALWAYS', null, null, '/items/models/nature/lily_large.glb', null, 34),
 ('0f045dcc-5f54-5ada-a44a-dfdbc7de2e14', '표지판', 'STRUCTURE', 0, 'ALWAYS', null, null, '/items/models/nature/sign.glb', null, 35),
 ('1bcd86b9-c047-56b7-b65f-3c9e2f80b7b9', '나룻배', 'STRUCTURE', 0, 'ALWAYS', null, null, '/items/models/nature/canoe.glb', null, 36),
-('3a89aa26-4182-5958-b039-0b59a78822f9', '돌 조각상', 'STRUCTURE', 0, 'STARDUST_CUMULATIVE', null, 8, '/items/models/nature/statue_head.glb', null, 37),
-('44444444-4444-4444-4444-00000000000e', '토끼', 'ANIMAL', 0, 'STORY_COMPLETE', '11111111-1111-1111-1111-111111111111', null, '/items/models/pets/animal-bunny.glb', null, 38),
-('44444444-4444-4444-4444-00000000000f', '고양이', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 5, '/items/models/pets/animal-cat.glb', null, 39),
-('059d3974-b8bd-52e4-a6d1-dd0114890baa', '강아지', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 8, '/items/models/pets/animal-dog.glb', null, 40),
-('44444444-4444-4444-4444-000000000010', '여우', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 11, '/items/models/pets/animal-fox.glb', null, 41),
-('873ccc94-dc7a-59c6-beca-4f0333f7e1ca', '사슴', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 14, '/items/models/pets/animal-deer.glb', null, 42),
-('d8e565b7-1efa-57d2-88af-68f49c9fde99', '돼지', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 18, '/items/models/pets/animal-pig.glb', null, 43),
-('e3230e20-b6e0-5a2b-9f4b-9ac3d5ccb62a', '펭귄', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 22, '/items/models/pets/animal-penguin.glb', null, 44),
-('50d78626-5754-5351-ba1b-c85793d80b0f', '판다', 'ANIMAL', 0, 'STARDUST_CUMULATIVE', null, 25, '/items/models/pets/animal-panda.glb', null, 45),
+('3a89aa26-4182-5958-b039-0b59a78822f9', '돌 조각상', 'STRUCTURE', 0, 'ALWAYS', null, 8, '/items/models/nature/statue_head.glb', null, 37),
+('44444444-4444-4444-4444-00000000000e', '토끼', 'ANIMAL', 0, 'ALWAYS', '11111111-1111-1111-1111-111111111111', null, '/items/models/pets/animal-bunny.glb', null, 38),
+('44444444-4444-4444-4444-00000000000f', '고양이', 'ANIMAL', 0, 'ALWAYS', null, 5, '/items/models/pets/animal-cat.glb', null, 39),
+('059d3974-b8bd-52e4-a6d1-dd0114890baa', '강아지', 'ANIMAL', 0, 'ALWAYS', null, 8, '/items/models/pets/animal-dog.glb', null, 40),
+('44444444-4444-4444-4444-000000000010', '여우', 'ANIMAL', 0, 'ALWAYS', null, 11, '/items/models/pets/animal-fox.glb', null, 41),
+('873ccc94-dc7a-59c6-beca-4f0333f7e1ca', '사슴', 'ANIMAL', 0, 'ALWAYS', null, 14, '/items/models/pets/animal-deer.glb', null, 42),
+('d8e565b7-1efa-57d2-88af-68f49c9fde99', '돼지', 'ANIMAL', 0, 'ALWAYS', null, 18, '/items/models/pets/animal-pig.glb', null, 43),
+('e3230e20-b6e0-5a2b-9f4b-9ac3d5ccb62a', '펭귄', 'ANIMAL', 0, 'ALWAYS', null, 22, '/items/models/pets/animal-penguin.glb', null, 44),
+('50d78626-5754-5351-ba1b-c85793d80b0f', '판다', 'ANIMAL', 0, 'ALWAYS', null, 25, '/items/models/pets/animal-panda.glb', null, 45),
 -- 기념 아이템 3종 (2026-08-19) — Meshy AI 생성. 행성에서 **6x6 칸**을 차지한다.
 --
 -- 발판(footprint)은 서버가 모르는 값이다. 행성 앱의 config/catalog.ts 에만 있고
