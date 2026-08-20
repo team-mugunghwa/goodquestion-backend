@@ -110,7 +110,16 @@
 | GET | `/api/stories` | 이야기 목록을 조회한다 | `?topic=` (선택) | `StoryListResponse` | ✅ |
 | GET | `/api/stories/{storyId}` | 이야기 한 편의 상세 정보를 조회한다 | — | `StoryDetailResponse` | ✅ |
 | GET | `/api/stories/{storyId}/scenes` | 이야기의 장면 전체를 순서대로 조회한다 | — | `List<SceneContentResponse>` | ✅ |
+| GET | `/api/children/{childId}/stories/completed` | 이 아이가 완주한 이야기의 id들 | — | `CompletedStoriesResponse` | ✅ |
 | GET | `/api/topics` | 이야기를 거르는 데 쓰는 주제 목록을 조회한다 | — | `List<TopicResponse>` | ✅ |
+
+`/api/stories*` 는 **누가 보든 같은 답**이라 아이를 받지 않는다. 아이별로 달라지는 것은
+`/api/children/{childId}/stories/...` 로 갈라 둔다 — 경로만 보고 아이가 필요한 조회인지
+알 수 있다.
+
+완주 목록은 경로가 이야기 모양이지만 **세션이 답한다**(`SessionController`). 완주는
+이야기의 성질이 아니라 (아이, 이야기)의 런타임 상태이고, 콘텐츠 패키지는 런타임 상태를
+알지 못한다(데이터-02 · `ArchitectureTest.content_must_not_depend_on_runtime`).
 
 ### 2.7 세션
 
@@ -536,6 +545,22 @@ DB의 `provider`는 `LOCAL`/`KAKAO` 둘 다 NOT NULL이지만, 응답에서는 `
 | `sceneCount` | int |
 | `childRole` | String |
 | `intro` | String |
+
+#### `CompletedStoriesResponse`
+
+> **사용처** — `GET /api/children/{childId}/stories/completed` 응답
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `storyIds` | `List<UUID>` | 이 아이가 완주한 이야기. 순서 보장 없음. 없으면 빈 배열(404 아님) |
+
+이야기 목록 화면이 카드에 "끝냈어" 도장을 찍는 근거다. 완주 판정은 **COMPLETED 세션**이고,
+후속 자유 대화의 진입 조건과 같은 근거를 쓴다 — 갈리면 도장은 찍혔는데 친구는 못 만나는
+화면이 나온다. 홈의 완주 개수(`activity.completedStories`)와도 같은 표를 본다.
+
+> 이야기 **한 편**의 완주 여부만 알면 될 때는 이 API 가 아니라 자유 대화 인물 목록
+> (`.../free-talk/characters`, 미완주면 404)으로도 알 수 있다. 그쪽은 이야기당 한 번씩
+> 물어야 해서 목록 화면에는 못 쓴다.
 
 #### `SceneContentResponse` — 세션 시작·이어하기·장면 전환·현재 장면이 공유
 

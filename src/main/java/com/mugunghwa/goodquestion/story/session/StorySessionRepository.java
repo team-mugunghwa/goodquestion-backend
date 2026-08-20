@@ -47,6 +47,22 @@ public interface StorySessionRepository extends JpaRepository<StorySession, UUID
                               @Param("status") SessionStatus status);
 
     /**
+     * 이 아이가 완주한 이야기의 id들. 홈의 완주 개수({@link #countDistinctStories})와
+     * <b>같은 근거를 쓴다</b> - 개수와 목록이 다른 표를 보면 "3편 끝냈다"는데 도장은
+     * 두 개만 찍히는 화면이 나온다.
+     *
+     * <p>완주 횟수표(child_story_play_counts)를 쓰지 않는 것도 자유 대화의 진입
+     * 판정({@link #existsByChildIdAndStoryIdAndStatus})과 같은 이유다 - 저 표는 보상
+     * 지급이 걸려 있어 보상 규칙이 바뀌면 함께 흔들린다.
+     */
+    @Query("""
+            select distinct s.story.id from StorySession s
+            where s.child.id = :childId and s.status = :status
+            """)
+    List<UUID> findDistinctStoryIds(@Param("childId") UUID childId,
+                                    @Param("status") SessionStatus status);
+
+    /**
      * 6각 그래프 "지난 회차 평균"용 — 같은 아이의 다른 완료 세션 중 가장 최근 3건.
      * → claude/보호자리포트_6축그래프_설계안_D6.md 4장.
      */
