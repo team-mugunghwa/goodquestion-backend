@@ -6,7 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.netty.http.client.HttpClientRequest;
+import reactor.util.retry.Retry;
 import tools.jackson.databind.JsonNode;
 
 import java.io.ByteArrayOutputStream;
@@ -50,6 +52,12 @@ public class GeminiTtsClient implements TtsClient {
     private final Duration timeout;
     public GeminiTtsClient(
             WebClient webClient,
+            // 두 경로를 받는다. URL 은 baseUrl + "/models/" + model + ":generateContent" 로
+            // 조립되므로 설정만 바꾸면 그대로 갈린다.
+            //   AI Studio : https://generativelanguage.googleapis.com/v1beta
+            //               + gemini-2.5-flash-preview-tts (미리보기. 일일 한도가 작다)
+            //   Vertex GA : https://aiplatform.googleapis.com/v1/publishers/google
+            //               + gemini-2.5-flash-tts (한도가 별개다. 익스프레스 키로 부른다)
             @Value("${external.tts.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl,
             @Value("${external.tts.gemini.api-key:}") String apiKey,
             @Value("${external.tts.gemini.model:gemini-2.5-flash-preview-tts}") String model,
@@ -91,7 +99,11 @@ public class GeminiTtsClient implements TtsClient {
                     nettyRequest.responseTimeout(timeout);
                 })
                 .bodyValue(Map.of(
-                        "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
+                        // role 을 반드시 싣는다. generativelanguage 는 없어도 받아 주지만
+                        // Vertex 는 400 INVALID_ARGUMENT 로 거절한다(실측). 둘 다 받는 형태로 보낸다.
+                        "contents", List.of(Map.of(
+                                "role", "user",
+                                "parts", List.of(Map.of("text", prompt)))),
                         "generationConfig", Map.of(
                                 "responseModalities", List.of("AUDIO"),
                                 "speechConfig", Map.of("voiceConfig", Map.of(
@@ -99,6 +111,17 @@ public class GeminiTtsClient implements TtsClient {
                                                 "voiceName", voices.voiceFor(characterName)))))))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
+                // 429 만 다시 친다. Vertex 익스프레스는 **동시 요청**에 한도를 건다 —
+                // 실측으로 간격을 두면 5/5 통과인데 연발하면 2건째부터 거절이다. 대사는
+                // 문장별로 합성하므로 아이가 둘만 붙어도 밟는다. 여기서 물러섰다 다시
+                // 치지 않으면 그 턴이 통째로 503 이 되어 소리가 사라진다.
+                //
+                // 다른 코드는 재시도하지 않는다 - 401/403(키)·400(본문)은 다시 쳐도 같고,
+                // 안전 거부는 애초에 예외가 아니라 빈 오디오로 온다.
+                .retryWhen(Retry.backoff(3, Duration.ofMillis(400))
+                        .filter(error -> error instanceof WebClientResponseException e
+                                && e.getStatusCode().value() == 429)
+                        .transientErrors(true))
                 .block();
 
         if (response == null) {
