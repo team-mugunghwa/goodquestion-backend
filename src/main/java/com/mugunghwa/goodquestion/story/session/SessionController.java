@@ -1,6 +1,7 @@
 package com.mugunghwa.goodquestion.story.session;
 
 import com.mugunghwa.goodquestion.global.security.CurrentParentId;
+import com.mugunghwa.goodquestion.story.session.dto.CompletedStoriesResponse;
 import com.mugunghwa.goodquestion.story.session.dto.MessageResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SceneAdvanceResponse;
 import com.mugunghwa.goodquestion.story.session.dto.SessionResponse;
@@ -27,6 +28,23 @@ public class SessionController {
     public SessionStartResponse start(@CurrentParentId UUID parentId, @PathVariable UUID childId,
                                       @Valid @RequestBody SessionStartRequest request) {
         return sessionService.start(parentId, childId, request);
+    }
+
+    /**
+     * 이 아이가 완주한 이야기의 id들. 이야기 목록 화면이 카드에 "끝냈어" 도장을 찍는 데 쓴다.
+     *
+     * <p><b>이야기 모양의 경로인데 세션 컨트롤러에 있다.</b> 완주는 이야기의 성질이 아니라
+     * (아이, 이야기)의 런타임 상태이고, 그 상태를 아는 것은 세션뿐이다. 콘텐츠 패키지는
+     * 런타임 상태를 알지 못한다는 규칙이 있다(데이터-02,
+     * {@code ArchitectureTest.content_must_not_depend_on_runtime}).
+     *
+     * <p>한 번도 완주하지 않았으면 빈 배열이다 - 404가 아니다. 아이가 아직 아무것도 안 한
+     * 것은 정상이고, 목록 화면은 그 응답으로 도장만 안 찍으면 된다.
+     */
+    @GetMapping("/api/children/{childId}/stories/completed")
+    public CompletedStoriesResponse getCompletedStories(@CurrentParentId UUID parentId,
+                                                        @PathVariable UUID childId) {
+        return sessionService.getCompletedStories(parentId, childId);
     }
 
     @GetMapping("/api/sessions/{sessionId}")

@@ -1,4 +1,4 @@
-package com.mugunghwa.goodquestion.story.content.dto;
+package com.mugunghwa.goodquestion.story.session.dto;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +10,11 @@ import java.util.UUID;
  * 보호자 리포트 목록의 <b>이야기 제목 문자열</b>로 맞추고 있었는데, 리포트에는
  * {@code storyId}가 없어서 그 방법밖에 없었다. 제목이 같은 이야기가 둘 생기거나 제목이
  * 한 글자만 바뀌어도 조용히 틀리는 판정이었다.
+ *
+ * <p><b>세션 패키지에 있는 이유</b> - 완주는 이야기의 성질이 아니라 <b>(아이, 이야기)의
+ * 런타임 상태</b>다. 콘텐츠 패키지({@code story.content})는 런타임 상태를 알지 못한다는
+ * 규칙이 있고(데이터-02, {@code ArchitectureTest.content_must_not_depend_on_runtime}),
+ * 처음에 여기 두지 않았다가 그 테스트에 걸렸다.
  *
  * <p>이야기 <b>한 편</b>의 완주 여부는 이 응답이 아니라 자유 대화 인물 목록
  * ({@code /free-talk/characters})으로도 알 수 있다 - 미완주면 404다. 그쪽은 이야기당

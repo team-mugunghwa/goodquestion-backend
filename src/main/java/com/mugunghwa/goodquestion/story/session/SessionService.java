@@ -41,6 +41,25 @@ public class SessionService {
     private final ApplicationEventPublisher eventPublisher;
     private final SceneAudioResolver sceneAudioResolver;
 
+    /**
+     * 이 아이가 완주한 이야기의 id들.
+     *
+     * <p>이야기 목록 카드의 "끝냈어" 도장이 이걸로 그려진다. 완주 판정의 근거는 후속 자유
+     * 대화의 진입 조건({@code FreeTalkTransactions.requireCompleted})과 <b>같은 COMPLETED
+     * 세션</b>이다 - 근거가 갈리면 도장은 찍혔는데 친구는 못 만나는(또는 그 반대의) 화면이
+     * 나오고, 그 어긋남은 화면에서만 보여서 찾기 어렵다. 홈의 완주 개수
+     * ({@code countDistinctStories})와도 같은 표를 본다.
+     *
+     * <p>완주 횟수표(child_story_play_counts)는 쓰지 않는다 - 보상 지급이 걸린 표라 보상
+     * 규칙이 바뀌면 함께 흔들린다.
+     */
+    @Transactional(readOnly = true)
+    public CompletedStoriesResponse getCompletedStories(UUID parentId, UUID childId) {
+        childService.getOwnedChild(parentId, childId);
+        return new CompletedStoriesResponse(
+                sessionRepository.findDistinctStoryIds(childId, SessionStatus.COMPLETED));
+    }
+
     @Transactional
     public SessionStartResponse start(UUID parentId, UUID childId, SessionStartRequest request) {
         Child child = childService.getOwnedChild(parentId, childId);
