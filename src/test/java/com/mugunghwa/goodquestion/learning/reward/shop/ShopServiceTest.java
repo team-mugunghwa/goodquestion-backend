@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.mugunghwa.goodquestion.learning.reward.RewardFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,11 +29,32 @@ class ShopServiceTest {
     @Autowired
     private StardustWalletRepository walletRepository;
 
+    @Autowired
+    private ItemRepository itemRepository;
+
+    /**
+     * 이 테스트가 보는 것은 <b>전부 돌려주는가</b>이지 몇 개인가가 아니다.
+     *
+     * <p>예전에는 개수를 숫자로 박아 뒀는데({@code hasSize(45)}), 시드에 아이템이 더해질
+     * 때마다 이 테스트가 깨졌다 - 기념 아이템 3종이 들어오면서(#124) 실제로 깨진 채로
+     * develop 에 머지됐다. 콘텐츠가 늘었다고 실패하는 테스트는 늘 실패하는 테스트가 되고,
+     * 그러면 아무도 안 본다.
+     *
+     * <p>그래서 기대값을 저장소에서 가져온다. 상점은 캐시({@code ItemCatalog})를 거치고
+     * 이쪽은 안 거치므로, 캐시가 몇 개를 흘리거나 순서를 잃으면 여전히 잡힌다.
+     * 첫 칸이 돌인 것만 따로 확인하는 이유는 시드의 진열 순서 자체가 뒤집히는 경우를
+     * 잡기 위해서다 - 저장소도 같이 뒤집히면 위 비교로는 안 잡힌다.
+     */
     @Test
     void 상점은_진열_순서대로_전체를_돌려준다() {
+        List<UUID> displayed = itemRepository.findAllActiveWithUnlockStory(ItemStatus.ACTIVE)
+                .stream().map(Item::getId).toList();
+
         List<ShopItemResponse> items = shopService.getShopItems(PARENT_ID, CHILD_ID);
 
-        assertThat(items).hasSize(45);
+        // 개수와 순서를 한 번에 본다. 첫 칸만 보면 정렬이 통째로 빠져도 우연히 맞는다.
+        assertThat(items).extracting(ShopItemResponse::itemId)
+                .containsExactlyElementsOf(displayed);
         assertThat(items.getFirst().itemId()).isEqualTo(ROCK_ITEM_ID);
     }
 
