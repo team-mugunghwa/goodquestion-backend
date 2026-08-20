@@ -112,9 +112,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '/stories/banggui/scenes/01_intro.jpg',
     '/stories/banggui/scenes/01_intro_loop.mp4'
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     image_url = excluded.image_url,
@@ -130,9 +130,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '/stories/banggui/scenes/02_holding.jpg',
     '/stories/banggui/scenes/02_holding_loop.mp4'
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     image_url = excluded.image_url,
@@ -178,9 +178,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     2, 4
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
@@ -206,9 +206,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '/stories/banggui/scenes/04_bigfart.jpg',
     '/stories/banggui/scenes/04_bigfart_loop.mp4'
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     image_url = excluded.image_url,
@@ -249,9 +249,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     2, 5
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
@@ -278,9 +278,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     -- 6번은 i2v가 아니라 켄번즈(10초 루프) - 인물 6명 미디엄 와이드는 i2v가 무너지는 유형
     '/stories/banggui/scenes/06_peartree.mp4'
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     image_url = excluded.image_url,
@@ -341,9 +341,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     2, 5
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
@@ -369,9 +369,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     '/stories/banggui/scenes/08_apology.jpg',
     '/stories/banggui/scenes/08_apology_loop.mp4'
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     image_url = excluded.image_url,
@@ -435,9 +435,9 @@ insert into story_scenes (id, story_id, scene_order, scene_type, scene_descripti
     }'::jsonb,
     2, 4
 )
-on conflict (id) do update set
-    story_id = excluded.story_id,
-    scene_order = excluded.scene_order,
+-- 자연키로 잡는다. id 로 잡으면 운영에 이미 있는 같은 장면(다른 id)과
+-- 부딪혀 유니크 위반으로 죽는다. id 는 갱신하지 않는다 - 참조가 다섯 곳이다.
+on conflict (story_id, scene_order) do update set
     scene_type = excluded.scene_type,
     scene_description = excluded.scene_description,
     conflict = excluded.conflict,
